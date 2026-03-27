@@ -14,7 +14,6 @@ export default function ListingExplorer() {
   const [openFilter, setOpenFilter] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const [listings, setListings] = useState([]);
-  const [mediaCounts, setMediaCounts] = useState({});
   const [mediaPreview, setMediaPreview] = useState({});
   const [loadingListings, setLoadingListings] = useState(true);
   const [viewerId, setViewerId] = useState('');
@@ -40,8 +39,6 @@ export default function ListingExplorer() {
   const [businessNames, setBusinessNames] = useState({});
   const [sellerFollowIds, setSellerFollowIds] = useState([]);
   const [businessFollowIds, setBusinessFollowIds] = useState([]);
-  const [sellerFollowerCounts, setSellerFollowerCounts] = useState({});
-  const [businessFollowerCounts, setBusinessFollowerCounts] = useState({});
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 900);
@@ -96,12 +93,6 @@ export default function ListingExplorer() {
             .from('user_follows')
             .select('followed_user_id')
             .in('followed_user_id', sellerIds);
-          const counts = {};
-          (sellerFollowers || []).forEach((row) => {
-            counts[row.followed_user_id] = (counts[row.followed_user_id] || 0) + 1;
-          });
-          setSellerFollowerCounts(counts);
-
           if (uid) {
             const { data: mySellerFollows } = await supabase
               .from('user_follows')
@@ -117,12 +108,6 @@ export default function ListingExplorer() {
             .from('business_follows')
             .select('business_id')
             .in('business_id', businessIds);
-          const counts = {};
-          (businessFollowers || []).forEach((row) => {
-            counts[row.business_id] = (counts[row.business_id] || 0) + 1;
-          });
-          setBusinessFollowerCounts(counts);
-
           if (uid) {
             const { data: myBusinessFollows } = await supabase
               .from('business_follows')
@@ -139,19 +124,14 @@ export default function ListingExplorer() {
           .select('listing_id,media_type,url,thumbnail_url,sort_order')
           .in('listing_id', ids);
 
-        const counts = {};
         const preview = {};
         (media || []).forEach((m) => {
-          if (!counts[m.listing_id]) counts[m.listing_id] = { photos: 0, videos: 0 };
           if (!preview[m.listing_id]) preview[m.listing_id] = [];
           preview[m.listing_id].push(m);
-          if (m.media_type === 'video') counts[m.listing_id].videos += 1;
-          else counts[m.listing_id].photos += 1;
         });
         Object.keys(preview).forEach((id) => {
           preview[id].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
         });
-        setMediaCounts(counts);
         setMediaPreview(preview);
       }
 
@@ -316,14 +296,12 @@ export default function ListingExplorer() {
       const { error } = await supabase.from('user_follows').delete().eq('follower_user_id', viewerId).eq('followed_user_id', sellerId);
       if (error) return;
       setSellerFollowIds((prev) => prev.filter((id) => id !== sellerId));
-      setSellerFollowerCounts((prev) => ({ ...prev, [sellerId]: Math.max((prev[sellerId] || 1) - 1, 0) }));
       return;
     }
 
     const { error } = await supabase.from('user_follows').insert({ follower_user_id: viewerId, followed_user_id: sellerId });
     if (error) return;
     setSellerFollowIds((prev) => [...prev, sellerId]);
-    setSellerFollowerCounts((prev) => ({ ...prev, [sellerId]: (prev[sellerId] || 0) + 1 }));
   }
 
   async function toggleFollowBusiness(businessId) {
@@ -339,14 +317,12 @@ export default function ListingExplorer() {
       const { error } = await supabase.from('business_follows').delete().eq('follower_user_id', viewerId).eq('business_id', businessId);
       if (error) return;
       setBusinessFollowIds((prev) => prev.filter((id) => id !== businessId));
-      setBusinessFollowerCounts((prev) => ({ ...prev, [businessId]: Math.max((prev[businessId] || 1) - 1, 0) }));
       return;
     }
 
     const { error } = await supabase.from('business_follows').insert({ follower_user_id: viewerId, business_id: businessId });
     if (error) return;
     setBusinessFollowIds((prev) => [...prev, businessId]);
-    setBusinessFollowerCounts((prev) => ({ ...prev, [businessId]: (prev[businessId] || 0) + 1 }));
   }
 
   function toggleInArray(value, arr, setArr) {
@@ -479,7 +455,6 @@ export default function ListingExplorer() {
         {!loadingListings && filteredListings.length === 0 ? <p style={{ opacity: 0.8 }}>No active listings found.</p> : null}
         <div style={{ display: 'grid', gap: 10 }}>
           {filteredListings.map((l) => {
-            const counts = mediaCounts[l.id] || { photos: 0, videos: 0 };
             const media = mediaPreview[l.id] || [];
             const isOwner = viewerId && viewerId === l.seller_id;
             const isFavorite = favoriteIds.includes(l.id);
@@ -492,12 +467,6 @@ export default function ListingExplorer() {
                   <div style={{ opacity: 0.85, color: '#4b5563', fontSize: 13 }}>
                     {(businessNames[l.business_id] || 'Business')} · {prettyCategory(l.category)} · {l.business_age_years ?? 0} years · {[l.city, l.state, l.country].filter(Boolean).join(', ') || 'Location not set'}
                   </div>
-                  <div style={{ opacity: 0.75, color: '#6b7280', fontSize: 12 }}>Posted as: {l.lister_role || 'Authorized Representative'}</div>
-                  <div style={{ opacity: 0.72, color: '#6b7280', fontSize: 12 }}>
-                    {sellerFollowerCounts[l.seller_id] || 0} seller followers{l.business_id ? ` · ${businessFollowerCounts[l.business_id] || 0} business followers` : ''}
-                  </div>
-                  <div style={{ opacity: 0.75, color: '#6b7280', fontSize: 12 }}>{counts.photos} photos · {counts.videos} videos</div>
-
                   {media.length ? (
                     <div style={mediaScroller}>
                       {media.slice(0, 10).map((m, i) => (
@@ -612,7 +581,7 @@ const toastStyle = { position: 'fixed', bottom: 92, right: 20, background: '#111
 const listingCard = { border: '1px solid #eceff5', borderRadius: 16, background: '#fff', padding: 12, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'nowrap' };
 const mediaScroller = { display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 };
 const mediaThumbWrap = { border: 0, background: 'transparent', padding: 0, cursor: 'pointer' };
-const mediaThumb = { width: 44, height: 44, borderRadius: 10, objectFit: 'cover', border: '1px solid #eceff5', display: 'block' };
+const mediaThumb = { width: 108, height: 108, borderRadius: 14, objectFit: 'cover', border: '1px solid #eceff5', display: 'block' };
 const videoThumb = { display: 'grid', placeItems: 'center', background: '#f3f4f6', color: '#374151', fontSize: 14 };
 const miniBtn = { border: '1px solid #eceff5', borderRadius: 999, background: '#fff', color: '#111827', padding: '6px 10px', textDecoration: 'none', fontSize: 12, fontWeight: 600 };
 
