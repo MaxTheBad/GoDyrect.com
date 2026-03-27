@@ -10,12 +10,15 @@ export default function SignupPage() {
   const [phone, setPhone] = useState('');
   const [role, setRole] = useState('buyer');
   const [msg, setMsg] = useState('');
+  const [agree, setAgree] = useState(false);
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [confirmationSent, setConfirmationSent] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
   async function submit(e) {
     e.preventDefault();
     if (!supabase) return setMsg('Supabase env vars are missing.');
+    if (!agree) return setMsg('Please agree to the policy before creating an account.');
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -25,6 +28,8 @@ export default function SignupPage() {
           full_name: fullName,
           phone,
           role,
+          marketing_opt_in: marketingOptIn,
+          terms_accepted_at: new Date().toISOString(),
         },
       },
     });
@@ -38,6 +43,8 @@ export default function SignupPage() {
         full_name: fullName,
         phone,
         role,
+        marketing_opt_in: marketingOptIn,
+        terms_accepted_at: new Date().toISOString(),
       });
     }
 
@@ -104,6 +111,16 @@ export default function SignupPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+
+            <label style={{ ...label, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input type='checkbox' checked={agree} onChange={(e) => setAgree(e.target.checked)} required />
+              I agree to the <a href='/legal/privacy' style={{ color: '#8fb7ff' }}>Privacy & Terms</a>
+            </label>
+
+            <label style={{ ...label, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input type='checkbox' checked={marketingOptIn} onChange={(e) => setMarketingOptIn(e.target.checked)} />
+              Subscribe to product and listing email updates (optional)
+            </label>
 
             <button style={btn} type='submit'>Create Account</button>
             {msg ? <p style={{ marginBottom: 0 }}>{msg}</p> : null}

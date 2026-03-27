@@ -9,6 +9,8 @@ create table if not exists public.profiles (
   full_name text,
   phone text,
   role text check (role in ('buyer','seller','not_sure')) default 'buyer',
+  marketing_opt_in boolean default false,
+  terms_accepted_at timestamptz,
   avatar_url text,
   bio text,
   created_at timestamptz default now() not null,
@@ -109,17 +111,21 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, full_name, phone, role)
+  insert into public.profiles (id, full_name, phone, role, marketing_opt_in, terms_accepted_at)
   values (
     new.id,
     coalesce(new.raw_user_meta_data->>'full_name', null),
     coalesce(new.raw_user_meta_data->>'phone', null),
-    coalesce(new.raw_user_meta_data->>'role', 'buyer')
+    coalesce(new.raw_user_meta_data->>'role', 'buyer'),
+    coalesce((new.raw_user_meta_data->>'marketing_opt_in')::boolean, false),
+    coalesce((new.raw_user_meta_data->>'terms_accepted_at')::timestamptz, now())
   )
   on conflict (id) do update
     set full_name = excluded.full_name,
         phone = excluded.phone,
-        role = excluded.role;
+        role = excluded.role,
+        marketing_opt_in = excluded.marketing_opt_in,
+        terms_accepted_at = excluded.terms_accepted_at;
 
   return new;
 end;
@@ -185,6 +191,8 @@ for insert with check (
 -- Ensure profile fields exist for existing projects
 alter table public.profiles add column if not exists phone text;
 alter table public.profiles add column if not exists role text;
+alter table public.profiles add column if not exists marketing_opt_in boolean default false;
+alter table public.profiles add column if not exists terms_accepted_at timestamptz;
 alter table public.profiles alter column role set default 'buyer';
 alter table public.profiles drop constraint if exists profiles_role_check;
 alter table public.profiles add constraint profiles_role_check check (role in ('buyer','seller','not_sure'));
