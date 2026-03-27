@@ -320,15 +320,41 @@ export default function ListingExplorer() {
 
     const isFollowing = businessFollowIds.includes(businessId);
     if (isFollowing) {
-      const { error } = await supabase.from('business_follows').delete().eq('follower_user_id', viewerId).eq('business_id', businessId);
-      if (error) return;
+      const { error } = await supabase
+        .from('business_follows')
+        .delete()
+        .eq('follower_user_id', viewerId)
+        .eq('business_id', businessId);
+      if (error) {
+        setToast(error.message || 'Could not unfollow business');
+        setTimeout(() => setToast(''), 2200);
+        return;
+      }
       setBusinessFollowIds((prev) => prev.filter((id) => id !== businessId));
+      setToast('Unfollowed business');
+      setTimeout(() => setToast(''), 1200);
       return;
     }
 
-    const { error } = await supabase.from('business_follows').insert({ follower_user_id: viewerId, business_id: businessId });
-    if (error) return;
+    const { error } = await supabase
+      .from('business_follows')
+      .insert({ follower_user_id: viewerId, business_id: businessId });
+
+    if (error) {
+      if (error.message?.includes('duplicate key')) {
+        setBusinessFollowIds((prev) => (prev.includes(businessId) ? prev : [...prev, businessId]));
+        setToast('Already following this business');
+        setTimeout(() => setToast(''), 1200);
+        return;
+      }
+      setToast(error.message || 'Could not follow business');
+      setTimeout(() => setToast(''), 2400);
+      return;
+    }
+
     setBusinessFollowIds((prev) => [...prev, businessId]);
+    setToast('Following business');
+    setTimeout(() => setToast(''), 1200);
   }
 
   function toggleInArray(value, arr, setArr) {

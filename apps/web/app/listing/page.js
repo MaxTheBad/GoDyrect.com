@@ -161,13 +161,21 @@ export default function ListingDetailPage() {
       if (error) return setMsg(error.message);
       setIsFollowingBusiness(false);
       setBusinessFollowerCount((c) => Math.max(c - 1, 0));
+      setMsg('Unfollowed business');
       return;
     }
 
     const { error } = await supabase.from('business_follows').insert({ follower_user_id: viewerId, business_id: listing.business_id });
-    if (error) return setMsg(error.message);
+    if (error) {
+      if (error.message?.includes('duplicate key')) {
+        setIsFollowingBusiness(true);
+        return setMsg('Already following this business');
+      }
+      return setMsg(error.message);
+    }
     setIsFollowingBusiness(true);
     setBusinessFollowerCount((c) => c + 1);
+    setMsg('Following business');
   }
 
   return (
