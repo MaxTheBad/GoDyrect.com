@@ -1,14 +1,18 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
 
 export default function EditListingPage() {
-  const params = useSearchParams();
-  const id = params.get('id');
+  const [id, setId] = useState('');
   const [form, setForm] = useState(null);
   const [msg, setMsg] = useState('');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const value = new URLSearchParams(window.location.search).get('id') || '';
+    setId(value);
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -50,6 +54,10 @@ export default function EditListingPage() {
 
     const { error } = await supabase.from('listings').update(payload).eq('id', id);
     setMsg(error ? error.message : 'Listing updated.');
+  }
+
+  if (!id) {
+    return <main style={wrap}><div style={card}><p>Missing listing id.</p><a href='/listings' style={{ color: '#8fb7ff' }}>Back to Listings</a></div></main>;
   }
 
   if (!form) {
