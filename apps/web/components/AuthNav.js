@@ -61,13 +61,12 @@ export default function AuthNav() {
 
   const loggedInLinks = (
     <>
-      <a href='/dashboard' style={ghostBtn}>Dashboard</a>
-      <a href='/profile' style={ghostBtn}>Profile</a>
       <a href='/feed' style={ghostBtn}>Feed</a>
-      <a href='/businesses' style={ghostBtn}>My Businesses</a>
-      <a href='/favorites' style={ghostBtn}>Favorites</a>
-      <a href='/listings/new' style={primaryBtn}>Sell</a>
+      <a href='/businesses' style={ghostBtn}>Businesses</a>
       <a href='/messages' style={ghostBtn}>Messages</a>
+      <a href='/favorites' style={ghostBtn}>Favorites</a>
+      <a href='/listings/new' style={primaryBtn}>Post</a>
+      <a href='/profile' style={ghostBtn}>Account</a>
       <button style={ghostBtn} onClick={signOut}>Sign out</button>
     </>
   );
