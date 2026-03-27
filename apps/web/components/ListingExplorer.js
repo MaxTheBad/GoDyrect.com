@@ -33,6 +33,7 @@ export default function ListingExplorer() {
   const [maxPrice, setMaxPrice] = useState('');
   const [sortBy, setSortBy] = useState('Newest');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [mediaModal, setMediaModal] = useState({ open: false, listingId: '', index: 0 });
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 900);
@@ -183,6 +184,23 @@ export default function ListingExplorer() {
     setArr(arr.includes(value) ? arr.filter((x) => x !== value) : [...arr, value]);
   }
 
+
+  function openMediaModal(listingId, index = 0) {
+    setMediaModal({ open: true, listingId, index });
+  }
+
+  function closeMediaModal() {
+    setMediaModal({ open: false, listingId: '', index: 0 });
+  }
+
+  function stepMedia(direction) {
+    const items = mediaPreview[mediaModal.listingId] || [];
+    if (!items.length) return;
+    const next = (mediaModal.index + direction + items.length) % items.length;
+    setMediaModal((prev) => ({ ...prev, index: next }));
+  }
+
+
   return (
     <>
       <section style={heroSection}>
@@ -296,13 +314,13 @@ export default function ListingExplorer() {
                   {media.length ? (
                     <div style={mediaScroller}>
                       {media.slice(0, 10).map((m, i) => (
-                        <a key={m.url + i} href={`/listing?id=${l.id}`} style={mediaThumbWrap} title='Open full listing'>
+                        <button key={m.url + i} type='button' onClick={() => openMediaModal(l.id, i)} style={mediaThumbWrap} title='Preview media'>
                           {m.media_type === 'video' ? (
                             <div style={{ ...mediaThumb, ...videoThumb }}>▶</div>
                           ) : (
                             <img src={m.thumbnail_url || m.url} alt='preview' style={mediaThumb} />
                           )}
-                        </a>
+                        </button>
                       ))}
                     </div>
                   ) : null}
@@ -319,6 +337,41 @@ export default function ListingExplorer() {
           })}
         </div>
       </section>
+
+
+      {mediaModal.open ? (
+        <div style={modalBackdrop} onClick={closeMediaModal}>
+          <div style={modalCard} onClick={(e) => e.stopPropagation()}>
+            {(() => {
+              const items = mediaPreview[mediaModal.listingId] || [];
+              const current = items[mediaModal.index];
+              if (!current) return <p style={{ color: '#fff' }}>No media.</p>;
+              return (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <strong style={{ color: '#fff' }}>Media preview</strong>
+                    <button style={closeBtn} onClick={closeMediaModal}>✕</button>
+                  </div>
+
+                  <div style={modalMediaWrap}>
+                    {current.media_type === 'video' ? (
+                      <video src={current.url} controls autoPlay style={modalMedia} />
+                    ) : (
+                      <img src={current.url} alt='media' style={modalMedia} />
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+                    <button style={navBtn} onClick={() => stepMedia(-1)}>Prev</button>
+                    <span style={{ color: '#d1d5db', fontSize: 12 }}>{mediaModal.index + 1} / {items.length}</span>
+                    <button style={navBtn} onClick={() => stepMedia(1)}>Next</button>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      ) : null}
 
       {toast ? <div style={toastStyle}>{toast}</div> : null}
     </>
@@ -368,7 +421,14 @@ const rowLabel = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 
 const toastStyle = { position: 'fixed', bottom: 92, right: 20, background: '#111827', color: '#fff', padding: '10px 14px', borderRadius: 12, boxShadow: '0 10px 24px rgba(17,24,39,0.25)' };
 const listingCard = { border: '1px solid #eceff5', borderRadius: 16, background: '#fff', padding: 12, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'nowrap' };
 const mediaScroller = { display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 };
-const mediaThumbWrap = { textDecoration: 'none' };
+const mediaThumbWrap = { border: 0, background: 'transparent', padding: 0, cursor: 'pointer' };
 const mediaThumb = { width: 44, height: 44, borderRadius: 10, objectFit: 'cover', border: '1px solid #eceff5', display: 'block' };
 const videoThumb = { display: 'grid', placeItems: 'center', background: '#f3f4f6', color: '#374151', fontSize: 14 };
 const miniBtn = { border: '1px solid #eceff5', borderRadius: 999, background: '#fff', color: '#111827', padding: '6px 10px', textDecoration: 'none', fontSize: 12, fontWeight: 600 };
+
+const modalBackdrop = { position: 'fixed', inset: 0, background: 'rgba(17,24,39,0.72)', display: 'grid', placeItems: 'center', zIndex: 1200, padding: 16 };
+const modalCard = { width: 'min(780px, 96vw)', background: '#0b1228', border: '1px solid #2e3f73', borderRadius: 14, padding: 10 };
+const modalMediaWrap = { borderRadius: 10, overflow: 'hidden', border: '1px solid #2e3f73', background: '#050a1a' };
+const modalMedia = { width: '100%', maxHeight: '70vh', objectFit: 'contain', display: 'block' };
+const closeBtn = { border: '1px solid #34467f', borderRadius: 8, background: '#0f1738', color: '#fff', padding: '6px 10px', cursor: 'pointer' };
+const navBtn = { border: '1px solid #34467f', borderRadius: 8, background: '#0f1738', color: '#fff', padding: '6px 12px', cursor: 'pointer' };
