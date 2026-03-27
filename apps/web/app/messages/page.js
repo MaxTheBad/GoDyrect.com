@@ -12,6 +12,8 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState([]);
   const [body, setBody] = useState('');
   const [msg, setMsg] = useState('');
+  const [startSellerId, setStartSellerId] = useState('');
+  const [startListingId, setStartListingId] = useState('');
 
   const activeConversation = useMemo(
     () => conversations.find((c) => c.id === activeId) || null,
@@ -23,6 +25,13 @@ export default function MessagesPage() {
       ? activeConversation.seller_id
       : activeConversation.buyer_id
     : null;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const qp = new URLSearchParams(window.location.search);
+    setStartSellerId(qp.get('seller') || '');
+    setStartListingId(qp.get('listing') || '');
+  }, []);
 
   useEffect(() => {
     async function init() {
@@ -40,9 +49,34 @@ export default function MessagesPage() {
 
       if (error) return setMsg(error.message);
 
-      const list = convos || [];
+      let list = convos || [];
+
+      if (startSellerId && startSellerId !== me.id) {
+        let convo = list.find(
+          (c) =>
+            c.buyer_id === me.id &&
+            c.seller_id === startSellerId &&
+            (startListingId ? c.listing_id === startListingId : true)
+        );
+
+        if (!convo) {
+          const { data: created, error: cErr } = await supabase
+            .from('conversations')
+            .insert({ buyer_id: me.id, seller_id: startSellerId, listing_id: startListingId || null })
+            .select('*')
+            .single();
+          if (cErr) setMsg(cErr.message);
+          if (created) {
+            convo = created;
+            list = [created, ...list];
+          }
+        }
+
+        if (convo?.id) setActiveId(convo.id);
+      }
+
       setConversations(list);
-      if (list.length) setActiveId(list[0].id);
+      if (!activeId && list.length) setActiveId((prev) => prev || list[0].id);
 
       const counterpartIds = [...new Set(list.map((c) => (c.buyer_id === me.id ? c.seller_id : c.buyer_id)).filter(Boolean))];
       const listingIds = [...new Set(list.map((c) => c.listing_id).filter(Boolean))];
@@ -63,7 +97,7 @@ export default function MessagesPage() {
     }
 
     init();
-  }, []);
+  }, [startSellerId, startListingId]);
 
   useEffect(() => {
     async function loadMessages() {

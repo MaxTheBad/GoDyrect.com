@@ -78,7 +78,7 @@ export default function ListingDetailPage() {
         </section>
 
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-          <a href='/messages' style={btn}>Message Seller</a>
+          <a href={`/messages?seller=${listing.seller_id}&listing=${listing.id}`} style={btn}>Message Seller</a>
           <a href='/' style={ghostBtn}>Back home</a>
         </div>
       </div>

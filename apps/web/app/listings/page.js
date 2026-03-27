@@ -5,27 +5,45 @@ import { supabase } from '../../lib/supabase';
 
 export default function MyListingsPage() {
   const [rows, setRows] = useState([]);
+  const [userId, setUserId] = useState('');
   const [msg, setMsg] = useState('');
 
+  async function loadListings() {
+    if (!supabase) return;
+    const { data: auth } = await supabase.auth.getUser();
+    const user = auth?.user;
+    if (!user) return setMsg('Please sign in to see your listings.');
+    setUserId(user.id);
+
+    const { data, error } = await supabase
+      .from('listings')
+      .select('id,title,asking_price,category,is_active,is_sold,created_at')
+      .eq('seller_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) return setMsg(error.message);
+    setRows(data || []);
+  }
+
   useEffect(() => {
-    async function load() {
-      if (!supabase) return;
-      const { data: auth } = await supabase.auth.getUser();
-      const user = auth?.user;
-      if (!user) return setMsg('Please sign in to see your listings.');
-
-      const { data, error } = await supabase
-        .from('listings')
-        .select('id,title,asking_price,category,is_active,is_sold,created_at')
-        .eq('seller_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) return setMsg(error.message);
-      setRows(data || []);
-    }
-
-    load();
+    loadListings();
   }, []);
+
+  async function deleteListing(id) {
+    const ok = window.confirm('Delete this listing? This cannot be undone from the app.');
+    if (!ok || !supabase || !userId) return;
+
+    const { error } = await supabase
+      .from('listings')
+      .delete()
+      .eq('id', id)
+      .eq('seller_id', userId);
+
+    if (error) return setMsg(error.message);
+
+    setRows((prev) => prev.filter((r) => r.id !== id));
+    setMsg('Listing deleted.');
+  }
 
   return (
     <main style={wrap}>
@@ -48,7 +66,9 @@ export default function MyListingsPage() {
                 <div style={{ opacity: 0.75, fontSize: 12 }}>{r.is_sold ? 'Sold' : r.is_active ? 'Active' : 'Inactive'}</div>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
+                <a href={`/listing?id=${r.id}`} style={ghostBtn}>View</a>
                 <a href={`/listings/edit?id=${r.id}`} style={ghostBtn}>Edit</a>
+                <button onClick={() => deleteListing(r.id)} style={dangerBtn}>Delete</button>
               </div>
             </div>
           ))}
@@ -63,3 +83,4 @@ const card = { maxWidth: 900, margin: '0 auto', background: '#121b3f', border: '
 const row = { border: '1px solid #304178', borderRadius: 10, background: '#0e1738', padding: 12, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' };
 const primaryBtn = { border: 0, borderRadius: 10, background: '#2e7dff', color: '#fff', padding: '10px 12px', textDecoration: 'none' };
 const ghostBtn = { border: '1px solid #304178', borderRadius: 10, background: '#0e1738', color: '#fff', padding: '10px 12px', textDecoration: 'none' };
+const dangerBtn = { border: '1px solid #7a3040', borderRadius: 10, background: '#3a1520', color: '#ffd7dd', padding: '10px 12px', cursor: 'pointer' };
