@@ -1,5 +1,6 @@
 -- BizMarket initial schema
 create extension if not exists "uuid-ossp";
+create extension if not exists "pg_trgm";
 
 -- Profiles (extends auth.users)
 create table if not exists public.profiles (
@@ -149,3 +150,64 @@ for insert with check (
   auth.uid() = sender_id and
   exists(select 1 from public.conversations c where c.id = conversation_id and auth.uid() in (c.buyer_id, c.seller_id))
 );
+
+-- Search support (name/category/keywords only, not description)
+alter table public.listings
+  add column if not exists keywords text[] default '{}';
+
+create index if not exists idx_listings_keywords_gin on public.listings using gin (keywords);
+create index if not exists idx_listings_title_trgm on public.listings using gin (title gin_trgm_ops);
+
+-- Supabase Storage buckets
+insert into storage.buckets (id, name, public)
+values ('listing-media', 'listing-media', true)
+on conflict (id) do nothing;
+
+insert into storage.buckets (id, name, public)
+values ('profile-photos', 'profile-photos', true)
+on conflict (id) do nothing;
+
+-- Storage policies
+alter table storage.objects enable row level security;
+
+drop policy if exists "listing media public read" on storage.objects;
+create policy "listing media public read"
+on storage.objects for select
+using (bucket_id = 'listing-media');
+
+drop policy if exists "listing media authenticated upload" on storage.objects;
+create policy "listing media authenticated upload"
+on storage.objects for insert
+with check (bucket_id = 'listing-media' and auth.role() = 'authenticated');
+
+drop policy if exists "listing media owner update" on storage.objects;
+create policy "listing media owner update"
+on storage.objects for update
+using (bucket_id = 'listing-media' and owner = auth.uid())
+with check (bucket_id = 'listing-media' and owner = auth.uid());
+
+drop policy if exists "listing media owner delete" on storage.objects;
+create policy "listing media owner delete"
+on storage.objects for delete
+using (bucket_id = 'listing-media' and owner = auth.uid());
+
+drop policy if exists "profile photos public read" on storage.objects;
+create policy "profile photos public read"
+on storage.objects for select
+using (bucket_id = 'profile-photos');
+
+drop policy if exists "profile photos authenticated upload" on storage.objects;
+create policy "profile photos authenticated upload"
+on storage.objects for insert
+with check (bucket_id = 'profile-photos' and auth.role() = 'authenticated');
+
+drop policy if exists "profile photos owner update" on storage.objects;
+create policy "profile photos owner update"
+on storage.objects for update
+using (bucket_id = 'profile-photos' and owner = auth.uid())
+with check (bucket_id = 'profile-photos' and owner = auth.uid());
+
+drop policy if exists "profile photos owner delete" on storage.objects;
+create policy "profile photos owner delete"
+on storage.objects for delete
+using (bucket_id = 'profile-photos' and owner = auth.uid());
