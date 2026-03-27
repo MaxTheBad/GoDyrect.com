@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 const sortOptions = ['Newest', 'Oldest', 'Price: Low to High', 'Price: High to Low'];
-const businessTypes = ['Established Businesses', 'Asset Sales', 'Real Estate', 'Start-up Businesses'];
+const businessTypes = ['established', 'asset_sale', 'real_estate', 'startup'];
 const ageOptions = ['0-1 years', '2-5 years', '6-10 years', '10+ years'];
+const milesOptions = ['5', '10', '25', '50', '100', '250'];
 
 export default function ListingExplorer() {
   const [view] = useState('list');
@@ -13,7 +14,19 @@ export default function ListingExplorer() {
   const [openFilter, setOpenFilter] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const [listings, setListings] = useState([]);
+  const [mediaCounts, setMediaCounts] = useState({});
   const [loadingListings, setLoadingListings] = useState(true);
+
+  const [selectedTypes, setSelectedTypes] = useState([]);
+  const [selectedAges, setSelectedAges] = useState([]);
+  const [country, setCountry] = useState('');
+  const [state, setState] = useState('');
+  const [city, setCity] = useState('');
+  const [county, setCounty] = useState('');
+  const [miles, setMiles] = useState('');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [sortBy, setSortBy] = useState('Newest');
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 900);
@@ -29,16 +42,72 @@ export default function ListingExplorer() {
       if (!supabase) return setLoadingListings(false);
       const { data } = await supabase
         .from('listings')
-        .select('id,title,category,business_age_years,asking_price,city,state')
+        .select('id,title,description,category,business_age_years,asking_price,city,state,country,created_at')
         .eq('is_active', true)
         .eq('is_sold', false)
         .order('created_at', { ascending: false })
-        .limit(50);
-      setListings(data || []);
+        .limit(100);
+
+      const rows = data || [];
+      setListings(rows);
+
+      if (rows.length) {
+        const ids = rows.map((r) => r.id);
+        const { data: media } = await supabase
+          .from('listing_media')
+          .select('listing_id,media_type')
+          .in('listing_id', ids);
+
+        const counts = {};
+        (media || []).forEach((m) => {
+          if (!counts[m.listing_id]) counts[m.listing_id] = { photos: 0, videos: 0 };
+          if (m.media_type === 'video') counts[m.listing_id].videos += 1;
+          else counts[m.listing_id].photos += 1;
+        });
+        setMediaCounts(counts);
+      }
+
       setLoadingListings(false);
     }
     loadListings();
   }, []);
+
+  const countries = useMemo(() => [...new Set(listings.map((l) => l.country).filter(Boolean))].sort(), [listings]);
+  const states = useMemo(() => [...new Set(listings.map((l) => l.state).filter(Boolean))].sort(), [listings]);
+  const cities = useMemo(() => [...new Set(listings.map((l) => l.city).filter(Boolean))].sort(), [listings]);
+
+  const filteredListings = useMemo(() => {
+    let rows = [...listings];
+
+    if (selectedTypes.length) rows = rows.filter((l) => selectedTypes.includes(l.category));
+    if (selectedAges.length) {
+      rows = rows.filter((l) => {
+        const age = Number(l.business_age_years || 0);
+        return selectedAges.some((bucket) => {
+          if (bucket === '0-1 years') return age <= 1;
+          if (bucket === '2-5 years') return age >= 2 && age <= 5;
+          if (bucket === '6-10 years') return age >= 6 && age <= 10;
+          if (bucket === '10+ years') return age >= 10;
+          return true;
+        });
+      });
+    }
+
+    if (country) rows = rows.filter((l) => l.country === country);
+    if (state) rows = rows.filter((l) => l.state === state);
+    if (city) rows = rows.filter((l) => l.city === city);
+    if (county) rows = rows; // county to be wired once schema is added
+
+    if (minPrice) rows = rows.filter((l) => Number(l.asking_price || 0) >= Number(minPrice));
+    if (maxPrice) rows = rows.filter((l) => Number(l.asking_price || 0) <= Number(maxPrice));
+
+    if (sortBy === 'Newest') rows.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    if (sortBy === 'Oldest') rows.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    if (sortBy === 'Price: Low to High') rows.sort((a, b) => Number(a.asking_price || 0) - Number(b.asking_price || 0));
+    if (sortBy === 'Price: High to Low') rows.sort((a, b) => Number(b.asking_price || 0) - Number(a.asking_price || 0));
+
+    return rows;
+  }, [listings, selectedTypes, selectedAges, country, state, city, county, minPrice, maxPrice, sortBy]);
 
   function handleMapSoon() {
     setToast('Map view is coming soon');
@@ -47,6 +116,10 @@ export default function ListingExplorer() {
 
   function toggleFilter(key) {
     setOpenFilter((curr) => (curr === key ? null : key));
+  }
+
+  function toggleInArray(value, arr, setArr) {
+    setArr(arr.includes(value) ? arr.filter((x) => x !== value) : [...arr, value]);
   }
 
   return (
@@ -64,7 +137,7 @@ export default function ListingExplorer() {
         <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           <label style={sortWrap}>
             <span style={{ fontSize: 13, opacity: 0.8 }}>Sort by</span>
-            <select style={input} defaultValue='Newest'>
+            <select style={input} value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
               {sortOptions.map((option) => <option key={option}>{option}</option>)}
             </select>
           </label>
@@ -74,46 +147,70 @@ export default function ListingExplorer() {
       <section style={{ marginTop: 16, background: '#121b3f', border: '1px solid #26366d', borderRadius: 16, padding: 12 }}>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, minmax(0, 1fr))', gap: 10 }}>
           <DropdownFilter title='Business type' isOpen={openFilter === 'type'} onToggle={() => toggleFilter('type')}>
-            {businessTypes.map((option) => <label key={option} style={rowLabel}><input type='checkbox' /> {option}</label>)}
+            {businessTypes.map((option) => (
+              <label key={option} style={rowLabel}>
+                <input type='checkbox' checked={selectedTypes.includes(option)} onChange={() => toggleInArray(option, selectedTypes, setSelectedTypes)} /> {prettyCategory(option)}
+              </label>
+            ))}
           </DropdownFilter>
 
           <DropdownFilter title='Business age' isOpen={openFilter === 'age'} onToggle={() => toggleFilter('age')}>
-            {ageOptions.map((option) => <label key={option} style={rowLabel}><input type='checkbox' /> {option}</label>)}
+            {ageOptions.map((option) => (
+              <label key={option} style={rowLabel}>
+                <input type='checkbox' checked={selectedAges.includes(option)} onChange={() => toggleInArray(option, selectedAges, setSelectedAges)} /> {option}
+              </label>
+            ))}
           </DropdownFilter>
 
           <DropdownFilter title='Price range' isOpen={openFilter === 'price'} onToggle={() => toggleFilter('price')}>
-            <input style={input} placeholder='Min price' />
-            <input style={{ ...input, marginTop: 8 }} placeholder='Max price' />
+            <input style={input} placeholder='Min price' value={minPrice} onChange={(e) => setMinPrice(e.target.value)} />
+            <input style={{ ...input, marginTop: 8 }} placeholder='Max price' value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} />
           </DropdownFilter>
 
-          <DropdownFilter title='Quick actions' isOpen={openFilter === 'quick'} onToggle={() => toggleFilter('quick')}>
-            <button style={ghostBtn}>Save filter</button>
-            <button style={{ ...ghostBtn, marginTop: 8 }}>Reset filter</button>
+          <DropdownFilter title='Location + miles' isOpen={openFilter === 'location'} onToggle={() => toggleFilter('location')}>
+            <select style={input} value={country} onChange={(e) => setCountry(e.target.value)}>
+              <option value=''>Country</option>{countries.map((v) => <option key={v}>{v}</option>)}
+            </select>
+            <select style={{ ...input, marginTop: 8 }} value={state} onChange={(e) => setState(e.target.value)}>
+              <option value=''>State</option>{states.map((v) => <option key={v}>{v}</option>)}
+            </select>
+            <select style={{ ...input, marginTop: 8 }} value={city} onChange={(e) => setCity(e.target.value)}>
+              <option value=''>City</option>{cities.map((v) => <option key={v}>{v}</option>)}
+            </select>
+            <select style={{ ...input, marginTop: 8 }} value={county} onChange={(e) => setCounty(e.target.value)}>
+              <option value=''>County (after SQL update)</option>
+            </select>
+            <select style={{ ...input, marginTop: 8 }} value={miles} onChange={(e) => { setMiles(e.target.value); setToast('Miles filter activates after location SQL/geo setup'); setTimeout(()=>setToast(''),1500);} }>
+              <option value=''>Miles from...</option>{milesOptions.map((v) => <option key={v} value={v}>{v} miles</option>)}
+            </select>
           </DropdownFilter>
         </div>
       </section>
 
-
-
       <section style={{ marginTop: 16, background: '#121b3f', border: '1px solid #26366d', borderRadius: 16, padding: 12 }}>
         <h3 style={{ marginTop: 4 }}>Business Listings</h3>
         {loadingListings ? <p style={{ opacity: 0.8 }}>Loading listings...</p> : null}
-        {!loadingListings && listings.length === 0 ? <p style={{ opacity: 0.8 }}>No active listings yet.</p> : null}
+        {!loadingListings && filteredListings.length === 0 ? <p style={{ opacity: 0.8 }}>No active listings yet.</p> : null}
         <div style={{ display: 'grid', gap: 10 }}>
-          {listings.map((l) => (
-            <div key={l.id} style={listingCard}>
-              <div>
-                <strong>{l.title}</strong>
-                <div style={{ opacity: 0.8, fontSize: 13 }}>
-                  {l.category} · {l.business_age_years ?? 0} years · {[l.city, l.state].filter(Boolean).join(', ') || 'Location not set'}
+          {filteredListings.map((l) => {
+            const counts = mediaCounts[l.id] || { photos: 0, videos: 0 };
+            return (
+              <a key={l.id} href={`/listing?id=${l.id}`} style={listingCardLink}>
+                <div style={listingCard}>
+                  <div>
+                    <strong>{l.title}</strong>
+                    <div style={{ opacity: 0.8, fontSize: 13 }}>
+                      {prettyCategory(l.category)} · {l.business_age_years ?? 0} years · {[l.city, l.state, l.country].filter(Boolean).join(', ') || 'Location not set'}
+                    </div>
+                    <div style={{ opacity: 0.75, fontSize: 12 }}>{counts.photos} photos · {counts.videos} videos</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <strong>${Number(l.asking_price || 0).toLocaleString()}</strong>
+                  </div>
                 </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <strong>${Number(l.asking_price || 0).toLocaleString()}</strong>
-                <a href={`/messages`} style={ghostBtn}>Message</a>
-              </div>
-            </div>
-          ))}
+              </a>
+            );
+          })}
         </div>
       </section>
 
@@ -134,6 +231,13 @@ function DropdownFilter({ title, isOpen, onToggle, children }) {
   );
 }
 
+function prettyCategory(value) {
+  if (value === 'asset_sale') return 'Asset Sales';
+  if (value === 'real_estate') return 'Real Estate';
+  if (value === 'startup') return 'Start-up Businesses';
+  return 'Established Businesses';
+}
+
 const primaryBtn = { border: 0, borderRadius: 10, background: '#2e7dff', color: '#fff', padding: '10px 12px', cursor: 'pointer' };
 const ghostBtn = { border: '1px solid #304178', borderRadius: 10, background: '#0e1738', color: '#fff', padding: '10px 12px', cursor: 'pointer' };
 const input = { borderRadius: 10, border: '1px solid #304178', background: '#0b1431', color: '#fff', padding: '10px 12px', width: '100%' };
@@ -142,4 +246,5 @@ const dropWrap = { background: '#0f1738', border: '1px solid #26366d', borderRad
 const dropBtn = { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #304178', borderRadius: 10, background: '#0e1738', color: '#fff', padding: '10px 12px', cursor: 'pointer' };
 const rowLabel = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 };
 const toastStyle = { position: 'fixed', bottom: 92, right: 20, background: '#1f2d5c', border: '1px solid #3654a8', padding: '10px 14px', borderRadius: 10 };
+const listingCardLink = { textDecoration: 'none', color: 'inherit' };
 const listingCard = { border: '1px solid #304178', borderRadius: 10, background: '#0e1738', padding: 12, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' };
