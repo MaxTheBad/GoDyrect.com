@@ -6,6 +6,8 @@ import { supabase } from '../lib/supabase';
 export default function AuthNav() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -22,6 +24,10 @@ export default function AuthNav() {
       }
     }
 
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
     loadUser();
 
     if (!supabase) return () => {};
@@ -32,6 +38,7 @@ export default function AuthNav() {
 
     return () => {
       mounted = false;
+      window.removeEventListener('resize', checkMobile);
       subscription?.subscription?.unsubscribe();
     };
   }, []);
@@ -44,26 +51,49 @@ export default function AuthNav() {
 
   if (loading) return null;
 
-  if (!user) {
+  const loggedOutLinks = (
+    <>
+      <a href='/login' style={ghostBtn}>Sign in</a>
+      <a href='/signup' style={ghostBtn}>Sign up</a>
+      <a href='/signup?intent=sell' style={primaryBtn}>Sell</a>
+    </>
+  );
+
+  const loggedInLinks = (
+    <>
+      <a href='/dashboard' style={ghostBtn}>Dashboard</a>
+      <a href='/profile' style={ghostBtn}>Profile</a>
+      <a href='/listings/new' style={primaryBtn}>Sell</a>
+      <a href='/messages' style={ghostBtn}>Messages</a>
+      <button style={ghostBtn} onClick={signOut}>Sign out</button>
+    </>
+  );
+
+  if (isMobile) {
     return (
-      <nav style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <a href='/login' style={ghostBtn}>Log in</a>
-        <a href='/signup' style={ghostBtn}>Sign up</a>
-        <a href='/signup?intent=sell' style={primaryBtn}>Sell My Business</a>
-      </nav>
+      <div style={{ position: 'relative' }}>
+        <button style={ghostBtn} onClick={() => setMenuOpen((v) => !v)} aria-label='Menu'>☰</button>
+        {menuOpen ? <div style={mobileMenu}>{user ? loggedInLinks : loggedOutLinks}</div> : null}
+      </div>
     );
   }
 
-  return (
-    <nav style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-      <a href='/dashboard' style={ghostBtn}>Dashboard</a>
-      <a href='/profile' style={ghostBtn}>Profile</a>
-      <a href='/listings/new' style={primaryBtn}>Sell My Business</a>
-      <a href='/messages' style={ghostBtn}>Messages</a>
-      <button style={ghostBtn} onClick={signOut}>Sign out</button>
-    </nav>
-  );
+  return <nav style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{user ? loggedInLinks : loggedOutLinks}</nav>;
 }
+
+const mobileMenu = {
+  position: 'absolute',
+  right: 0,
+  top: 44,
+  background: '#121b3f',
+  border: '1px solid #304178',
+  borderRadius: 12,
+  padding: 8,
+  display: 'grid',
+  gap: 8,
+  minWidth: 180,
+  zIndex: 20,
+};
 
 const primaryBtn = {
   border: 0,
