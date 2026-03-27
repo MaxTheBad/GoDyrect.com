@@ -34,6 +34,8 @@ export default function ListingExplorer() {
   const [sortBy, setSortBy] = useState('Newest');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [mediaModal, setMediaModal] = useState({ open: false, listingId: '', index: 0 });
+  const [searchDraft, setSearchDraft] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 900);
@@ -142,6 +144,16 @@ export default function ListingExplorer() {
   const filteredListings = useMemo(() => {
     let rows = [...listings];
 
+    if (searchQuery) {
+      rows = rows.filter((l) => {
+        const haystack = [l.title, l.description, l.category, l.city, l.state, l.country, l.county]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(searchQuery);
+      });
+    }
+
     if (selectedTypes.length) rows = rows.filter((l) => selectedTypes.includes(l.category));
     if (selectedAges.length) {
       rows = rows.filter((l) => {
@@ -174,10 +186,14 @@ export default function ListingExplorer() {
     if (sortBy === 'Price: High to Low') rows.sort((a, b) => Number(b.asking_price || 0) - Number(a.asking_price || 0));
 
     return rows;
-  }, [listings, selectedTypes, selectedAges, country, state, city, county, minPrice, maxPrice, sortBy, miles, originLatLng]);
+  }, [listings, searchQuery, selectedTypes, selectedAges, country, state, city, county, minPrice, maxPrice, sortBy, miles, originLatLng]);
 
   function toggleFilter(key) {
     setOpenFilter((curr) => (curr === key ? null : key));
+  }
+
+  function applySearch() {
+    setSearchQuery(searchDraft.trim().toLowerCase());
   }
 
   function toggleInArray(value, arr, setArr) {
@@ -208,8 +224,19 @@ export default function ListingExplorer() {
         <p style={{ margin: 0, opacity: 0.75, color: '#374151' }}>Search by business name, category, or keywords.</p>
 
         <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr auto auto', gap: 8 }}>
-          <input style={{ ...input, width: '100%' }} placeholder='Search business name, categories, keywords' />
-          <button style={primaryBtn}>Search</button>
+          <input
+            style={{ ...input, width: '100%' }}
+            placeholder='Search business name, categories, keywords'
+            value={searchDraft}
+            onChange={(e) => setSearchDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                applySearch();
+              }
+            }}
+          />
+          <button style={primaryBtn} onClick={applySearch}>Search</button>
           <button style={ghostBtn} onClick={() => { setToast('Map view is coming soon'); setTimeout(() => setToast(''), 1800); }}>Map View (Coming Soon)</button>
         </div>
 
