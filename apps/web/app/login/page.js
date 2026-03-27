@@ -23,8 +23,8 @@ function AuthForm({ title, submit, email, setEmail, password, setPassword, msg }
     <main style={wrap}>
       <form onSubmit={submit} style={card}>
         <h1>{title}</h1>
-        <input style={input} placeholder='Email' value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input style={input} placeholder='Password' type='password' value={password} onChange={(e) => setPassword(e.target.value)} />
+        <input style={input} placeholder='Email' type='email' name='email' autoComplete='email' value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input style={input} placeholder='Password' type='password' name='password' id='login-password' autoComplete='current-password' value={password} onChange={(e) => setPassword(e.target.value)} />
         <button style={btn} type='submit'>{title}</button>
         {msg ? <p>{msg}</p> : null}
       </form>

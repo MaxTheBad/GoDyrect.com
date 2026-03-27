@@ -52,7 +52,7 @@ export default function SignupPage() {
         <input style={input} placeholder='John Smith' value={fullName} onChange={(e) => setFullName(e.target.value)} required />
 
         <label style={label}>Email (confirmation required)</label>
-        <input style={input} type='email' placeholder='you@email.com' value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <input style={input} type='email' name='email' autoComplete='email' placeholder='you@email.com' value={email} onChange={(e) => setEmail(e.target.value)} required />
 
         <label style={label}>Phone number</label>
         <input style={input} placeholder='+1 (555) 555-5555' value={phone} onChange={(e) => setPhone(e.target.value)} required />
@@ -65,7 +65,17 @@ export default function SignupPage() {
         </select>
 
         <label style={label}>Password</label>
-        <input style={input} placeholder='Create a password' type='password' value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <input
+          style={input}
+          placeholder='Create a password'
+          type='password'
+          name='password'
+          id='signup-password'
+          autoComplete='new-password'
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
 
         <button style={btn} type='submit'>Create Account</button>
         {msg ? <p style={{ marginBottom: 0 }}>{msg}</p> : null}
