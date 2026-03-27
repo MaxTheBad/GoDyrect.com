@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { US_STATES } from '../../lib/us-states';
 
 function yearsSince(startDate) {
   if (!startDate) return null;
@@ -32,6 +33,11 @@ function completeness(details) {
   return Math.round((done / fields.length) * 100);
 }
 
+const countries = [
+  'United States','Canada','United Kingdom','Australia','Germany','France','Spain','Italy','Netherlands','Sweden',
+  'Norway','Denmark','Switzerland','India','Mexico','Brazil','United Arab Emirates','Singapore','Japan','South Africa'
+];
+
 const emptyDetails = {
   description: '',
   category: 'established',
@@ -54,6 +60,8 @@ export default function MyBusinessesPage() {
   const [detailsByBusiness, setDetailsByBusiness] = useState({});
   const [newBusinessName, setNewBusinessName] = useState('');
   const [newBusinessRole, setNewBusinessRole] = useState('Owner');
+  const [newBusinessState, setNewBusinessState] = useState('Florida');
+  const [newBusinessCountry, setNewBusinessCountry] = useState('United States');
   const [inviteByBusiness, setInviteByBusiness] = useState({});
   const [focusBusinessId, setFocusBusinessId] = useState('');
   const [msg, setMsg] = useState('');
@@ -151,19 +159,25 @@ export default function MyBusinessesPage() {
 
     const { data: created, error: createErr } = await supabase
       .from('businesses')
-      .insert({ name: newBusinessName.trim(), created_by: userId, status: 'approved' })
+      .insert({
+        name: newBusinessName.trim(),
+        state: newBusinessState || null,
+        country: newBusinessCountry || null,
+        created_by: userId,
+        status: 'approved',
+      })
       .select('id')
       .single();
 
     if (createErr) return setMsg(createErr.message);
 
-    const { error: membershipErr } = await supabase.from('business_memberships').insert({
+    const { error: membershipErr } = await supabase.from('business_memberships').upsert({
       business_id: created.id,
       user_id: userId,
-      role: newBusinessRole,
+      role: newBusinessRole || 'Owner',
       is_admin: true,
       status: 'approved',
-    });
+    }, { onConflict: 'business_id,user_id' });
 
     if (membershipErr) return setMsg(membershipErr.message);
 
@@ -229,6 +243,12 @@ export default function MyBusinessesPage() {
           <select style={input} value={newBusinessRole} onChange={(e) => setNewBusinessRole(e.target.value)}>
             <option>Owner</option><option>CEO</option><option>Founder</option><option>Broker</option><option>Managing Partner</option><option>Authorized Representative</option>
           </select>
+          <select style={input} value={newBusinessState} onChange={(e) => setNewBusinessState(e.target.value)}>
+            {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select style={input} value={newBusinessCountry} onChange={(e) => setNewBusinessCountry(e.target.value)}>
+            {countries.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
           <button style={btnPrimary} type='submit'>Create Business</button>
         </form>
 
@@ -268,8 +288,14 @@ export default function MyBusinessesPage() {
                   <input style={input} placeholder='Annual profit' value={details.annual_profit} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, annual_profit: e.target.value } }))} />
                   <input style={input} placeholder='Default asking price' value={details.default_asking_price} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, default_asking_price: e.target.value } }))} />
                   <input style={input} placeholder='City' value={details.city} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, city: e.target.value } }))} />
-                  <input style={input} placeholder='State' value={details.state} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, state: e.target.value } }))} />
-                  <input style={input} placeholder='Country' value={details.country} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, country: e.target.value } }))} />
+                  <select style={input} value={details.state} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, state: e.target.value } }))}>
+                    <option value=''>State</option>
+                    {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <select style={input} value={details.country} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, country: e.target.value } }))}>
+                    <option value=''>Country</option>
+                    {countries.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
                   <input style={input} placeholder='County' value={details.county} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, county: e.target.value } }))} />
                   <input style={{ ...input, gridColumn: '1 / -1' }} placeholder='Keywords (comma separated)' value={details.keywords} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, keywords: e.target.value } }))} />
                   <button style={btnPrimary} type='button' onClick={() => saveDetails(row.business_id)}>Save Business Details</button>
@@ -320,7 +346,7 @@ export default function MyBusinessesPage() {
 
 const wrap = { minHeight: '100vh', padding: 24, background: '#0b1020', color: '#fff' };
 const card = { maxWidth: 980, margin: '0 auto', background: '#121b3f', border: '1px solid #2a3c78', borderRadius: 12, padding: 16, display: 'grid', gap: 12 };
-const createWrap = { display: 'grid', gridTemplateColumns: '1.4fr 1fr auto', gap: 8 };
+const createWrap = { display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr auto', gap: 8 };
 const bizCard = { border: '1px solid #304178', borderRadius: 10, background: '#0e1738', padding: 12 };
 const memberRow = { border: '1px solid #304178', borderRadius: 8, padding: 8, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' };
 const input = { borderRadius: 8, border: '1px solid #304178', background: '#0b1431', color: '#fff', padding: '10px 12px' };
