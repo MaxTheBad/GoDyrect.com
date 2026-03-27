@@ -16,13 +16,13 @@ export default function BottomNav() {
 
   return (
     <nav style={wrap}>
-      <a href='/' style={item} aria-label='Home'>
-        <HomeIcon />
-        <span style={label}>Home</span>
-      </a>
       <a href='/feed' style={item} aria-label='Feed'>
         <FeedIcon />
         <span style={label}>Feed</span>
+      </a>
+      <a href='/explore' style={item} aria-label='Explore'>
+        <HomeIcon />
+        <span style={label}>Explore</span>
       </a>
       <a href='/favorites' style={item} aria-label='Favorites'>
         <HeartIcon />

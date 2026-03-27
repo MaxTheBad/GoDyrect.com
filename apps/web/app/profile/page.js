@@ -98,7 +98,10 @@ export default function ProfilePage() {
         <input style={input} type='file' accept='image/*' onChange={(e) => setAvatarFile(e.target.files?.[0] || null)} />
         <button style={btn} type='submit'>Save Profile</button>
         {msg ? <p>{msg}</p> : null}
-        <a href='/dashboard' style={{ color: '#8fb7ff' }}>Back to dashboard</a>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <a href='/businesses' style={{ color: '#8fb7ff' }}>My Businesses</a>
+          <a href='/feed' style={{ color: '#8fb7ff' }}>Back to Feed</a>
+        </div>
       </form>
     </main>
   );

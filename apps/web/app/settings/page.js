@@ -7,7 +7,7 @@ export default function SettingsPage() {
 
         <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
           <a href='/profile' style={btn}>Profile Settings</a>
-          <a href='/dashboard' style={btn}>Dashboard</a>
+          <a href='/businesses' style={btn}>My Businesses</a>
           <a href='/legal/privacy' style={btn}>Privacy Policy</a>
         </div>
       </div>

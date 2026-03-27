@@ -63,7 +63,7 @@ export default function MyListingsPage() {
         <h1 style={{ marginTop: 0 }}>My Listings</h1>
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
           <a href='/listings/new' style={primaryBtn}>Post New Listing</a>
-          <a href='/dashboard' style={ghostBtn}>Back to Dashboard</a>
+          <a href='/feed' style={ghostBtn}>Back to Feed</a>
         </div>
 
         {msg ? <p>{msg}</p> : null}

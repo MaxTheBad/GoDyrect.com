@@ -6,7 +6,7 @@ export default function TopNav() {
   return (
     <header style={wrap}>
       <div style={inner}>
-        <a href='/' style={brand}>
+        <a href='/feed' style={brand}>
           <div style={brandIcon}>◎</div>
           <strong style={{ fontSize: 21, color: '#111827', letterSpacing: '-0.01em' }}>GoDyrect</strong>
         </a>

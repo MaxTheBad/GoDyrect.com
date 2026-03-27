@@ -12,7 +12,7 @@ export default function LoginPage() {
     if (!supabase) return setMsg('Supabase env vars are missing.');
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setMsg(error ? error.message : 'Logged in. Redirecting...');
-    if (!error) setTimeout(() => (window.location.href = '/dashboard'), 600);
+    if (!error) setTimeout(() => (window.location.href = '/feed'), 600);
   }
 
   return (
