@@ -72,7 +72,7 @@ export default function AuthNav() {
   if (isMobile) {
     return (
       <div style={{ position: 'relative' }}>
-        <button style={ghostBtn} onClick={() => setMenuOpen((v) => !v)} aria-label='Menu'>☰</button>
+        <button style={hamburgerBtn} onClick={() => setMenuOpen((v) => !v)} aria-label='Menu'>☰</button>
         {menuOpen ? <div style={mobileMenu}>{user ? loggedInLinks : loggedOutLinks}</div> : null}
       </div>
     );
@@ -116,4 +116,14 @@ const ghostBtn = {
   cursor: 'pointer',
   textDecoration: 'none',
   fontWeight: 600,
+};
+
+const hamburgerBtn = {
+  border: 0,
+  background: 'transparent',
+  color: '#111827',
+  fontSize: 26,
+  lineHeight: 1,
+  padding: 2,
+  cursor: 'pointer',
 };
