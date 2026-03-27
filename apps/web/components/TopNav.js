@@ -7,8 +7,8 @@ export default function TopNav() {
     <header style={wrap}>
       <div style={inner}>
         <a href='/' style={brand}>
-          <div style={brandIcon} />
-          <strong style={{ fontSize: 20, color: '#fff' }}>GoDyrect</strong>
+          <div style={brandIcon}>◎</div>
+          <strong style={{ fontSize: 21, color: '#111827', letterSpacing: '-0.01em' }}>GoDyrect</strong>
         </a>
         <AuthNav />
       </div>
@@ -20,9 +20,9 @@ const wrap = {
   position: 'sticky',
   top: 0,
   zIndex: 50,
-  background: 'rgba(11,16,32,0.92)',
-  backdropFilter: 'blur(6px)',
-  borderBottom: '1px solid #1f2d5c',
+  background: 'rgba(255,255,255,0.92)',
+  backdropFilter: 'blur(10px)',
+  borderBottom: '1px solid #eceff5',
 };
 
 const inner = {
@@ -37,4 +37,14 @@ const inner = {
 };
 
 const brand = { display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' };
-const brandIcon = { width: 34, height: 34, borderRadius: 10, background: '#2e7dff' };
+const brandIcon = {
+  width: 34,
+  height: 34,
+  borderRadius: 10,
+  display: 'grid',
+  placeItems: 'center',
+  fontSize: 14,
+  fontWeight: 700,
+  color: '#fff',
+  background: 'linear-gradient(135deg, #f58529 0%, #dd2a7b 45%, #8134af 75%, #515bd4 100%)',
+};

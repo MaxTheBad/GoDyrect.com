@@ -186,8 +186,8 @@ export default function ListingExplorer() {
   return (
     <>
       <section style={heroSection}>
-        <h1 style={{ margin: '0 0 8px', fontSize: 30 }}>Buy & sell businesses</h1>
-        <p style={{ margin: 0, opacity: 0.86 }}>Search by business name, category, or keywords.</p>
+        <h1 style={{ margin: '0 0 8px', fontSize: 30, color: '#111827', letterSpacing: '-0.02em' }}>Buy & sell businesses</h1>
+        <p style={{ margin: 0, opacity: 0.75, color: '#374151' }}>Search by business name, category, or keywords.</p>
 
         <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr auto auto', gap: 8 }}>
           <input style={{ ...input, width: '100%' }} placeholder='Search business name, categories, keywords' />
@@ -276,7 +276,7 @@ export default function ListingExplorer() {
       </section>
 
       <section style={listingSection}>
-        <h3 style={{ marginTop: 4 }}>Business Listings</h3>
+        <h3 style={{ marginTop: 4, color: '#111827' }}>Business Listings</h3>
         {loadingListings ? <p style={{ opacity: 0.8 }}>Loading listings...</p> : null}
         {!loadingListings && filteredListings.length === 0 ? <p style={{ opacity: 0.8 }}>No active listings found.</p> : null}
         <div style={{ display: 'grid', gap: 10 }}>
@@ -288,10 +288,10 @@ export default function ListingExplorer() {
               <div key={l.id} style={listingCard}>
                 <div style={{ display: 'grid', gap: 8, flex: 1, minWidth: 0 }}>
                   <strong>{l.title}</strong>
-                  <div style={{ opacity: 0.8, fontSize: 13 }}>
+                  <div style={{ opacity: 0.85, color: '#4b5563', fontSize: 13 }}>
                     {prettyCategory(l.category)} · {l.business_age_years ?? 0} years · {[l.city, l.state, l.country].filter(Boolean).join(', ') || 'Location not set'}
                   </div>
-                  <div style={{ opacity: 0.75, fontSize: 12 }}>{counts.photos} photos · {counts.videos} videos</div>
+                  <div style={{ opacity: 0.75, color: '#6b7280', fontSize: 12 }}>{counts.photos} photos · {counts.videos} videos</div>
 
                   {media.length ? (
                     <div style={mediaScroller}>
@@ -354,21 +354,21 @@ function milesBetween(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-const heroSection = { marginTop: 24, background: '#121b3f', border: '1px solid #26366d', borderRadius: 16, padding: 18 };
-const filterSection = { marginTop: 16, background: '#121b3f', border: '1px solid #26366d', borderRadius: 16, padding: 12 };
-const mobileFilterToggle = { width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #304178', borderRadius: 10, background: '#0e1738', color: '#fff', padding: '10px 12px', cursor: 'pointer' };
-const listingSection = { marginTop: 16, background: '#121b3f', border: '1px solid #26366d', borderRadius: 16, padding: 12 };
-const primaryBtn = { border: 0, borderRadius: 10, background: '#2e7dff', color: '#fff', padding: '10px 12px', cursor: 'pointer' };
-const ghostBtn = { border: '1px solid #304178', borderRadius: 10, background: '#0e1738', color: '#fff', padding: '10px 12px', cursor: 'pointer' };
-const input = { borderRadius: 10, border: '1px solid #304178', background: '#0b1431', color: '#fff', padding: '10px 12px', width: '100%' };
+const heroSection = { marginTop: 24, background: '#fff', border: '1px solid #eceff5', borderRadius: 20, padding: 18, boxShadow: '0 8px 24px rgba(17,24,39,0.06)' };
+const filterSection = { marginTop: 16, background: '#fff', border: '1px solid #eceff5', borderRadius: 20, padding: 12, boxShadow: '0 8px 24px rgba(17,24,39,0.06)' };
+const mobileFilterToggle = { width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #e5e7eb', borderRadius: 12, background: '#fff', color: '#111827', padding: '10px 12px', cursor: 'pointer', fontWeight: 600 };
+const listingSection = { marginTop: 16, background: '#fff', border: '1px solid #eceff5', borderRadius: 20, padding: 12, boxShadow: '0 8px 24px rgba(17,24,39,0.06)' };
+const primaryBtn = { border: 0, borderRadius: 999, background: 'linear-gradient(135deg, #f58529 0%, #dd2a7b 45%, #8134af 75%, #515bd4 100%)', color: '#fff', padding: '10px 14px', cursor: 'pointer', fontWeight: 600 };
+const ghostBtn = { border: '1px solid #e5e7eb', borderRadius: 999, background: '#fff', color: '#111827', padding: '10px 12px', cursor: 'pointer', fontWeight: 600 };
+const input = { borderRadius: 12, border: '1px solid #e5e7eb', background: '#fff', color: '#111827', padding: '10px 12px', width: '100%' };
 const sortWrap = { display: 'grid', gap: 4 };
-const dropWrap = { background: '#0f1738', border: '1px solid #26366d', borderRadius: 12, padding: 10 };
-const dropBtn = { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #304178', borderRadius: 10, background: '#0e1738', color: '#fff', padding: '10px 12px', cursor: 'pointer' };
-const rowLabel = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 };
-const toastStyle = { position: 'fixed', bottom: 92, right: 20, background: '#1f2d5c', border: '1px solid #3654a8', padding: '10px 14px', borderRadius: 10 };
-const listingCard = { border: '1px solid #304178', borderRadius: 10, background: '#0e1738', padding: 12, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'nowrap' };
+const dropWrap = { background: '#f9fafb', border: '1px solid #eceff5', borderRadius: 14, padding: 10 };
+const dropBtn = { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #e5e7eb', borderRadius: 12, background: '#fff', color: '#111827', padding: '10px 12px', cursor: 'pointer', fontWeight: 600 };
+const rowLabel = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: '#374151' };
+const toastStyle = { position: 'fixed', bottom: 92, right: 20, background: '#111827', color: '#fff', padding: '10px 14px', borderRadius: 12, boxShadow: '0 10px 24px rgba(17,24,39,0.25)' };
+const listingCard = { border: '1px solid #eceff5', borderRadius: 16, background: '#fff', padding: 12, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'nowrap' };
 const mediaScroller = { display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 };
 const mediaThumbWrap = { textDecoration: 'none' };
-const mediaThumb = { width: 44, height: 44, borderRadius: 8, objectFit: 'cover', border: '1px solid #3654a8', display: 'block' };
-const videoThumb = { display: 'grid', placeItems: 'center', background: '#1a2754', color: '#dbe7ff', fontSize: 14 };
-const miniBtn = { border: '1px solid #304178', borderRadius: 8, background: '#13204a', color: '#fff', padding: '6px 10px', textDecoration: 'none', fontSize: 12 };
+const mediaThumb = { width: 44, height: 44, borderRadius: 10, objectFit: 'cover', border: '1px solid #eceff5', display: 'block' };
+const videoThumb = { display: 'grid', placeItems: 'center', background: '#f3f4f6', color: '#374151', fontSize: 14 };
+const miniBtn = { border: '1px solid #eceff5', borderRadius: 999, background: '#fff', color: '#111827', padding: '6px 10px', textDecoration: 'none', fontSize: 12, fontWeight: 600 };
