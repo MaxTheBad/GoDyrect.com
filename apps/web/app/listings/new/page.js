@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 
 export default function NewListingPage() {
@@ -17,6 +17,16 @@ export default function NewListingPage() {
   });
   const [files, setFiles] = useState([]);
   const [msg, setMsg] = useState('');
+  const [isAuthed, setIsAuthed] = useState(false);
+
+  useEffect(() => {
+    async function checkAuth() {
+      if (!supabase) return;
+      const { data } = await supabase.auth.getUser();
+      setIsAuthed(!!data?.user);
+    }
+    checkAuth();
+  }, []);
 
   function update(key, value) {
     setForm((s) => ({ ...s, [key]: value }));
@@ -67,6 +77,19 @@ export default function NewListingPage() {
     }
 
     setMsg('Listing posted.');
+  }
+
+  if (!isAuthed) {
+    return (
+      <main style={wrap}>
+        <div style={card}>
+          <h1>Sell My Business</h1>
+          <p>You need an account to post a business listing.</p>
+          <a href='/signup' style={{ color: '#8fb7ff' }}>Create account</a>
+          <a href='/login' style={{ color: '#8fb7ff' }}>Log in</a>
+        </div>
+      </main>
+    );
   }
 
   return (

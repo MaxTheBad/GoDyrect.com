@@ -48,7 +48,8 @@ export default function AuthNav() {
     return (
       <nav style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <a href='/login' style={ghostBtn}>Log in</a>
-        <a href='/signup' style={primaryBtn}>Sign up</a>
+        <a href='/signup' style={ghostBtn}>Sign up</a>
+        <a href='/signup?intent=sell' style={primaryBtn}>Sell My Business</a>
       </nav>
     );
   }
@@ -57,9 +58,9 @@ export default function AuthNav() {
     <nav style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
       <a href='/dashboard' style={ghostBtn}>Dashboard</a>
       <a href='/profile' style={ghostBtn}>Profile</a>
-      <a href='/listings/new' style={ghostBtn}>Post Business</a>
+      <a href='/listings/new' style={primaryBtn}>Sell My Business</a>
       <a href='/messages' style={ghostBtn}>Messages</a>
-      <button style={primaryBtn} onClick={signOut}>Sign out</button>
+      <button style={ghostBtn} onClick={signOut}>Sign out</button>
     </nav>
   );
 }

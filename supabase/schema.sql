@@ -7,6 +7,8 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   handle text unique,
   full_name text,
+  phone text,
+  role text check (role in ('buyer','seller','not_sure')) default 'buyer',
   avatar_url text,
   bio text,
   created_at timestamptz default now() not null,
@@ -150,6 +152,13 @@ for insert with check (
   auth.uid() = sender_id and
   exists(select 1 from public.conversations c where c.id = conversation_id and auth.uid() in (c.buyer_id, c.seller_id))
 );
+
+-- Ensure profile fields exist for existing projects
+alter table public.profiles add column if not exists phone text;
+alter table public.profiles add column if not exists role text;
+alter table public.profiles alter column role set default 'buyer';
+alter table public.profiles drop constraint if exists profiles_role_check;
+alter table public.profiles add constraint profiles_role_check check (role in ('buyer','seller','not_sure'));
 
 -- Search support (name/category/keywords only, not description)
 alter table public.listings
