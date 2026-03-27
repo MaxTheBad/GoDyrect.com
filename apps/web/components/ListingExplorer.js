@@ -16,6 +16,7 @@ export default function ListingExplorer() {
   const [listings, setListings] = useState([]);
   const [mediaCounts, setMediaCounts] = useState({});
   const [loadingListings, setLoadingListings] = useState(true);
+  const [viewerId, setViewerId] = useState('');
 
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [selectedAges, setSelectedAges] = useState([]);
@@ -41,6 +42,9 @@ export default function ListingExplorer() {
   useEffect(() => {
     async function loadListings() {
       if (!supabase) return setLoadingListings(false);
+      const { data: auth } = await supabase.auth.getUser();
+      setViewerId(auth?.user?.id || '');
+
       const { data } = await supabase
         .from('listings')
         .select('id,seller_id,title,description,category,business_age_years,asking_price,city,state,country,county,lat,lng,created_at')
@@ -235,19 +239,24 @@ export default function ListingExplorer() {
         <div style={{ display: 'grid', gap: 10 }}>
           {filteredListings.map((l) => {
             const counts = mediaCounts[l.id] || { photos: 0, videos: 0 };
+            const isOwner = viewerId && viewerId === l.seller_id;
             return (
-              <a key={l.id} href={`/listing?id=${l.id}`} style={listingCardLink}>
-                <div style={listingCard}>
-                  <div>
-                    <strong>{l.title}</strong>
-                    <div style={{ opacity: 0.8, fontSize: 13 }}>
-                      {prettyCategory(l.category)} · {l.business_age_years ?? 0} years · {[l.city, l.state, l.country].filter(Boolean).join(', ') || 'Location not set'}
-                    </div>
-                    <div style={{ opacity: 0.75, fontSize: 12 }}>{counts.photos} photos · {counts.videos} videos</div>
+              <div key={l.id} style={listingCard}>
+                <div>
+                  <strong>{l.title}</strong>
+                  <div style={{ opacity: 0.8, fontSize: 13 }}>
+                    {prettyCategory(l.category)} · {l.business_age_years ?? 0} years · {[l.city, l.state, l.country].filter(Boolean).join(', ') || 'Location not set'}
                   </div>
-                  <strong>${Number(l.asking_price || 0).toLocaleString()}</strong>
+                  <div style={{ opacity: 0.75, fontSize: 12 }}>{counts.photos} photos · {counts.videos} videos</div>
                 </div>
-              </a>
+                <div style={{ display: 'grid', gap: 6, justifyItems: 'end' }}>
+                  <strong>${Number(l.asking_price || 0).toLocaleString()}</strong>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    <a href={`/listing?id=${l.id}`} style={miniBtn}>View</a>
+                    {isOwner ? <a href={`/listings/edit?id=${l.id}`} style={miniBtn}>Edit</a> : <a href={`/messages?seller=${l.seller_id}&listing=${l.id}`} style={miniBtn}>Message</a>}
+                  </div>
+                </div>
+              </div>
             );
           })}
         </div>
@@ -298,5 +307,5 @@ const dropWrap = { background: '#0f1738', border: '1px solid #26366d', borderRad
 const dropBtn = { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #304178', borderRadius: 10, background: '#0e1738', color: '#fff', padding: '10px 12px', cursor: 'pointer' };
 const rowLabel = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 };
 const toastStyle = { position: 'fixed', bottom: 92, right: 20, background: '#1f2d5c', border: '1px solid #3654a8', padding: '10px 14px', borderRadius: 10 };
-const listingCardLink = { textDecoration: 'none', color: 'inherit' };
 const listingCard = { border: '1px solid #304178', borderRadius: 10, background: '#0e1738', padding: 12, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' };
+const miniBtn = { border: '1px solid #304178', borderRadius: 8, background: '#13204a', color: '#fff', padding: '6px 10px', textDecoration: 'none', fontSize: 12 };

@@ -30,6 +30,7 @@ create table if not exists public.listings (
   title text not null,
   description text,
   category public.listing_category not null,
+  lister_role text,
   business_age_years int,
   asking_price numeric(14,2) not null,
   annual_revenue numeric(14,2),
@@ -198,6 +199,8 @@ alter table public.profiles drop constraint if exists profiles_role_check;
 alter table public.profiles add constraint profiles_role_check check (role in ('buyer','seller','not_sure'));
 
 -- Search support (name/category/keywords only, not description)
+alter table public.listings
+  add column if not exists lister_role text;
 alter table public.listings
   add column if not exists keywords text[] default '{}';
 

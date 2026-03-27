@@ -19,7 +19,7 @@ export default function EditListingPage() {
       if (!supabase || !id) return;
       const { data, error } = await supabase
         .from('listings')
-        .select('id,title,description,category,business_age_years,asking_price,annual_revenue,annual_profit,city,state,country,county,is_active,is_sold,keywords')
+        .select('id,title,description,category,lister_role,business_age_years,asking_price,annual_revenue,annual_profit,city,state,country,county,is_active,is_sold,keywords')
         .eq('id', id)
         .single();
       if (error) return setMsg(error.message);
@@ -40,6 +40,7 @@ export default function EditListingPage() {
       title: form.title,
       description: form.description,
       category: form.category,
+      lister_role: form.lister_role,
       business_age_years: Number(form.business_age_years || 0),
       asking_price: Number(form.asking_price || 0),
       annual_revenue: form.annual_revenue ? Number(form.annual_revenue) : null,
@@ -76,6 +77,15 @@ export default function EditListingPage() {
           <option value='asset_sale'>Asset Sales</option>
           <option value='real_estate'>Real Estate</option>
           <option value='startup'>Start-up Businesses</option>
+        </select>
+        <select style={input} value={form.lister_role || 'Owner'} onChange={(e) => update('lister_role', e.target.value)}>
+          <option>Owner</option>
+          <option>CEO</option>
+          <option>Founder</option>
+          <option>Managing Partner</option>
+          <option>Broker</option>
+          <option>Manager</option>
+          <option>Authorized Representative</option>
         </select>
         <input style={input} value={form.business_age_years ?? 0} onChange={(e) => update('business_age_years', e.target.value)} placeholder='Business age' />
         <input style={input} value={form.asking_price ?? ''} onChange={(e) => update('asking_price', e.target.value)} placeholder='Asking price' />
