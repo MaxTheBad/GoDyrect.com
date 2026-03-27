@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 const sortOptions = ['Newest', 'Oldest', 'Price: Low to High', 'Price: High to Low'];
 const businessTypes = ['Established Businesses', 'Asset Sales', 'Real Estate', 'Start-up Businesses'];
@@ -11,6 +12,8 @@ export default function ListingExplorer() {
   const [toast, setToast] = useState('');
   const [openFilter, setOpenFilter] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [listings, setListings] = useState([]);
+  const [loadingListings, setLoadingListings] = useState(true);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 900);
@@ -20,6 +23,22 @@ export default function ListingExplorer() {
   }, []);
 
   const nextViewLabel = useMemo(() => (view === 'list' ? 'Map View (Coming Soon)' : 'List View'), [view]);
+
+  useEffect(() => {
+    async function loadListings() {
+      if (!supabase) return setLoadingListings(false);
+      const { data } = await supabase
+        .from('listings')
+        .select('id,title,category,business_age_years,asking_price,city,state')
+        .eq('is_active', true)
+        .eq('is_sold', false)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      setListings(data || []);
+      setLoadingListings(false);
+    }
+    loadListings();
+  }, []);
 
   function handleMapSoon() {
     setToast('Map view is coming soon');
@@ -74,6 +93,30 @@ export default function ListingExplorer() {
         </div>
       </section>
 
+
+
+      <section style={{ marginTop: 16, background: '#121b3f', border: '1px solid #26366d', borderRadius: 16, padding: 12 }}>
+        <h3 style={{ marginTop: 4 }}>Business Listings</h3>
+        {loadingListings ? <p style={{ opacity: 0.8 }}>Loading listings...</p> : null}
+        {!loadingListings && listings.length === 0 ? <p style={{ opacity: 0.8 }}>No active listings yet.</p> : null}
+        <div style={{ display: 'grid', gap: 10 }}>
+          {listings.map((l) => (
+            <div key={l.id} style={listingCard}>
+              <div>
+                <strong>{l.title}</strong>
+                <div style={{ opacity: 0.8, fontSize: 13 }}>
+                  {l.category} · {l.business_age_years ?? 0} years · {[l.city, l.state].filter(Boolean).join(', ') || 'Location not set'}
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <strong>${Number(l.asking_price || 0).toLocaleString()}</strong>
+                <a href={`/messages`} style={ghostBtn}>Message</a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {toast ? <div style={toastStyle}>{toast}</div> : null}
     </>
   );
@@ -99,3 +142,4 @@ const dropWrap = { background: '#0f1738', border: '1px solid #26366d', borderRad
 const dropBtn = { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #304178', borderRadius: 10, background: '#0e1738', color: '#fff', padding: '10px 12px', cursor: 'pointer' };
 const rowLabel = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 };
 const toastStyle = { position: 'fixed', bottom: 92, right: 20, background: '#1f2d5c', border: '1px solid #3654a8', padding: '10px 14px', borderRadius: 10 };
+const listingCard = { border: '1px solid #304178', borderRadius: 10, background: '#0e1738', padding: 12, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' };
