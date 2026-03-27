@@ -168,7 +168,7 @@ values ('profile-photos', 'profile-photos', true)
 on conflict (id) do nothing;
 
 -- Storage policies
-alter table storage.objects enable row level security;
+-- Note: do not run ALTER TABLE on storage.objects; managed by Supabase
 
 drop policy if exists "listing media public read" on storage.objects;
 create policy "listing media public read"
