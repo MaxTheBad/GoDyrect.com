@@ -15,6 +15,7 @@ export default function ListingExplorer() {
   const [isMobile, setIsMobile] = useState(false);
   const [listings, setListings] = useState([]);
   const [mediaCounts, setMediaCounts] = useState({});
+  const [mediaPreview, setMediaPreview] = useState({});
   const [loadingListings, setLoadingListings] = useState(true);
   const [viewerId, setViewerId] = useState('');
 
@@ -61,16 +62,23 @@ export default function ListingExplorer() {
         const ids = rows.map((r) => r.id);
         const { data: media } = await supabase
           .from('listing_media')
-          .select('listing_id,media_type')
+          .select('listing_id,media_type,url,thumbnail_url,sort_order')
           .in('listing_id', ids);
 
         const counts = {};
+        const preview = {};
         (media || []).forEach((m) => {
           if (!counts[m.listing_id]) counts[m.listing_id] = { photos: 0, videos: 0 };
+          if (!preview[m.listing_id]) preview[m.listing_id] = [];
+          preview[m.listing_id].push(m);
           if (m.media_type === 'video') counts[m.listing_id].videos += 1;
           else counts[m.listing_id].photos += 1;
         });
+        Object.keys(preview).forEach((id) => {
+          preview[id].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+        });
         setMediaCounts(counts);
+        setMediaPreview(preview);
       }
 
       setLoadingListings(false);
@@ -274,15 +282,30 @@ export default function ListingExplorer() {
         <div style={{ display: 'grid', gap: 10 }}>
           {filteredListings.map((l) => {
             const counts = mediaCounts[l.id] || { photos: 0, videos: 0 };
+            const media = mediaPreview[l.id] || [];
             const isOwner = viewerId && viewerId === l.seller_id;
             return (
               <div key={l.id} style={listingCard}>
-                <div>
+                <div style={{ display: 'grid', gap: 8, flex: 1, minWidth: 0 }}>
                   <strong>{l.title}</strong>
                   <div style={{ opacity: 0.8, fontSize: 13 }}>
                     {prettyCategory(l.category)} · {l.business_age_years ?? 0} years · {[l.city, l.state, l.country].filter(Boolean).join(', ') || 'Location not set'}
                   </div>
                   <div style={{ opacity: 0.75, fontSize: 12 }}>{counts.photos} photos · {counts.videos} videos</div>
+
+                  {media.length ? (
+                    <div style={mediaScroller}>
+                      {media.slice(0, 10).map((m, i) => (
+                        <a key={m.url + i} href={`/listing?id=${l.id}`} style={mediaThumbWrap} title='Open full listing'>
+                          {m.media_type === 'video' ? (
+                            <div style={{ ...mediaThumb, ...videoThumb }}>▶</div>
+                          ) : (
+                            <img src={m.thumbnail_url || m.url} alt='preview' style={mediaThumb} />
+                          )}
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
                 <div style={{ display: 'grid', gap: 6, justifyItems: 'end' }}>
                   <strong>${Number(l.asking_price || 0).toLocaleString()}</strong>
@@ -343,5 +366,9 @@ const dropWrap = { background: '#0f1738', border: '1px solid #26366d', borderRad
 const dropBtn = { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #304178', borderRadius: 10, background: '#0e1738', color: '#fff', padding: '10px 12px', cursor: 'pointer' };
 const rowLabel = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 };
 const toastStyle = { position: 'fixed', bottom: 92, right: 20, background: '#1f2d5c', border: '1px solid #3654a8', padding: '10px 14px', borderRadius: 10 };
-const listingCard = { border: '1px solid #304178', borderRadius: 10, background: '#0e1738', padding: 12, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap' };
+const listingCard = { border: '1px solid #304178', borderRadius: 10, background: '#0e1738', padding: 12, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'nowrap' };
+const mediaScroller = { display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 };
+const mediaThumbWrap = { textDecoration: 'none' };
+const mediaThumb = { width: 44, height: 44, borderRadius: 8, objectFit: 'cover', border: '1px solid #3654a8', display: 'block' };
+const videoThumb = { display: 'grid', placeItems: 'center', background: '#1a2754', color: '#dbe7ff', fontSize: 14 };
 const miniBtn = { border: '1px solid #304178', borderRadius: 8, background: '#13204a', color: '#fff', padding: '6px 10px', textDecoration: 'none', fontSize: 12 };
