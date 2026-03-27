@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 
 export default function MessagesPage() {
@@ -8,6 +8,17 @@ export default function MessagesPage() {
   const [listingId, setListingId] = useState('');
   const [body, setBody] = useState('');
   const [msg, setMsg] = useState('');
+  const [sellerRole, setSellerRole] = useState('');
+
+
+  useEffect(() => {
+    async function loadRole() {
+      if (!supabase || !sellerId) return setSellerRole('');
+      const { data } = await supabase.from('profiles').select('role').eq('id', sellerId).maybeSingle();
+      setSellerRole(data?.role || '');
+    }
+    loadRole();
+  }, [sellerId]);
 
   async function sendMessage(e) {
     e.preventDefault();
@@ -51,6 +62,7 @@ export default function MessagesPage() {
         <h1>Messages</h1>
         <p style={{ marginTop: 0, opacity: 0.8 }}>Enter seller/listing id to test messaging until UI list is connected.</p>
         <input style={input} placeholder='Seller user id (uuid)' value={sellerId} onChange={(e) => setSellerId(e.target.value)} required />
+        {sellerRole ? <div style={badge(sellerRole)}>Recipient: {sellerRole === 'not_sure' ? 'Not sure yet' : sellerRole}</div> : null}
         <input style={input} placeholder='Listing id (uuid, optional)' value={listingId} onChange={(e) => setListingId(e.target.value)} />
         <textarea style={input} rows={4} placeholder='Type message' value={body} onChange={(e) => setBody(e.target.value)} required />
         <button style={btn} type='submit'>Send Message</button>
@@ -65,3 +77,4 @@ const wrap = { minHeight: '100vh', padding: 24, background: '#0b1020', color: '#
 const card = { maxWidth: 680, display: 'grid', gap: 10, background: '#121b3f', padding: 20, borderRadius: 12 };
 const input = { borderRadius: 8, border: '1px solid #304178', background: '#0b1431', color: '#fff', padding: '10px 12px' };
 const btn = { border: 0, borderRadius: 8, background: '#2e7dff', color: '#fff', padding: '10px 12px' };
+const badge = (role) => ({ display: 'inline-block', width: 'fit-content', padding: '6px 10px', borderRadius: 999, background: role === 'seller' ? '#124d2f' : role === 'buyer' ? '#1e3a8a' : '#5b4b16', border: '1px solid #3a4f8f', fontSize: 12, textTransform: 'capitalize' });
