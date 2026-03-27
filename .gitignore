@@ -1,0 +1,10 @@
+node_modules
+.next
+dist
+build
+.expo
+.env
+.env.local
+.env.*.local
+apps/mobile/.env
+.DS_Store
