@@ -94,6 +94,24 @@ create table if not exists public.favorites (
   primary key (user_id, listing_id)
 );
 
+create table if not exists public.user_follows (
+  follower_user_id uuid not null references public.profiles(id) on delete cascade,
+  followed_user_id uuid not null references public.profiles(id) on delete cascade,
+  created_at timestamptz default now() not null,
+  primary key (follower_user_id, followed_user_id),
+  check (follower_user_id <> followed_user_id)
+);
+
+create table if not exists public.business_follows (
+  follower_user_id uuid not null references public.profiles(id) on delete cascade,
+  business_id uuid not null references public.businesses(id) on delete cascade,
+  created_at timestamptz default now() not null,
+  primary key (follower_user_id, business_id)
+);
+
+create index if not exists idx_user_follows_followed on public.user_follows(followed_user_id);
+create index if not exists idx_business_follows_business on public.business_follows(business_id);
+
 create table if not exists public.conversations (
   id uuid primary key default uuid_generate_v4(),
   buyer_id uuid not null references public.profiles(id) on delete cascade,
@@ -175,6 +193,8 @@ alter table public.business_memberships enable row level security;
 alter table public.listings enable row level security;
 alter table public.listing_media enable row level security;
 alter table public.favorites enable row level security;
+alter table public.user_follows enable row level security;
+alter table public.business_follows enable row level security;
 alter table public.conversations enable row level security;
 alter table public.messages enable row level security;
 
@@ -257,6 +277,21 @@ create policy "users read own favorites" on public.favorites
 for select using (auth.uid() = user_id);
 create policy "users manage own favorites" on public.favorites
 for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- Policies: follows
+drop policy if exists "users read own follows" on public.user_follows;
+create policy "users read own follows" on public.user_follows
+for select using (auth.uid() = follower_user_id);
+drop policy if exists "users manage own follows" on public.user_follows;
+create policy "users manage own follows" on public.user_follows
+for all using (auth.uid() = follower_user_id) with check (auth.uid() = follower_user_id);
+
+drop policy if exists "users read own business follows" on public.business_follows;
+create policy "users read own business follows" on public.business_follows
+for select using (auth.uid() = follower_user_id);
+drop policy if exists "users manage own business follows" on public.business_follows;
+create policy "users manage own business follows" on public.business_follows
+for all using (auth.uid() = follower_user_id) with check (auth.uid() = follower_user_id);
 
 -- Policies: conversations/messages
 create policy "participants can read conversations" on public.conversations

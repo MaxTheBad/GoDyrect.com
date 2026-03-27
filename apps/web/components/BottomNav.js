@@ -20,6 +20,10 @@ export default function BottomNav() {
         <HomeIcon />
         <span style={label}>Home</span>
       </a>
+      <a href='/feed' style={item} aria-label='Feed'>
+        <FeedIcon />
+        <span style={label}>Feed</span>
+      </a>
       <a href='/favorites' style={item} aria-label='Favorites'>
         <HeartIcon />
         <span style={label}>Favorites</span>
@@ -52,6 +56,9 @@ function PlusIcon() {
 function MessageIcon() {
   return <IconWrap><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><path d='M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z' /></svg></IconWrap>;
 }
+function FeedIcon() {
+  return <IconWrap><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><path d='M4 19h16' /><path d='M4 12h16' /><path d='M4 5h16' /></svg></IconWrap>;
+}
 function HeartIcon() {
   return <IconWrap><svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><path d='M12 21s-6.5-4.35-9-8.25C1.2 9.9 2.2 6.5 5.25 5.35c2.14-.8 4.2-.05 5.5 1.55 1.3-1.6 3.36-2.35 5.5-1.55C19.3 6.5 20.3 9.9 18.5 12.75 16 16.65 12 21 12 21z' /></svg></IconWrap>;
 }
@@ -68,7 +75,7 @@ const wrap = {
   border: '1px solid #eceff5',
   borderRadius: 18,
   display: 'grid',
-  gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+  gridTemplateColumns: 'repeat(6, minmax(0, 1fr))',
   gap: 8,
   padding: 8,
   zIndex: 1000,
