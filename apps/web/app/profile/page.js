@@ -53,17 +53,30 @@ export default function ProfilePage() {
       if (emailErr) return setMsg(emailErr.message);
     }
 
+    const cleanHandle = handle.trim() ? handle.trim().toLowerCase() : null;
+
     const { error } = await supabase.from('profiles').upsert({
       id: user.id,
       full_name: fullName,
-      handle,
+      handle: cleanHandle,
       phone,
       role,
       avatar_url: nextAvatarUrl,
     });
 
-    if (!error) setAvatarUrl(nextAvatarUrl || '');
-    setMsg(error ? error.message : 'Profile saved.');
+    if (!error) {
+      setAvatarUrl(nextAvatarUrl || '');
+      setHandle(cleanHandle || '');
+      setMsg('Profile saved.');
+      return;
+    }
+
+    if (error.message?.includes('profiles_handle_key')) {
+      setMsg('That handle is already taken. Try a different one.');
+      return;
+    }
+
+    setMsg(error.message);
   }
 
   return (
@@ -79,6 +92,7 @@ export default function ProfilePage() {
         <select style={input} value={role} onChange={(e) => setRole(e.target.value)}>
           <option value='buyer'>Buyer</option>
           <option value='seller'>Seller</option>
+          <option value='broker'>Broker</option>
           <option value='not_sure'>Not sure yet</option>
         </select>
         <input style={input} type='file' accept='image/*' onChange={(e) => setAvatarFile(e.target.files?.[0] || null)} />

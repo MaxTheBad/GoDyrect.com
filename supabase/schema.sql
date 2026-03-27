@@ -21,6 +21,17 @@ create table if not exists public.businesses (
   id uuid primary key default uuid_generate_v4(),
   name text not null,
   slug text unique,
+  description text,
+  category text check (category in ('established','asset_sale','real_estate','startup')),
+  start_date date,
+  annual_revenue numeric(14,2),
+  annual_profit numeric(14,2),
+  default_asking_price numeric(14,2),
+  city text,
+  state text,
+  country text,
+  county text,
+  keywords text[] default '{}',
   status text not null default 'approved' check (status in ('pending','approved','rejected')),
   created_by uuid not null references public.profiles(id) on delete cascade,
   created_at timestamptz default now() not null,
@@ -319,6 +330,20 @@ alter table public.profiles drop constraint if exists profiles_role_check;
 alter table public.profiles add constraint profiles_role_check check (role in ('buyer','seller','broker','not_sure'));
 
 -- Search support (name/category/keywords only, not description)
+alter table public.businesses add column if not exists description text;
+alter table public.businesses add column if not exists category text;
+alter table public.businesses add column if not exists start_date date;
+alter table public.businesses add column if not exists annual_revenue numeric(14,2);
+alter table public.businesses add column if not exists annual_profit numeric(14,2);
+alter table public.businesses add column if not exists default_asking_price numeric(14,2);
+alter table public.businesses add column if not exists city text;
+alter table public.businesses add column if not exists state text;
+alter table public.businesses add column if not exists country text;
+alter table public.businesses add column if not exists county text;
+alter table public.businesses add column if not exists keywords text[] default '{}';
+alter table public.businesses drop constraint if exists businesses_category_check;
+alter table public.businesses add constraint businesses_category_check check (category in ('established','asset_sale','real_estate','startup') or category is null);
+
 alter table public.listings
   add column if not exists business_id uuid references public.businesses(id) on delete set null;
 alter table public.listings

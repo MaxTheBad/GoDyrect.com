@@ -3,11 +3,37 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 
+function yearsSince(startDate) {
+  if (!startDate) return null;
+  const start = new Date(startDate);
+  if (Number.isNaN(start.getTime())) return null;
+  const now = new Date();
+  let years = now.getFullYear() - start.getFullYear();
+  const m = now.getMonth() - start.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < start.getDate())) years -= 1;
+  return Math.max(0, years);
+}
+
+const emptyDetails = {
+  description: '',
+  category: 'established',
+  start_date: '',
+  annual_revenue: '',
+  annual_profit: '',
+  default_asking_price: '',
+  city: '',
+  state: '',
+  country: 'United States',
+  county: '',
+  keywords: '',
+};
+
 export default function MyBusinessesPage() {
   const [userId, setUserId] = useState('');
   const [rows, setRows] = useState([]);
   const [membersByBusiness, setMembersByBusiness] = useState({});
   const [profileOptions, setProfileOptions] = useState([]);
+  const [detailsByBusiness, setDetailsByBusiness] = useState({});
   const [newBusinessName, setNewBusinessName] = useState('');
   const [newBusinessRole, setNewBusinessRole] = useState('Owner');
   const [inviteByBusiness, setInviteByBusiness] = useState({});
@@ -17,23 +43,24 @@ export default function MyBusinessesPage() {
     if (!supabase) return;
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth?.user?.id;
-    if (!uid) {
-      setMsg('Please sign in to manage businesses.');
-      return;
-    }
+    if (!uid) return setMsg('Please sign in to manage businesses.');
     setUserId(uid);
 
     const [{ data: memberships, error: membershipsErr }, { data: profiles }] = await Promise.all([
       supabase
         .from('business_memberships')
-        .select('id,business_id,user_id,role,is_admin,status,businesses(id,name,status,created_by)')
+        .select('id,business_id,user_id,role,is_admin,status,businesses(id,name,status,created_by,description,category,start_date,annual_revenue,annual_profit,default_asking_price,city,state,country,county,keywords)')
         .eq('user_id', uid)
         .eq('status', 'approved'),
       supabase.from('profiles').select('id,full_name,handle').limit(500),
     ]);
 
     if (membershipsErr) {
-      setMsg(membershipsErr.message);
+      if (membershipsErr.message?.includes("public.business_memberships")) {
+        setMsg('Business tables are not created yet in Supabase. Run latest supabase/schema.sql in SQL editor, then refresh.');
+      } else {
+        setMsg(membershipsErr.message);
+      }
       return;
     }
 
@@ -47,6 +74,25 @@ export default function MyBusinessesPage() {
 
     setRows(businessRows);
     setProfileOptions(profiles || []);
+
+    const details = {};
+    businessRows.forEach((row) => {
+      const b = row.business || {};
+      details[row.business_id] = {
+        description: b.description || '',
+        category: b.category || 'established',
+        start_date: b.start_date || '',
+        annual_revenue: b.annual_revenue ?? '',
+        annual_profit: b.annual_profit ?? '',
+        default_asking_price: b.default_asking_price ?? '',
+        city: b.city || '',
+        state: b.state || '',
+        country: b.country || 'United States',
+        county: b.county || '',
+        keywords: Array.isArray(b.keywords) ? b.keywords.join(', ') : '',
+      };
+    });
+    setDetailsByBusiness(details);
 
     const ids = businessRows.map((r) => r.business_id);
     if (ids.length) {
@@ -72,8 +118,7 @@ export default function MyBusinessesPage() {
   async function createBusiness(e) {
     e.preventDefault();
     setMsg('');
-    if (!supabase || !userId) return;
-    if (!newBusinessName.trim()) return setMsg('Business name is required.');
+    if (!supabase || !userId || !newBusinessName.trim()) return;
 
     const { data: created, error: createErr } = await supabase
       .from('businesses')
@@ -94,13 +139,31 @@ export default function MyBusinessesPage() {
     if (membershipErr) return setMsg(membershipErr.message);
 
     setNewBusinessName('');
-    setNewBusinessRole('Owner');
-    setMsg('Business created and approved.');
+    setMsg('Business created. Fill out details below once, then post without retyping.');
     loadAll();
   }
 
+  async function saveDetails(businessId) {
+    const details = detailsByBusiness[businessId] || emptyDetails;
+    const payload = {
+      description: details.description || null,
+      category: details.category || null,
+      start_date: details.start_date || null,
+      annual_revenue: details.annual_revenue ? Number(details.annual_revenue) : null,
+      annual_profit: details.annual_profit ? Number(details.annual_profit) : null,
+      default_asking_price: details.default_asking_price ? Number(details.default_asking_price) : null,
+      city: details.city || null,
+      state: details.state || null,
+      country: details.country || null,
+      county: details.county || null,
+      keywords: (details.keywords || '').split(',').map((k) => k.trim()).filter(Boolean),
+    };
+
+    const { error } = await supabase.from('businesses').update(payload).eq('id', businessId);
+    setMsg(error ? error.message : 'Business details saved.');
+  }
+
   async function inviteMember(businessId) {
-    setMsg('');
     const invite = inviteByBusiness[businessId] || {};
     if (!supabase || !businessId || !invite.user_id) return;
 
@@ -113,14 +176,12 @@ export default function MyBusinessesPage() {
     }, { onConflict: 'business_id,user_id' });
 
     if (error) return setMsg(error.message);
-
     setInviteByBusiness((prev) => ({ ...prev, [businessId]: { user_id: '', role: 'Authorized Representative', is_admin: false } }));
     setMsg('Member added.');
     loadAll();
   }
 
   async function setAdmin(memberId, makeAdmin) {
-    if (!supabase) return;
     const { error } = await supabase.from('business_memberships').update({ is_admin: makeAdmin }).eq('id', memberId);
     if (error) return setMsg(error.message);
     loadAll();
@@ -149,6 +210,8 @@ export default function MyBusinessesPage() {
             const members = membersByBusiness[row.business_id] || [];
             const canManage = row.is_admin;
             const invite = inviteByBusiness[row.business_id] || { user_id: '', role: 'Authorized Representative', is_admin: false };
+            const details = detailsByBusiness[row.business_id] || emptyDetails;
+            const age = yearsSince(details.start_date);
 
             return (
               <section key={row.business_id} style={bizCard}>
@@ -156,8 +219,29 @@ export default function MyBusinessesPage() {
                   <div>
                     <strong>{row.business?.name || 'Business'}</strong>
                     <div style={{ opacity: 0.8, fontSize: 13 }}>Your role: {row.role}{row.is_admin ? ' · Admin' : ''}</div>
+                    <div style={{ opacity: 0.72, fontSize: 12 }}>{age !== null ? `Calculated age: ${age} year${age === 1 ? '' : 's'}` : 'Set start date to auto-calculate age'}</div>
                   </div>
                   <a href={`/listings/new?business=${row.business_id}`} style={btn}>Post as this business</a>
+                </div>
+
+                <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+                  <textarea style={{ ...input, gridColumn: '1 / -1' }} rows={3} placeholder='Business description' value={details.description} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, description: e.target.value } }))} />
+                  <select style={input} value={details.category} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, category: e.target.value } }))}>
+                    <option value='established'>Established Businesses</option>
+                    <option value='asset_sale'>Asset Sales</option>
+                    <option value='real_estate'>Real Estate</option>
+                    <option value='startup'>Start-up Businesses</option>
+                  </select>
+                  <input style={input} type='date' value={details.start_date} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, start_date: e.target.value } }))} />
+                  <input style={input} placeholder='Annual revenue' value={details.annual_revenue} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, annual_revenue: e.target.value } }))} />
+                  <input style={input} placeholder='Annual profit' value={details.annual_profit} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, annual_profit: e.target.value } }))} />
+                  <input style={input} placeholder='Default asking price' value={details.default_asking_price} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, default_asking_price: e.target.value } }))} />
+                  <input style={input} placeholder='City' value={details.city} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, city: e.target.value } }))} />
+                  <input style={input} placeholder='State' value={details.state} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, state: e.target.value } }))} />
+                  <input style={input} placeholder='Country' value={details.country} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, country: e.target.value } }))} />
+                  <input style={input} placeholder='County' value={details.county} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, county: e.target.value } }))} />
+                  <input style={{ ...input, gridColumn: '1 / -1' }} placeholder='Keywords (comma separated)' value={details.keywords} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, keywords: e.target.value } }))} />
+                  <button style={btnPrimary} type='button' onClick={() => saveDetails(row.business_id)}>Save Business Details</button>
                 </div>
 
                 <div style={{ marginTop: 8 }}>
@@ -176,7 +260,6 @@ export default function MyBusinessesPage() {
                         ) : null}
                       </div>
                     ))}
-                    {members.length === 0 ? <small style={{ opacity: 0.7 }}>No members yet.</small> : null}
                   </div>
                 </div>
 
