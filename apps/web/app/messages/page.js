@@ -79,10 +79,11 @@ export default function MessagesPage() {
       if (!activeId && list.length) setActiveId((prev) => prev || list[0].id);
 
       const counterpartIds = [...new Set(list.map((c) => (c.buyer_id === me.id ? c.seller_id : c.buyer_id)).filter(Boolean))];
+      const profileIds = [...new Set([me.id, ...counterpartIds])];
       const listingIds = [...new Set(list.map((c) => c.listing_id).filter(Boolean))];
 
-      if (counterpartIds.length) {
-        const { data: prof } = await supabase.from('profiles').select('id,full_name,role,avatar_url').in('id', counterpartIds);
+      if (profileIds.length) {
+        const { data: prof } = await supabase.from('profiles').select('id,full_name,role,avatar_url').in('id', profileIds);
         const map = {};
         (prof || []).forEach((p) => (map[p.id] = p));
         setProfiles(map);
@@ -170,13 +171,28 @@ export default function MessagesPage() {
                 With {profiles[counterpartId]?.full_name || 'User'}
                 {profiles[counterpartId]?.role ? ` · ${profiles[counterpartId].role === 'not_sure' ? 'Not sure yet' : profiles[counterpartId].role}` : ''}
               </p>
+              {activeConversation.listing_id ? (
+                <a href={`/listing?id=${activeConversation.listing_id}`} style={{ color: '#8fb7ff', fontSize: 13 }}>
+                  Listing: {listings[activeConversation.listing_id]?.title || 'View listing'}
+                </a>
+              ) : null}
 
               <div style={messagesWrap}>
                 {messages.map((m) => {
                   const mine = m.sender_id === user.id;
+                  const sender = profiles[m.sender_id];
                   return (
                     <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
-                      <div style={{ ...bubble, background: mine ? '#2e7dff' : '#1a2754' }}>{m.body}</div>
+                      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, flexDirection: mine ? 'row-reverse' : 'row' }}>
+                        <a href={`/profile/view?id=${m.sender_id}`} title='View profile' style={{ textDecoration: 'none' }}>
+                          {sender?.avatar_url ? (
+                            <img src={sender.avatar_url} alt='avatar' style={avatar} />
+                          ) : (
+                            <div style={avatarFallback}>{initial(sender?.full_name)}</div>
+                          )}
+                        </a>
+                        <div style={{ ...bubble, background: mine ? '#2e7dff' : '#1a2754' }}>{m.body}</div>
+                      </div>
                     </div>
                   );
                 })}
@@ -198,6 +214,11 @@ export default function MessagesPage() {
   );
 }
 
+function initial(name) {
+  if (!name) return '?';
+  return name.trim().charAt(0).toUpperCase();
+}
+
 const wrap = { minHeight: '100vh', padding: 24, background: '#0b1020', color: '#fff' };
 const card = { maxWidth: 520, display: 'grid', gap: 10, background: '#121b3f', padding: 20, borderRadius: 12, border: '1px solid #2a3c78' };
 const shell = { display: 'grid', gridTemplateColumns: '320px 1fr', gap: 12 };
@@ -206,6 +227,8 @@ const rightPane = { background: '#121b3f', border: '1px solid #2a3c78', borderRa
 const threadBtn = { width: '100%', textAlign: 'left', border: '1px solid #304178', borderRadius: 10, background: '#0e1738', color: '#fff', padding: 10, marginBottom: 8, display: 'grid', gap: 6, cursor: 'pointer' };
 const badge = (role) => ({ display: 'inline-block', width: 'fit-content', padding: '4px 8px', borderRadius: 999, background: role === 'seller' ? '#124d2f' : role === 'buyer' ? '#1e3a8a' : '#5b4b16', border: '1px solid #3a4f8f', fontSize: 11 });
 const messagesWrap = { border: '1px solid #304178', borderRadius: 10, background: '#0b1431', padding: 10, minHeight: 280, maxHeight: 480, overflow: 'auto', display: 'grid', gap: 8 };
-const bubble = { maxWidth: '75%', borderRadius: 12, padding: '8px 10px' };
+const bubble = { maxWidth: 340, borderRadius: 12, padding: '6px 9px', fontSize: 14, lineHeight: 1.3 };
+const avatar = { width: 28, height: 28, borderRadius: 999, objectFit: 'cover', border: '1px solid #3a4f8f' };
+const avatarFallback = { width: 28, height: 28, borderRadius: 999, display: 'grid', placeItems: 'center', background: '#243569', border: '1px solid #3a4f8f', fontSize: 12 };
 const input = { borderRadius: 8, border: '1px solid #304178', background: '#0b1431', color: '#fff', padding: '10px 12px' };
 const btn = { border: 0, borderRadius: 8, background: '#2e7dff', color: '#fff', padding: '10px 12px' };
