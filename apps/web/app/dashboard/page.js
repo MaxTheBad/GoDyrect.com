@@ -35,6 +35,7 @@ export default function DashboardPage() {
 
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 14 }}>
         <a href='/profile' style={btn}>Edit Profile</a>
+        <a href='/listings' style={btn}>My Listings</a>
         <a href='/listings/new' style={btnPrimary}>Sell My Business</a>
         <a href='/messages' style={btn}>Messages</a>
       </div>

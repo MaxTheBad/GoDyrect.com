@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
 
 const states = [
@@ -19,6 +20,7 @@ const countries = [
 const ages = Array.from({ length: 301 }, (_, i) => i);
 
 export default function NewListingPage() {
+  const router = useRouter();
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -102,7 +104,8 @@ export default function NewListingPage() {
       if (mediaInsert.error) return setMsg(mediaInsert.error.message);
     }
 
-    setMsg('Listing posted.');
+    setMsg('Listing posted. Redirecting...');
+    setTimeout(() => router.push('/listings'), 400);
   }
 
   if (!isAuthed) {
