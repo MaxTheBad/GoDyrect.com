@@ -101,6 +101,35 @@ create trigger trg_listings_updated_at
 before update on public.listings
 for each row execute procedure public.set_updated_at();
 
+-- Auto-create profile row for every auth user (prevents listings FK errors)
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, full_name, phone, role)
+  values (
+    new.id,
+    coalesce(new.raw_user_meta_data->>'full_name', null),
+    coalesce(new.raw_user_meta_data->>'phone', null),
+    coalesce(new.raw_user_meta_data->>'role', 'buyer')
+  )
+  on conflict (id) do update
+    set full_name = excluded.full_name,
+        phone = excluded.phone,
+        role = excluded.role;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function public.handle_new_user();
+
 -- RLS
 alter table public.profiles enable row level security;
 alter table public.listings enable row level security;

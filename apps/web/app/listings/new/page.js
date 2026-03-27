@@ -3,16 +3,33 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 
+const states = [
+  'Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia',
+  'Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts',
+  'Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico',
+  'New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina',
+  'South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming'
+];
+
+const countries = [
+  'United States','Canada','United Kingdom','Australia','Germany','France','Spain','Italy','Netherlands','Sweden',
+  'Norway','Denmark','Switzerland','India','Mexico','Brazil','United Arab Emirates','Singapore','Japan','South Africa'
+];
+
+const ages = Array.from({ length: 301 }, (_, i) => i);
+
 export default function NewListingPage() {
   const [form, setForm] = useState({
     title: '',
     description: '',
     category: 'established',
-    business_age_years: '',
+    business_age_years: '0',
     asking_price: '',
+    annual_revenue: '',
+    annual_profit: '',
     city: '',
-    state: '',
-    country: '',
+    state: 'Florida',
+    country: 'United States',
     keywords: '',
   });
   const [files, setFiles] = useState([]);
@@ -40,6 +57,13 @@ export default function NewListingPage() {
     const user = userData?.user;
     if (!user) return setMsg('Please log in first.');
 
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      full_name: user.user_metadata?.full_name || null,
+      phone: user.user_metadata?.phone || null,
+      role: user.user_metadata?.role || 'seller',
+    });
+
     const { data: listing, error } = await supabase
       .from('listings')
       .insert({
@@ -47,8 +71,10 @@ export default function NewListingPage() {
         title: form.title,
         description: form.description,
         category: form.category,
-        business_age_years: form.business_age_years ? Number(form.business_age_years) : null,
+        business_age_years: Number(form.business_age_years),
         asking_price: Number(form.asking_price || 0),
+        annual_revenue: form.annual_revenue ? Number(form.annual_revenue) : null,
+        annual_profit: form.annual_profit ? Number(form.annual_profit) : null,
         city: form.city,
         state: form.state,
         country: form.country,
@@ -104,11 +130,27 @@ export default function NewListingPage() {
           <option value='real_estate'>Real Estate</option>
           <option value='startup'>Start-up Businesses</option>
         </select>
-        <input style={input} placeholder='Business age (years)' value={form.business_age_years} onChange={(e) => update('business_age_years', e.target.value)} />
+
+        <label style={label}>Business age (years)</label>
+        <select style={input} value={form.business_age_years} onChange={(e) => update('business_age_years', e.target.value)}>
+          {ages.map((age) => <option key={age} value={age}>{age}</option>)}
+        </select>
+
         <input style={input} placeholder='Asking price' value={form.asking_price} onChange={(e) => update('asking_price', e.target.value)} required />
+        <input style={input} placeholder='Annual revenue (optional)' value={form.annual_revenue} onChange={(e) => update('annual_revenue', e.target.value)} />
+        <input style={input} placeholder='Annual profit (optional)' value={form.annual_profit} onChange={(e) => update('annual_profit', e.target.value)} />
         <input style={input} placeholder='City' value={form.city} onChange={(e) => update('city', e.target.value)} />
-        <input style={input} placeholder='State' value={form.state} onChange={(e) => update('state', e.target.value)} />
-        <input style={input} placeholder='Country' value={form.country} onChange={(e) => update('country', e.target.value)} />
+
+        <label style={label}>State</label>
+        <select style={input} value={form.state} onChange={(e) => update('state', e.target.value)}>
+          {states.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+
+        <label style={label}>Country</label>
+        <select style={input} value={form.country} onChange={(e) => update('country', e.target.value)}>
+          {countries.map((c) => <option key={c} value={c}>{c}</option>)}
+        </select>
+
         <input style={input} placeholder='Keywords (comma separated)' value={form.keywords} onChange={(e) => update('keywords', e.target.value)} />
         <input style={input} type='file' multiple accept='image/*,video/*' onChange={(e) => setFiles(Array.from(e.target.files || []))} />
         <button style={btn} type='submit'>Publish Listing</button>
@@ -121,5 +163,6 @@ export default function NewListingPage() {
 
 const wrap = { minHeight: '100vh', padding: 24, background: '#0b1020', color: '#fff' };
 const card = { maxWidth: 680, display: 'grid', gap: 10, background: '#121b3f', padding: 20, borderRadius: 12 };
+const label = { fontSize: 13, opacity: 0.85 };
 const input = { borderRadius: 8, border: '1px solid #304178', background: '#0b1431', color: '#fff', padding: '10px 12px' };
 const btn = { border: 0, borderRadius: 8, background: '#2e7dff', color: '#fff', padding: '10px 12px' };
