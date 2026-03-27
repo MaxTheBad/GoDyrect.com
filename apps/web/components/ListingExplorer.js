@@ -52,24 +52,26 @@ export default function ListingExplorer() {
         </div>
       </section>
 
-      <section style={{ marginTop: 16, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, minmax(0, 1fr))', gap: 10 }}>
-        <DropdownFilter title='Business type' isOpen={openFilter === 'type'} onToggle={() => toggleFilter('type')}>
-          {businessTypes.map((option) => <label key={option} style={rowLabel}><input type='checkbox' /> {option}</label>)}
-        </DropdownFilter>
+      <section style={{ marginTop: 16, background: '#121b3f', border: '1px solid #26366d', borderRadius: 16, padding: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, minmax(0, 1fr))', gap: 10 }}>
+          <DropdownFilter title='Business type' isOpen={openFilter === 'type'} onToggle={() => toggleFilter('type')}>
+            {businessTypes.map((option) => <label key={option} style={rowLabel}><input type='checkbox' /> {option}</label>)}
+          </DropdownFilter>
 
-        <DropdownFilter title='Business age' isOpen={openFilter === 'age'} onToggle={() => toggleFilter('age')}>
-          {ageOptions.map((option) => <label key={option} style={rowLabel}><input type='checkbox' /> {option}</label>)}
-        </DropdownFilter>
+          <DropdownFilter title='Business age' isOpen={openFilter === 'age'} onToggle={() => toggleFilter('age')}>
+            {ageOptions.map((option) => <label key={option} style={rowLabel}><input type='checkbox' /> {option}</label>)}
+          </DropdownFilter>
 
-        <DropdownFilter title='Price range' isOpen={openFilter === 'price'} onToggle={() => toggleFilter('price')}>
-          <input style={input} placeholder='Min price' />
-          <input style={{ ...input, marginTop: 8 }} placeholder='Max price' />
-        </DropdownFilter>
+          <DropdownFilter title='Price range' isOpen={openFilter === 'price'} onToggle={() => toggleFilter('price')}>
+            <input style={input} placeholder='Min price' />
+            <input style={{ ...input, marginTop: 8 }} placeholder='Max price' />
+          </DropdownFilter>
 
-        <DropdownFilter title='Quick actions' isOpen={openFilter === 'quick'} onToggle={() => toggleFilter('quick')}>
-          <button style={ghostBtn}>Save filter</button>
-          <button style={{ ...ghostBtn, marginTop: 8 }}>Reset filter</button>
-        </DropdownFilter>
+          <DropdownFilter title='Quick actions' isOpen={openFilter === 'quick'} onToggle={() => toggleFilter('quick')}>
+            <button style={ghostBtn}>Save filter</button>
+            <button style={{ ...ghostBtn, marginTop: 8 }}>Reset filter</button>
+          </DropdownFilter>
+        </div>
       </section>
 
       {toast ? <div style={toastStyle}>{toast}</div> : null}
@@ -93,7 +95,7 @@ const primaryBtn = { border: 0, borderRadius: 10, background: '#2e7dff', color: 
 const ghostBtn = { border: '1px solid #304178', borderRadius: 10, background: '#0e1738', color: '#fff', padding: '10px 12px', cursor: 'pointer' };
 const input = { borderRadius: 10, border: '1px solid #304178', background: '#0b1431', color: '#fff', padding: '10px 12px', width: '100%' };
 const sortWrap = { display: 'grid', gap: 4 };
-const dropWrap = { background: '#121b3f', border: '1px solid #26366d', borderRadius: 12, padding: 12 };
+const dropWrap = { background: '#0f1738', border: '1px solid #26366d', borderRadius: 12, padding: 10 };
 const dropBtn = { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #304178', borderRadius: 10, background: '#0e1738', color: '#fff', padding: '10px 12px', cursor: 'pointer' };
 const rowLabel = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 };
 const toastStyle = { position: 'fixed', bottom: 92, right: 20, background: '#1f2d5c', border: '1px solid #3654a8', padding: '10px 14px', borderRadius: 10 };
