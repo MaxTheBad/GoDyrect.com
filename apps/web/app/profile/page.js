@@ -42,7 +42,7 @@ export default function ProfilePage() {
     if (avatarFile) {
       const ext = avatarFile.name.split('.').pop();
       const path = `${user.id}/avatar-${Date.now()}.${ext}`;
-      const upload = await supabase.storage.from('profile-photos').upload(path, avatarFile, { upsert: true });
+      const upload = await supabase.storage.from('profile-photos').upload(path, avatarFile, { upsert: false });
       if (upload.error) return setMsg(upload.error.message);
       const { data: pub } = supabase.storage.from('profile-photos').getPublicUrl(path);
       nextAvatarUrl = pub.publicUrl;

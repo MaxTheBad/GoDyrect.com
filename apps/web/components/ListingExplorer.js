@@ -215,12 +215,26 @@ export default function ListingExplorer() {
             <select style={{ ...input, marginTop: 8 }} value={state} onChange={(e) => { setState(e.target.value); setCounty(''); setCity(''); }}>
               <option value=''>State</option>{US_STATES.map((v) => <option key={v}>{v}</option>)}
             </select>
-            <select style={{ ...input, marginTop: 8 }} value={county} onChange={(e) => setCounty(e.target.value)}>
-              <option value=''>County</option>{countyOptions.map((v) => <option key={v}>{v}</option>)}
-            </select>
-            <select style={{ ...input, marginTop: 8 }} value={city} onChange={(e) => setCity(e.target.value)}>
-              <option value=''>City</option>{cityOptions.map((v) => <option key={v}>{v}</option>)}
-            </select>
+            <input
+              list='county-options'
+              style={{ ...input, marginTop: 8 }}
+              value={county}
+              onChange={(e) => setCounty(e.target.value)}
+              placeholder='County'
+            />
+            <datalist id='county-options'>
+              {countyOptions.map((v) => <option key={v} value={v} />)}
+            </datalist>
+            <input
+              list='city-options'
+              style={{ ...input, marginTop: 8 }}
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder='City'
+            />
+            <datalist id='city-options'>
+              {cityOptions.map((v) => <option key={v} value={v} />)}
+            </datalist>
           </DropdownFilter>
 
           <DropdownFilter title='Miles from' isOpen={openFilter === 'miles'} onToggle={() => toggleFilter('miles')}>
