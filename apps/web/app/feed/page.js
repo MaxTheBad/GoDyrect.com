@@ -61,7 +61,6 @@ export default function FeedPage() {
       }
 
       const listRows = listings || [];
-      setRows(listRows);
 
       const listingIds = listRows.map((r) => r.id);
       const sellerIds = [...new Set(listRows.map((r) => r.seller_id).filter(Boolean))];
@@ -96,6 +95,14 @@ export default function FeedPage() {
         mMap[id].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
       });
       setMediaByListing(mMap);
+
+      const ordered = [...listRows].sort((a, b) => {
+        const aHasMedia = (mMap[a.id] || []).length > 0 ? 1 : 0;
+        const bHasMedia = (mMap[b.id] || []).length > 0 ? 1 : 0;
+        if (aHasMedia !== bHasMedia) return bHasMedia - aHasMedia;
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+      setRows(ordered);
       setLoading(false);
     }
 

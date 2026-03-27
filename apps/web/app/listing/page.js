@@ -13,6 +13,8 @@ export default function ListingDetailPage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [isFollowingSeller, setIsFollowingSeller] = useState(false);
   const [isFollowingBusiness, setIsFollowingBusiness] = useState(false);
+  const [sellerFollowerCount, setSellerFollowerCount] = useState(0);
+  const [businessFollowerCount, setBusinessFollowerCount] = useState(0);
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
@@ -48,6 +50,12 @@ export default function ListingDetailPage() {
       if (lErr) return setMsg(lErr.message);
       setListing(l);
 
+      const { data: sellerFollowers } = await supabase
+        .from('user_follows')
+        .select('follower_user_id')
+        .eq('followed_user_id', l.seller_id);
+      setSellerFollowerCount((sellerFollowers || []).length);
+
       if (uid && uid !== l.seller_id) {
         const { data: sellerFollow } = await supabase
           .from('user_follows')
@@ -56,6 +64,14 @@ export default function ListingDetailPage() {
           .eq('followed_user_id', l.seller_id)
           .maybeSingle();
         setIsFollowingSeller(Boolean(sellerFollow));
+      }
+
+      if (l.business_id) {
+        const { data: businessFollowers } = await supabase
+          .from('business_follows')
+          .select('follower_user_id')
+          .eq('business_id', l.business_id);
+        setBusinessFollowerCount((businessFollowers || []).length);
       }
 
       if (uid && l.business_id) {
@@ -128,12 +144,14 @@ export default function ListingDetailPage() {
       const { error } = await supabase.from('user_follows').delete().eq('follower_user_id', viewerId).eq('followed_user_id', listing.seller_id);
       if (error) return setMsg(error.message);
       setIsFollowingSeller(false);
+      setSellerFollowerCount((c) => Math.max(c - 1, 0));
       return;
     }
 
     const { error } = await supabase.from('user_follows').insert({ follower_user_id: viewerId, followed_user_id: listing.seller_id });
     if (error) return setMsg(error.message);
     setIsFollowingSeller(true);
+    setSellerFollowerCount((c) => c + 1);
   }
 
   async function toggleFollowBusiness() {
@@ -142,12 +160,14 @@ export default function ListingDetailPage() {
       const { error } = await supabase.from('business_follows').delete().eq('follower_user_id', viewerId).eq('business_id', listing.business_id);
       if (error) return setMsg(error.message);
       setIsFollowingBusiness(false);
+      setBusinessFollowerCount((c) => Math.max(c - 1, 0));
       return;
     }
 
     const { error } = await supabase.from('business_follows').insert({ follower_user_id: viewerId, business_id: listing.business_id });
     if (error) return setMsg(error.message);
     setIsFollowingBusiness(true);
+    setBusinessFollowerCount((c) => c + 1);
   }
 
   return (
@@ -175,6 +195,9 @@ export default function ListingDetailPage() {
             {listing.business_id ? (
               <button onClick={toggleFollowBusiness} style={ghostBtn}>{isFollowingBusiness ? 'Unfollow Business' : 'Follow Business'}</button>
             ) : null}
+          </div>
+          <div style={{ opacity: 0.75, fontSize: 12, marginTop: 8 }}>
+            {sellerFollowerCount} seller follower{sellerFollowerCount === 1 ? '' : 's'}{listing.business_id ? ` · ${businessFollowerCount} business follower${businessFollowerCount === 1 ? '' : 's'}` : ''}
           </div>
         </section>
 

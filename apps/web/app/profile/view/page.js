@@ -8,6 +8,7 @@ export default function PublicProfilePage() {
   const [profile, setProfile] = useState(null);
   const [viewerId, setViewerId] = useState('');
   const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
@@ -32,6 +33,12 @@ export default function PublicProfilePage() {
       if (error) return setMsg(error.message);
       setProfile(data || null);
 
+      const { data: followers } = await supabase
+        .from('user_follows')
+        .select('follower_user_id')
+        .eq('followed_user_id', id);
+      setFollowerCount((followers || []).length);
+
       if (uid && uid !== id) {
         const { data: follow } = await supabase
           .from('user_follows')
@@ -51,12 +58,14 @@ export default function PublicProfilePage() {
       const { error } = await supabase.from('user_follows').delete().eq('follower_user_id', viewerId).eq('followed_user_id', id);
       if (error) return setMsg(error.message);
       setIsFollowing(false);
+      setFollowerCount((c) => Math.max(c - 1, 0));
       return;
     }
 
     const { error } = await supabase.from('user_follows').insert({ follower_user_id: viewerId, followed_user_id: id });
     if (error) return setMsg(error.message);
     setIsFollowing(true);
+    setFollowerCount((c) => c + 1);
   }
 
   if (!id) return <main style={wrap}><div style={card}><p>Missing profile id.</p></div></main>;
@@ -69,6 +78,7 @@ export default function PublicProfilePage() {
         <h1 style={{ marginBottom: 4 }}>{profile.full_name || 'User'}</h1>
         {profile.handle ? <p style={{ margin: 0, opacity: 0.8 }}>@{profile.handle}</p> : null}
         {profile.role ? <span style={badge(profile.role)}>{profile.role === 'not_sure' ? 'Not sure yet' : profile.role}</span> : null}
+        <small style={{ opacity: 0.8 }}>{followerCount} follower{followerCount === 1 ? '' : 's'}</small>
         {viewerId && viewerId !== id ? (
           <button style={followBtn} onClick={toggleFollow}>{isFollowing ? 'Unfollow' : 'Follow'}</button>
         ) : null}

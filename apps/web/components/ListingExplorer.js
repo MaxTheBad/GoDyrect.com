@@ -38,6 +38,10 @@ export default function ListingExplorer() {
   const [searchQuery, setSearchQuery] = useState('');
   const [favoriteIds, setFavoriteIds] = useState([]);
   const [businessNames, setBusinessNames] = useState({});
+  const [sellerFollowIds, setSellerFollowIds] = useState([]);
+  const [businessFollowIds, setBusinessFollowIds] = useState([]);
+  const [sellerFollowerCounts, setSellerFollowerCounts] = useState({});
+  const [businessFollowerCounts, setBusinessFollowerCounts] = useState({});
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 900);
@@ -73,6 +77,7 @@ export default function ListingExplorer() {
       setListings(rows);
 
       if (rows.length) {
+        const sellerIds = [...new Set(rows.map((r) => r.seller_id).filter(Boolean))];
         const businessIds = [...new Set(rows.map((r) => r.business_id).filter(Boolean))];
         if (businessIds.length) {
           const { data: businesses } = await supabase
@@ -84,6 +89,48 @@ export default function ListingExplorer() {
             map[b.id] = b.name;
           });
           setBusinessNames(map);
+        }
+
+        if (sellerIds.length) {
+          const { data: sellerFollowers } = await supabase
+            .from('user_follows')
+            .select('followed_user_id')
+            .in('followed_user_id', sellerIds);
+          const counts = {};
+          (sellerFollowers || []).forEach((row) => {
+            counts[row.followed_user_id] = (counts[row.followed_user_id] || 0) + 1;
+          });
+          setSellerFollowerCounts(counts);
+
+          if (uid) {
+            const { data: mySellerFollows } = await supabase
+              .from('user_follows')
+              .select('followed_user_id')
+              .eq('follower_user_id', uid)
+              .in('followed_user_id', sellerIds);
+            setSellerFollowIds((mySellerFollows || []).map((f) => f.followed_user_id));
+          }
+        }
+
+        if (businessIds.length) {
+          const { data: businessFollowers } = await supabase
+            .from('business_follows')
+            .select('business_id')
+            .in('business_id', businessIds);
+          const counts = {};
+          (businessFollowers || []).forEach((row) => {
+            counts[row.business_id] = (counts[row.business_id] || 0) + 1;
+          });
+          setBusinessFollowerCounts(counts);
+
+          if (uid) {
+            const { data: myBusinessFollows } = await supabase
+              .from('business_follows')
+              .select('business_id')
+              .eq('follower_user_id', uid)
+              .in('business_id', businessIds);
+            setBusinessFollowIds((myBusinessFollows || []).map((f) => f.business_id));
+          }
         }
 
         const ids = rows.map((r) => r.id);
@@ -255,6 +302,53 @@ export default function ListingExplorer() {
     setFavoriteIds((prev) => [...prev, listingId]);
   }
 
+  async function toggleFollowSeller(sellerId) {
+    if (!supabase) return;
+    if (!viewerId) {
+      setToast('Please sign in to follow sellers');
+      setTimeout(() => setToast(''), 1800);
+      return;
+    }
+    if (viewerId === sellerId) return;
+
+    const isFollowing = sellerFollowIds.includes(sellerId);
+    if (isFollowing) {
+      const { error } = await supabase.from('user_follows').delete().eq('follower_user_id', viewerId).eq('followed_user_id', sellerId);
+      if (error) return;
+      setSellerFollowIds((prev) => prev.filter((id) => id !== sellerId));
+      setSellerFollowerCounts((prev) => ({ ...prev, [sellerId]: Math.max((prev[sellerId] || 1) - 1, 0) }));
+      return;
+    }
+
+    const { error } = await supabase.from('user_follows').insert({ follower_user_id: viewerId, followed_user_id: sellerId });
+    if (error) return;
+    setSellerFollowIds((prev) => [...prev, sellerId]);
+    setSellerFollowerCounts((prev) => ({ ...prev, [sellerId]: (prev[sellerId] || 0) + 1 }));
+  }
+
+  async function toggleFollowBusiness(businessId) {
+    if (!supabase || !businessId) return;
+    if (!viewerId) {
+      setToast('Please sign in to follow businesses');
+      setTimeout(() => setToast(''), 1800);
+      return;
+    }
+
+    const isFollowing = businessFollowIds.includes(businessId);
+    if (isFollowing) {
+      const { error } = await supabase.from('business_follows').delete().eq('follower_user_id', viewerId).eq('business_id', businessId);
+      if (error) return;
+      setBusinessFollowIds((prev) => prev.filter((id) => id !== businessId));
+      setBusinessFollowerCounts((prev) => ({ ...prev, [businessId]: Math.max((prev[businessId] || 1) - 1, 0) }));
+      return;
+    }
+
+    const { error } = await supabase.from('business_follows').insert({ follower_user_id: viewerId, business_id: businessId });
+    if (error) return;
+    setBusinessFollowIds((prev) => [...prev, businessId]);
+    setBusinessFollowerCounts((prev) => ({ ...prev, [businessId]: (prev[businessId] || 0) + 1 }));
+  }
+
   function toggleInArray(value, arr, setArr) {
     setArr(arr.includes(value) ? arr.filter((x) => x !== value) : [...arr, value]);
   }
@@ -389,6 +483,8 @@ export default function ListingExplorer() {
             const media = mediaPreview[l.id] || [];
             const isOwner = viewerId && viewerId === l.seller_id;
             const isFavorite = favoriteIds.includes(l.id);
+            const followsSeller = sellerFollowIds.includes(l.seller_id);
+            const followsBusiness = l.business_id ? businessFollowIds.includes(l.business_id) : false;
             return (
               <div key={l.id} style={listingCard}>
                 <div style={{ display: 'grid', gap: 8, flex: 1, minWidth: 0 }}>
@@ -397,6 +493,9 @@ export default function ListingExplorer() {
                     {(businessNames[l.business_id] || 'Business')} · {prettyCategory(l.category)} · {l.business_age_years ?? 0} years · {[l.city, l.state, l.country].filter(Boolean).join(', ') || 'Location not set'}
                   </div>
                   <div style={{ opacity: 0.75, color: '#6b7280', fontSize: 12 }}>Posted as: {l.lister_role || 'Authorized Representative'}</div>
+                  <div style={{ opacity: 0.72, color: '#6b7280', fontSize: 12 }}>
+                    {sellerFollowerCounts[l.seller_id] || 0} seller followers{l.business_id ? ` · ${businessFollowerCounts[l.business_id] || 0} business followers` : ''}
+                  </div>
                   <div style={{ opacity: 0.75, color: '#6b7280', fontSize: 12 }}>{counts.photos} photos · {counts.videos} videos</div>
 
                   {media.length ? (
@@ -417,6 +516,8 @@ export default function ListingExplorer() {
                   <strong>${Number(l.asking_price || 0).toLocaleString()}</strong>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     <button type='button' onClick={() => toggleFavorite(l.id)} style={miniBtn}>{isFavorite ? '★ Saved' : '☆ Favorite'}</button>
+                    {!isOwner ? <button type='button' onClick={() => toggleFollowSeller(l.seller_id)} style={miniBtn}>{followsSeller ? 'Unfollow Seller' : 'Follow Seller'}</button> : null}
+                    {l.business_id ? <button type='button' onClick={() => toggleFollowBusiness(l.business_id)} style={miniBtn}>{followsBusiness ? 'Unfollow Biz' : 'Follow Biz'}</button> : null}
                     <a href={`/listing?id=${l.id}`} style={miniBtn}>View</a>
                     {isOwner ? <a href={`/listings/edit?id=${l.id}`} style={miniBtn}>Edit</a> : <a href={`/messages?seller=${l.seller_id}&listing=${l.id}`} style={miniBtn}>Message</a>}
                   </div>
