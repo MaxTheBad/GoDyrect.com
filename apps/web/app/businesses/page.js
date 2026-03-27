@@ -55,6 +55,7 @@ export default function MyBusinessesPage() {
   const [newBusinessName, setNewBusinessName] = useState('');
   const [newBusinessRole, setNewBusinessRole] = useState('Owner');
   const [inviteByBusiness, setInviteByBusiness] = useState({});
+  const [focusBusinessId, setFocusBusinessId] = useState('');
   const [msg, setMsg] = useState('');
 
   async function loadAll() {
@@ -130,8 +131,18 @@ export default function MyBusinessesPage() {
   }
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const target = new URLSearchParams(window.location.search).get('business') || '';
+      setFocusBusinessId(target);
+    }
     loadAll();
   }, []);
+
+  useEffect(() => {
+    if (!focusBusinessId) return;
+    const el = document.getElementById(`business-card-${focusBusinessId}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [focusBusinessId, rows.length]);
 
   async function createBusiness(e) {
     e.preventDefault();
@@ -233,7 +244,7 @@ export default function MyBusinessesPage() {
             const completePct = completeness(details);
 
             return (
-              <section key={row.business_id} style={bizCard}>
+              <section id={`business-card-${row.business_id}`} key={row.business_id} style={row.business_id === focusBusinessId ? { ...bizCard, border: '1px solid #8fb7ff', boxShadow: '0 0 0 2px rgba(143,183,255,0.25)' } : bizCard}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
                   <div>
                     <strong>{row.business?.name || 'Business'}</strong>

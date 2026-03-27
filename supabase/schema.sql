@@ -223,17 +223,46 @@ drop policy if exists "businesses creator manages" on public.businesses;
 create policy "businesses creator manages" on public.businesses
 for all using (auth.uid() = created_by) with check (auth.uid() = created_by);
 
+-- Helpers to avoid RLS recursion on business_memberships
+create or replace function public.is_business_member(_business_id uuid, _user_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists(
+    select 1
+    from public.business_memberships bm
+    where bm.business_id = _business_id
+      and bm.user_id = _user_id
+      and bm.status = 'approved'
+  );
+$$;
+
+create or replace function public.is_business_admin(_business_id uuid, _user_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists(
+    select 1
+    from public.business_memberships bm
+    where bm.business_id = _business_id
+      and bm.user_id = _user_id
+      and bm.status = 'approved'
+      and bm.is_admin = true
+  );
+$$;
+
 -- Policies: business memberships
 drop policy if exists "members read memberships" on public.business_memberships;
 create policy "members read memberships" on public.business_memberships
 for select using (
   auth.uid() = user_id
-  or exists(
-    select 1 from public.business_memberships bm
-    where bm.business_id = business_memberships.business_id
-      and bm.user_id = auth.uid()
-      and bm.status = 'approved'
-  )
+  or public.is_business_member(business_id, auth.uid())
 );
 
 drop policy if exists "creator seeds own membership" on public.business_memberships;
@@ -249,23 +278,8 @@ for insert with check (
 
 drop policy if exists "admins manage memberships" on public.business_memberships;
 create policy "admins manage memberships" on public.business_memberships
-for all using (
-  exists(
-    select 1 from public.business_memberships bm
-    where bm.business_id = business_memberships.business_id
-      and bm.user_id = auth.uid()
-      and bm.is_admin = true
-      and bm.status = 'approved'
-  )
-) with check (
-  exists(
-    select 1 from public.business_memberships bm
-    where bm.business_id = business_memberships.business_id
-      and bm.user_id = auth.uid()
-      and bm.is_admin = true
-      and bm.status = 'approved'
-  )
-);
+for all using (public.is_business_admin(business_id, auth.uid()))
+with check (public.is_business_admin(business_id, auth.uid()));
 
 -- Policies: listings
 create policy "listings readable" on public.listings

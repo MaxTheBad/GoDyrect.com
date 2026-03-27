@@ -41,6 +41,7 @@ export default function NewListingPage() {
   const [approvedBusinesses, setApprovedBusinesses] = useState([]);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [useDefaultAskingPrice, setUseDefaultAskingPrice] = useState(true);
+  const [missingFields, setMissingFields] = useState([]);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -123,6 +124,7 @@ export default function NewListingPage() {
   async function submit(e) {
     e.preventDefault();
     setErrors({});
+    setMissingFields([]);
     if (!form.business_id) return setErrors((p) => ({ ...p, business_id: 'Choose an approved business first.' }));
     if (!form.title.trim()) return setErrors((p) => ({ ...p, title: 'Title is required.' }));
     if (!form.asking_price || Number(form.asking_price) <= 0) return setErrors((p) => ({ ...p, asking_price: 'Enter a valid asking price.' }));
@@ -162,7 +164,8 @@ export default function NewListingPage() {
       if (!Array.isArray(business.keywords) || business.keywords.length === 0) missing.push('keywords');
 
       if (missing.length) {
-        return setMsg(`Before first post, complete business profile fields in My Businesses: ${missing.join(', ')}.`);
+        setMissingFields(missing);
+        return setMsg(`Before first post, complete business profile fields in My Businesses.`);
       }
     }
 
@@ -268,6 +271,13 @@ export default function NewListingPage() {
         <input style={input} type='file' multiple accept='image/*,video/*' onChange={(e) => setFiles(Array.from(e.target.files || []))} />
         <button style={btn} type='submit'>Publish Listing</button>
         {msg ? <p>{msg}</p> : null}
+        {missingFields.length ? (
+          <div style={infoBox}>
+            <strong>Missing before first post</strong>
+            <div style={small}>{missingFields.join(', ')}</div>
+            <a href={`/businesses?business=${form.business_id}`} style={{ color: '#8fb7ff' }}>Open this business and fill missing fields</a>
+          </div>
+        ) : null}
       </form>
     </main>
   );
