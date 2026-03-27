@@ -9,6 +9,7 @@ export default function ListingDetailPage() {
   const [media, setMedia] = useState([]);
   const [seller, setSeller] = useState(null);
   const [viewerId, setViewerId] = useState('');
+  const [isFavorite, setIsFavorite] = useState(false);
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
@@ -22,7 +23,18 @@ export default function ListingDetailPage() {
       if (!supabase || !id) return;
 
       const { data: auth } = await supabase.auth.getUser();
-      setViewerId(auth?.user?.id || '');
+      const uid = auth?.user?.id || '';
+      setViewerId(uid);
+
+      if (uid) {
+        const { data: favoriteRow } = await supabase
+          .from('favorites')
+          .select('listing_id')
+          .eq('user_id', uid)
+          .eq('listing_id', id)
+          .maybeSingle();
+        setIsFavorite(Boolean(favoriteRow));
+      }
 
       const { data: l, error: lErr } = await supabase
         .from('listings')
@@ -63,6 +75,25 @@ export default function ListingDetailPage() {
   }
 
   const isOwner = viewerId && viewerId === listing.seller_id;
+
+  async function toggleFavorite() {
+    if (!supabase) return;
+    if (!viewerId) {
+      setMsg('Please sign in to save favorites.');
+      return;
+    }
+
+    if (isFavorite) {
+      const { error } = await supabase.from('favorites').delete().eq('user_id', viewerId).eq('listing_id', listing.id);
+      if (error) return setMsg(error.message);
+      setIsFavorite(false);
+      return;
+    }
+
+    const { error } = await supabase.from('favorites').insert({ user_id: viewerId, listing_id: listing.id });
+    if (error) return setMsg(error.message);
+    setIsFavorite(true);
+  }
 
   return (
     <main style={wrap}>
@@ -105,7 +136,8 @@ export default function ListingDetailPage() {
           </div>
         </section>
 
-        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+        <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+          <button onClick={toggleFavorite} style={ghostBtn}>{isFavorite ? '★ Saved' : '☆ Favorite'}</button>
           {isOwner ? (
             <a href={`/listings/edit?id=${listing.id}`} style={btn}>Edit Listing</a>
           ) : (

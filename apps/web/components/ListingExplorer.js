@@ -36,6 +36,7 @@ export default function ListingExplorer() {
   const [mediaModal, setMediaModal] = useState({ open: false, listingId: '', index: 0 });
   const [searchDraft, setSearchDraft] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [favoriteIds, setFavoriteIds] = useState([]);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 900);
@@ -48,7 +49,16 @@ export default function ListingExplorer() {
     async function loadListings() {
       if (!supabase) return setLoadingListings(false);
       const { data: auth } = await supabase.auth.getUser();
-      setViewerId(auth?.user?.id || '');
+      const uid = auth?.user?.id || '';
+      setViewerId(uid);
+
+      if (uid) {
+        const { data: favoriteRows } = await supabase
+          .from('favorites')
+          .select('listing_id')
+          .eq('user_id', uid);
+        setFavoriteIds((favoriteRows || []).map((r) => r.listing_id));
+      }
 
       const { data } = await supabase
         .from('listings')
@@ -130,6 +140,12 @@ export default function ListingExplorer() {
 
   const countries = useMemo(() => [...new Set(['United States', ...listings.map((l) => l.country).filter(Boolean)])], [listings]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchDraft.trim().toLowerCase());
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [searchDraft]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
@@ -194,6 +210,35 @@ export default function ListingExplorer() {
 
   function applySearch() {
     setSearchQuery(searchDraft.trim().toLowerCase());
+  }
+
+  async function toggleFavorite(listingId) {
+    if (!supabase) return;
+    if (!viewerId) {
+      setToast('Please sign in to save favorites');
+      setTimeout(() => setToast(''), 1800);
+      return;
+    }
+
+    const isFavorite = favoriteIds.includes(listingId);
+    if (isFavorite) {
+      const { error } = await supabase.from('favorites').delete().eq('user_id', viewerId).eq('listing_id', listingId);
+      if (error) {
+        setToast(error.message);
+        setTimeout(() => setToast(''), 1800);
+        return;
+      }
+      setFavoriteIds((prev) => prev.filter((id) => id !== listingId));
+      return;
+    }
+
+    const { error } = await supabase.from('favorites').insert({ user_id: viewerId, listing_id: listingId });
+    if (error) {
+      setToast(error.message);
+      setTimeout(() => setToast(''), 1800);
+      return;
+    }
+    setFavoriteIds((prev) => [...prev, listingId]);
   }
 
   function toggleInArray(value, arr, setArr) {
@@ -329,6 +374,7 @@ export default function ListingExplorer() {
             const counts = mediaCounts[l.id] || { photos: 0, videos: 0 };
             const media = mediaPreview[l.id] || [];
             const isOwner = viewerId && viewerId === l.seller_id;
+            const isFavorite = favoriteIds.includes(l.id);
             return (
               <div key={l.id} style={listingCard}>
                 <div style={{ display: 'grid', gap: 8, flex: 1, minWidth: 0 }}>
@@ -355,6 +401,7 @@ export default function ListingExplorer() {
                 <div style={{ display: 'grid', gap: 6, justifyItems: 'end' }}>
                   <strong>${Number(l.asking_price || 0).toLocaleString()}</strong>
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    <button type='button' onClick={() => toggleFavorite(l.id)} style={miniBtn}>{isFavorite ? '★ Saved' : '☆ Favorite'}</button>
                     <a href={`/listing?id=${l.id}`} style={miniBtn}>View</a>
                     {isOwner ? <a href={`/listings/edit?id=${l.id}`} style={miniBtn}>Edit</a> : <a href={`/messages?seller=${l.seller_id}&listing=${l.id}`} style={miniBtn}>Message</a>}
                   </div>
