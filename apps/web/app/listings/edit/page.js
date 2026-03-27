@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { supabase } from '../../../../lib/supabase';
+import { useSearchParams } from 'next/navigation';
+import { supabase } from '../../../lib/supabase';
 
 export default function EditListingPage() {
-  const params = useParams();
-  const id = params?.id;
+  const params = useSearchParams();
+  const id = params.get('id');
   const [form, setForm] = useState(null);
   const [msg, setMsg] = useState('');
 

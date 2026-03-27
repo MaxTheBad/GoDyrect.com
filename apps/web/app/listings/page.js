@@ -48,7 +48,7 @@ export default function MyListingsPage() {
                 <div style={{ opacity: 0.75, fontSize: 12 }}>{r.is_sold ? 'Sold' : r.is_active ? 'Active' : 'Inactive'}</div>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
-                <a href={`/listings/${r.id}/edit`} style={ghostBtn}>Edit</a>
+                <a href={`/listings/edit?id=${r.id}`} style={ghostBtn}>Edit</a>
               </div>
             </div>
           ))}
