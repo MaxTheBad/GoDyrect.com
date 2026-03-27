@@ -4,6 +4,21 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { US_STATES } from '../../lib/us-states';
 
+function formatCurrency(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '';
+  return `$${num.toLocaleString()}`;
+}
+
+function parseCurrencyInput(value) {
+  if (!value) return '';
+  const cleaned = String(value).replace(/[^\d.-]/g, '');
+  if (!cleaned) return '';
+  const num = Number(cleaned);
+  if (!Number.isFinite(num)) return '';
+  return String(num);
+}
+
 function yearsSince(startDate) {
   if (!startDate) return null;
   const start = new Date(startDate);
@@ -110,9 +125,9 @@ export default function MyBusinessesPage() {
         description: b.description || '',
         category: b.category || 'established',
         start_date: b.start_date || '',
-        annual_revenue: b.annual_revenue ?? '',
-        annual_profit: b.annual_profit ?? '',
-        default_asking_price: b.default_asking_price ?? '',
+        annual_revenue: b.annual_revenue != null ? formatCurrency(b.annual_revenue) : '',
+        annual_profit: b.annual_profit != null ? formatCurrency(b.annual_profit) : '',
+        default_asking_price: b.default_asking_price != null ? formatCurrency(b.default_asking_price) : '',
         city: b.city || '',
         state: b.state || '',
         country: b.country || 'United States',
@@ -193,9 +208,9 @@ export default function MyBusinessesPage() {
       description: details.description || null,
       category: details.category || null,
       start_date: details.start_date || null,
-      annual_revenue: details.annual_revenue ? Number(details.annual_revenue) : null,
-      annual_profit: details.annual_profit ? Number(details.annual_profit) : null,
-      default_asking_price: details.default_asking_price ? Number(details.default_asking_price) : null,
+      annual_revenue: parseCurrencyInput(details.annual_revenue) ? Number(parseCurrencyInput(details.annual_revenue)) : null,
+      annual_profit: parseCurrencyInput(details.annual_profit) ? Number(parseCurrencyInput(details.annual_profit)) : null,
+      default_asking_price: parseCurrencyInput(details.default_asking_price) ? Number(parseCurrencyInput(details.default_asking_price)) : null,
       city: details.city || null,
       state: details.state || null,
       country: details.country || null,
@@ -296,9 +311,36 @@ export default function MyBusinessesPage() {
                     <option value='startup'>Start-up Businesses</option>
                   </select>
                   <input style={input} type='date' value={details.start_date} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, start_date: e.target.value } }))} />
-                  <input style={input} placeholder='Annual revenue' value={details.annual_revenue} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, annual_revenue: e.target.value } }))} />
-                  <input style={input} placeholder='Annual profit' value={details.annual_profit} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, annual_profit: e.target.value } }))} />
-                  <input style={input} placeholder='Default asking price' value={details.default_asking_price} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, default_asking_price: e.target.value } }))} />
+                  <input
+                    style={input}
+                    placeholder='Annual revenue'
+                    value={details.annual_revenue}
+                    onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, annual_revenue: e.target.value } }))}
+                    onBlur={() => setDetailsByBusiness((prev) => {
+                      const raw = parseCurrencyInput(details.annual_revenue);
+                      return { ...prev, [row.business_id]: { ...details, annual_revenue: raw ? formatCurrency(raw) : '' } };
+                    })}
+                  />
+                  <input
+                    style={input}
+                    placeholder='Annual profit'
+                    value={details.annual_profit}
+                    onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, annual_profit: e.target.value } }))}
+                    onBlur={() => setDetailsByBusiness((prev) => {
+                      const raw = parseCurrencyInput(details.annual_profit);
+                      return { ...prev, [row.business_id]: { ...details, annual_profit: raw ? formatCurrency(raw) : '' } };
+                    })}
+                  />
+                  <input
+                    style={input}
+                    placeholder='Default asking price'
+                    value={details.default_asking_price}
+                    onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, default_asking_price: e.target.value } }))}
+                    onBlur={() => setDetailsByBusiness((prev) => {
+                      const raw = parseCurrencyInput(details.default_asking_price);
+                      return { ...prev, [row.business_id]: { ...details, default_asking_price: raw ? formatCurrency(raw) : '' } };
+                    })}
+                  />
                   <input style={input} placeholder='City' value={details.city} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, city: e.target.value } }))} />
                   <select style={input} value={details.state} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, state: e.target.value } }))}>
                     <option value=''>State</option>

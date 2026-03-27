@@ -4,6 +4,21 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
 
+function formatCurrency(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '';
+  return `$${num.toLocaleString()}`;
+}
+
+function parseCurrencyInput(value) {
+  if (!value) return '';
+  const cleaned = String(value).replace(/[^\d.-]/g, '');
+  if (!cleaned) return '';
+  const num = Number(cleaned);
+  if (!Number.isFinite(num)) return '';
+  return String(num);
+}
+
 function yearsSince(startDate) {
   if (!startDate) return null;
   const start = new Date(startDate);
@@ -86,7 +101,7 @@ export default function NewListingPage() {
           ...prev,
           business_id: picked.id,
           lister_role: picked.role,
-          asking_price: picked.business?.default_asking_price ? String(picked.business.default_asking_price) : prev.asking_price,
+          asking_price: picked.business?.default_asking_price ? formatCurrency(picked.business.default_asking_price) : prev.asking_price,
         }));
         setSelectedBusiness(picked.business || null);
       }
@@ -104,7 +119,7 @@ export default function NewListingPage() {
           business_id: value,
           lister_role: selected?.role || s.lister_role,
           asking_price: useDefaultAskingPrice && selected?.business?.default_asking_price
-            ? String(selected.business.default_asking_price)
+            ? formatCurrency(selected.business.default_asking_price)
             : s.asking_price,
         };
       }
@@ -117,7 +132,7 @@ export default function NewListingPage() {
 
   useEffect(() => {
     if (useDefaultAskingPrice && selectedBusiness?.default_asking_price) {
-      setForm((prev) => ({ ...prev, asking_price: String(selectedBusiness.default_asking_price) }));
+      setForm((prev) => ({ ...prev, asking_price: formatCurrency(selectedBusiness.default_asking_price) }));
     }
   }, [useDefaultAskingPrice, selectedBusiness]);
 
@@ -127,7 +142,8 @@ export default function NewListingPage() {
     setMissingFields([]);
     if (!form.business_id) return setErrors((p) => ({ ...p, business_id: 'Choose an approved business first.' }));
     if (!form.title.trim()) return setErrors((p) => ({ ...p, title: 'Title is required.' }));
-    if (!form.asking_price || Number(form.asking_price) <= 0) return setErrors((p) => ({ ...p, asking_price: 'Enter a valid asking price.' }));
+    const parsedAskingPrice = Number(parseCurrencyInput(form.asking_price));
+    if (!form.asking_price || !Number.isFinite(parsedAskingPrice) || parsedAskingPrice <= 0) return setErrors((p) => ({ ...p, asking_price: 'Enter a valid asking price.' }));
     if (!supabase) return setMsg('Supabase env vars missing.');
 
     const { data: userData } = await supabase.auth.getUser();
@@ -179,7 +195,7 @@ export default function NewListingPage() {
         category: business.category || 'established',
         lister_role: membership.role || form.lister_role,
         business_age_years: yearsSince(business.start_date),
-        asking_price: Number(form.asking_price || 0),
+        asking_price: parsedAskingPrice,
         annual_revenue: business.annual_revenue ?? null,
         annual_profit: business.annual_profit ?? null,
         city: business.city || null,
@@ -253,6 +269,10 @@ export default function NewListingPage() {
           placeholder='Asking price'
           value={form.asking_price}
           onChange={(e) => update('asking_price', e.target.value)}
+          onBlur={() => {
+            const raw = parseCurrencyInput(form.asking_price);
+            if (raw) update('asking_price', formatCurrency(raw));
+          }}
           disabled={useDefaultAskingPrice && !!selectedBusiness?.default_asking_price}
           required
         />
@@ -262,7 +282,7 @@ export default function NewListingPage() {
             <strong>Business details used in this post</strong>
             <div style={small}>Category: {selectedBusiness.category || '—'}</div>
             <div style={small}>Business age: {computedAge !== null ? `${computedAge} years (from start date)` : '—'}</div>
-            <div style={small}>Revenue: {selectedBusiness.annual_revenue ?? '—'} · Profit: {selectedBusiness.annual_profit ?? '—'}</div>
+            <div style={small}>Revenue: {selectedBusiness.annual_revenue != null ? formatCurrency(selectedBusiness.annual_revenue) : '—'} · Profit: {selectedBusiness.annual_profit != null ? formatCurrency(selectedBusiness.annual_profit) : '—'}</div>
             <div style={small}>Location: {[selectedBusiness.city, selectedBusiness.state, selectedBusiness.country].filter(Boolean).join(', ') || '—'}</div>
             <div style={small}>Profile completeness: {completenessPct}%</div>
           </div>
