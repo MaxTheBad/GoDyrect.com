@@ -31,6 +31,7 @@ export default function ListingExplorer() {
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [sortBy, setSortBy] = useState('Newest');
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 900);
@@ -118,6 +119,17 @@ export default function ListingExplorer() {
 
   const countries = useMemo(() => [...new Set(['United States', ...listings.map((l) => l.country).filter(Boolean)])], [listings]);
 
+
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (selectedTypes.length) count += 1;
+    if (selectedAges.length) count += 1;
+    if (minPrice || maxPrice) count += 1;
+    if (country || state || county || city) count += 1;
+    if (miles) count += 1;
+    return count;
+  }, [selectedTypes, selectedAges, minPrice, maxPrice, country, state, county, city, miles]);
+
   const filteredListings = useMemo(() => {
     let rows = [...listings];
 
@@ -186,64 +198,73 @@ export default function ListingExplorer() {
       </section>
 
       <section style={filterSection}>
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(5, minmax(0, 1fr))', gap: 10 }}>
-          <DropdownFilter title='Business type' isOpen={openFilter === 'type'} onToggle={() => toggleFilter('type')}>
-            {businessTypes.map((option) => (
-              <label key={option} style={rowLabel}>
-                <input type='checkbox' checked={selectedTypes.includes(option)} onChange={() => toggleInArray(option, selectedTypes, setSelectedTypes)} /> {prettyCategory(option)}
-              </label>
-            ))}
-          </DropdownFilter>
+        {isMobile ? (
+          <button style={mobileFilterToggle} onClick={() => setMobileFiltersOpen((v) => !v)}>
+            <span>{mobileFiltersOpen ? 'Hide filters' : 'Show filters'}</span>
+            <span style={{ opacity: 0.8 }}>{activeFilterCount ? `${activeFilterCount} active` : 'No filters'}</span>
+          </button>
+        ) : null}
 
-          <DropdownFilter title='Business age' isOpen={openFilter === 'age'} onToggle={() => toggleFilter('age')}>
-            {ageOptions.map((option) => (
-              <label key={option} style={rowLabel}>
-                <input type='checkbox' checked={selectedAges.includes(option)} onChange={() => toggleInArray(option, selectedAges, setSelectedAges)} /> {option}
-              </label>
-            ))}
-          </DropdownFilter>
+        {!isMobile || mobileFiltersOpen ? (
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(5, minmax(0, 1fr))', gap: 10, marginTop: isMobile ? 10 : 0 }}>
+            <DropdownFilter title='Business type' isOpen={openFilter === 'type'} onToggle={() => toggleFilter('type')}>
+              {businessTypes.map((option) => (
+                <label key={option} style={rowLabel}>
+                  <input type='checkbox' checked={selectedTypes.includes(option)} onChange={() => toggleInArray(option, selectedTypes, setSelectedTypes)} /> {prettyCategory(option)}
+                </label>
+              ))}
+            </DropdownFilter>
 
-          <DropdownFilter title='Price range' isOpen={openFilter === 'price'} onToggle={() => toggleFilter('price')}>
-            <input style={input} placeholder='Min price' value={minPrice} onChange={(e) => setMinPrice(e.target.value)} />
-            <input style={{ ...input, marginTop: 8 }} placeholder='Max price' value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} />
-          </DropdownFilter>
+            <DropdownFilter title='Business age' isOpen={openFilter === 'age'} onToggle={() => toggleFilter('age')}>
+              {ageOptions.map((option) => (
+                <label key={option} style={rowLabel}>
+                  <input type='checkbox' checked={selectedAges.includes(option)} onChange={() => toggleInArray(option, selectedAges, setSelectedAges)} /> {option}
+                </label>
+              ))}
+            </DropdownFilter>
 
-          <DropdownFilter title='Location' isOpen={openFilter === 'location'} onToggle={() => toggleFilter('location')}>
-            <select style={input} value={country} onChange={(e) => setCountry(e.target.value)}>
-              <option value=''>Country</option>{countries.map((v) => <option key={v}>{v}</option>)}
-            </select>
-            <select style={{ ...input, marginTop: 8 }} value={state} onChange={(e) => { setState(e.target.value); setCounty(''); setCity(''); }}>
-              <option value=''>State</option>{US_STATES.map((v) => <option key={v}>{v}</option>)}
-            </select>
-            <input
-              list='county-options'
-              style={{ ...input, marginTop: 8 }}
-              value={county}
-              onChange={(e) => setCounty(e.target.value)}
-              placeholder='County'
-            />
-            <datalist id='county-options'>
-              {countyOptions.map((v) => <option key={v} value={v} />)}
-            </datalist>
-            <input
-              list='city-options'
-              style={{ ...input, marginTop: 8 }}
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              placeholder='City'
-            />
-            <datalist id='city-options'>
-              {cityOptions.map((v) => <option key={v} value={v} />)}
-            </datalist>
-          </DropdownFilter>
+            <DropdownFilter title='Price range' isOpen={openFilter === 'price'} onToggle={() => toggleFilter('price')}>
+              <input style={input} placeholder='Min price' value={minPrice} onChange={(e) => setMinPrice(e.target.value)} />
+              <input style={{ ...input, marginTop: 8 }} placeholder='Max price' value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} />
+            </DropdownFilter>
 
-          <DropdownFilter title='Miles from' isOpen={openFilter === 'miles'} onToggle={() => toggleFilter('miles')}>
-            <button style={ghostBtn} onClick={requestLocation}>Use my location</button>
-            <select style={{ ...input, marginTop: 8 }} value={miles} onChange={(e) => setMiles(e.target.value)}>
-              <option value=''>Miles</option>{milesOptions.map((v) => <option key={v} value={v}>{v} miles</option>)}
-            </select>
-          </DropdownFilter>
-        </div>
+            <DropdownFilter title='Location' isOpen={openFilter === 'location'} onToggle={() => toggleFilter('location')}>
+              <select style={input} value={country} onChange={(e) => setCountry(e.target.value)}>
+                <option value=''>Country</option>{countries.map((v) => <option key={v}>{v}</option>)}
+              </select>
+              <select style={{ ...input, marginTop: 8 }} value={state} onChange={(e) => { setState(e.target.value); setCounty(''); setCity(''); }}>
+                <option value=''>State</option>{US_STATES.map((v) => <option key={v}>{v}</option>)}
+              </select>
+              <input
+                list='county-options'
+                style={{ ...input, marginTop: 8 }}
+                value={county}
+                onChange={(e) => setCounty(e.target.value)}
+                placeholder='County'
+              />
+              <datalist id='county-options'>
+                {countyOptions.map((v) => <option key={v} value={v} />)}
+              </datalist>
+              <input
+                list='city-options'
+                style={{ ...input, marginTop: 8 }}
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder='City'
+              />
+              <datalist id='city-options'>
+                {cityOptions.map((v) => <option key={v} value={v} />)}
+              </datalist>
+            </DropdownFilter>
+
+            <DropdownFilter title='Miles from' isOpen={openFilter === 'miles'} onToggle={() => toggleFilter('miles')}>
+              <button style={ghostBtn} onClick={requestLocation}>Use my location</button>
+              <select style={{ ...input, marginTop: 8 }} value={miles} onChange={(e) => setMiles(e.target.value)}>
+                <option value=''>Miles</option>{milesOptions.map((v) => <option key={v} value={v}>{v} miles</option>)}
+              </select>
+            </DropdownFilter>
+          </div>
+        ) : null}
       </section>
 
       <section style={listingSection}>
@@ -312,6 +333,7 @@ function milesBetween(lat1, lon1, lat2, lon2) {
 
 const heroSection = { marginTop: 24, background: '#121b3f', border: '1px solid #26366d', borderRadius: 16, padding: 18 };
 const filterSection = { marginTop: 16, background: '#121b3f', border: '1px solid #26366d', borderRadius: 16, padding: 12 };
+const mobileFilterToggle = { width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #304178', borderRadius: 10, background: '#0e1738', color: '#fff', padding: '10px 12px', cursor: 'pointer' };
 const listingSection = { marginTop: 16, background: '#121b3f', border: '1px solid #26366d', borderRadius: 16, padding: 12 };
 const primaryBtn = { border: 0, borderRadius: 10, background: '#2e7dff', color: '#fff', padding: '10px 12px', cursor: 'pointer' };
 const ghostBtn = { border: '1px solid #304178', borderRadius: 10, background: '#0e1738', color: '#fff', padding: '10px 12px', cursor: 'pointer' };
