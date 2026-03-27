@@ -17,18 +17,57 @@ export default function BottomNav() {
   return (
     <nav style={wrap}>
       <a href='/' style={item} aria-label='Home'>
-        <span style={{ fontSize: 20 }}>🏠</span>
+        <HomeIcon />
         <span style={label}>Home</span>
       </a>
       <a href='/listings/new' style={{ ...item, ...center }}>
-        <span style={{ fontSize: 20 }}>＋</span>
+        <PlusIcon />
         <span style={label}>Post Business</span>
       </a>
       <a href='/messages' style={item}>
-        <span style={{ fontSize: 20 }}>💬</span>
+        <MessageIcon />
         <span style={label}>Messages</span>
       </a>
     </nav>
+  );
+}
+
+function IconWrap({ children }) {
+  return (
+    <span style={{ width: 20, height: 20, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+      {children}
+    </span>
+  );
+}
+
+function HomeIcon() {
+  return (
+    <IconWrap>
+      <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+        <path d='M3 10.5 12 3l9 7.5' />
+        <path d='M5 9.8V21h14V9.8' />
+      </svg>
+    </IconWrap>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <IconWrap>
+      <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.2' strokeLinecap='round' strokeLinejoin='round'>
+        <path d='M12 5v14M5 12h14' />
+      </svg>
+    </IconWrap>
+  );
+}
+
+function MessageIcon() {
+  return (
+    <IconWrap>
+      <svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+        <path d='M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z' />
+      </svg>
+    </IconWrap>
   );
 }
 
