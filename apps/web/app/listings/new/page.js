@@ -22,6 +22,7 @@ const ages = Array.from({ length: 301 }, (_, i) => i);
 export default function NewListingPage() {
   const router = useRouter();
   const [form, setForm] = useState({
+    business_id: '',
     title: '',
     description: '',
     category: 'established',
@@ -39,24 +40,53 @@ export default function NewListingPage() {
   const [files, setFiles] = useState([]);
   const [msg, setMsg] = useState('');
   const [isAuthed, setIsAuthed] = useState(false);
+  const [approvedBusinesses, setApprovedBusinesses] = useState([]);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     async function checkAuth() {
       if (!supabase) return;
       const { data } = await supabase.auth.getUser();
-      setIsAuthed(!!data?.user);
+      const user = data?.user;
+      setIsAuthed(!!user);
+      if (!user) return;
+
+      const requestedBusiness = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('business') : '';
+
+      const { data: memberships } = await supabase
+        .from('business_memberships')
+        .select('business_id,role,businesses(id,name,status)')
+        .eq('user_id', user.id)
+        .eq('status', 'approved');
+
+      const options = (memberships || [])
+        .filter((m) => m.businesses?.status === 'approved')
+        .map((m) => ({ id: m.business_id, name: m.businesses?.name || 'Business', role: m.role || 'Authorized Representative' }));
+
+      setApprovedBusinesses(options);
+
+      if (options.length) {
+        const picked = options.find((o) => o.id === requestedBusiness) || options[0];
+        setForm((prev) => ({ ...prev, business_id: picked.id, lister_role: picked.role || prev.lister_role }));
+      }
     }
     checkAuth();
   }, []);
 
   function update(key, value) {
-    setForm((s) => ({ ...s, [key]: value }));
+    setForm((s) => {
+      if (key === 'business_id') {
+        const selected = approvedBusinesses.find((b) => b.id === value);
+        return { ...s, business_id: value, lister_role: selected?.role || s.lister_role };
+      }
+      return { ...s, [key]: value };
+    });
   }
 
   async function submit(e) {
     e.preventDefault();
     setErrors({});
+    if (!form.business_id) return setErrors((p)=>({ ...p, business_id: 'Choose an approved business first.' }));
     if (!form.title.trim()) return setErrors((p)=>({ ...p, title: 'Title is required.' }));
     if (!form.asking_price || Number(form.asking_price) <= 0) return setErrors((p)=>({ ...p, asking_price: 'Enter a valid asking price.' }));
     if (!supabase) return setMsg('Supabase env vars missing.');
@@ -72,14 +102,25 @@ export default function NewListingPage() {
       role: user.user_metadata?.role || 'seller',
     });
 
+    const { data: membership } = await supabase
+      .from('business_memberships')
+      .select('role,status')
+      .eq('user_id', user.id)
+      .eq('business_id', form.business_id)
+      .eq('status', 'approved')
+      .maybeSingle();
+
+    if (!membership) return setMsg('You are not approved to post for this business.');
+
     const { data: listing, error } = await supabase
       .from('listings')
       .insert({
         seller_id: user.id,
+        business_id: form.business_id,
         title: form.title,
         description: form.description,
         category: form.category,
-        lister_role: form.lister_role,
+        lister_role: membership.role || form.lister_role,
         business_age_years: Number(form.business_age_years),
         asking_price: Number(form.asking_price || 0),
         annual_revenue: form.annual_revenue ? Number(form.annual_revenue) : null,
@@ -131,11 +172,31 @@ export default function NewListingPage() {
     );
   }
 
+  if (isAuthed && approvedBusinesses.length === 0) {
+    return (
+      <main style={wrap}>
+        <div style={card}>
+          <h1>Post Business</h1>
+          <p>You need an approved business before posting.</p>
+          <a href='/businesses' style={{ color: '#8fb7ff' }}>Go to My Businesses</a>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main style={wrap}>
       <form onSubmit={submit} style={card}>
         <h1>Post Business</h1>
-        <input style={withError('title')} placeholder='Title' value={form.title} onChange={(e) => update('title', e.target.value)} required />
+
+        <label style={label}>Business (approved)</label>
+        <select style={withError('business_id')} value={form.business_id} onChange={(e) => update('business_id', e.target.value)} required>
+          <option value=''>Select your business</option>
+          {approvedBusinesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+        </select>
+        {errors.business_id ? <small style={errText}>{errors.business_id}</small> : null}
+
+        <input style={withError('title')} placeholder='Listing title / headline' value={form.title} onChange={(e) => update('title', e.target.value)} required />
         {errors.title ? <small style={errText}>{errors.title}</small> : null}
         <textarea style={input} placeholder='Description' value={form.description} onChange={(e) => update('description', e.target.value)} rows={4} />
         <select style={input} value={form.category} onChange={(e) => update('category', e.target.value)}>
@@ -144,15 +205,8 @@ export default function NewListingPage() {
           <option value='real_estate'>Real Estate</option>
           <option value='startup'>Start-up Businesses</option>
         </select>
-        <select style={input} value={form.lister_role} onChange={(e) => update('lister_role', e.target.value)}>
-          <option>Owner</option>
-          <option>CEO</option>
-          <option>Founder</option>
-          <option>Managing Partner</option>
-          <option>Broker</option>
-          <option>Manager</option>
-          <option>Authorized Representative</option>
-        </select>
+        <label style={label}>Posting as role</label>
+        <input style={input} value={form.lister_role} readOnly />
 
         <label style={label}>Business age (years)</label>
         <select style={input} value={form.business_age_years} onChange={(e) => update('business_age_years', e.target.value)}>

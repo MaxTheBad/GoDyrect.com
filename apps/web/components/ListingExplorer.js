@@ -37,6 +37,7 @@ export default function ListingExplorer() {
   const [searchDraft, setSearchDraft] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [favoriteIds, setFavoriteIds] = useState([]);
+  const [businessNames, setBusinessNames] = useState({});
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 900);
@@ -62,7 +63,7 @@ export default function ListingExplorer() {
 
       const { data } = await supabase
         .from('listings')
-        .select('id,seller_id,title,description,category,business_age_years,asking_price,city,state,country,county,lat,lng,created_at')
+        .select('id,seller_id,business_id,title,description,category,lister_role,business_age_years,asking_price,city,state,country,county,lat,lng,created_at')
         .eq('is_active', true)
         .eq('is_sold', false)
         .order('created_at', { ascending: false })
@@ -72,6 +73,19 @@ export default function ListingExplorer() {
       setListings(rows);
 
       if (rows.length) {
+        const businessIds = [...new Set(rows.map((r) => r.business_id).filter(Boolean))];
+        if (businessIds.length) {
+          const { data: businesses } = await supabase
+            .from('businesses')
+            .select('id,name')
+            .in('id', businessIds);
+          const map = {};
+          (businesses || []).forEach((b) => {
+            map[b.id] = b.name;
+          });
+          setBusinessNames(map);
+        }
+
         const ids = rows.map((r) => r.id);
         const { data: media } = await supabase
           .from('listing_media')
@@ -380,8 +394,9 @@ export default function ListingExplorer() {
                 <div style={{ display: 'grid', gap: 8, flex: 1, minWidth: 0 }}>
                   <strong>{l.title}</strong>
                   <div style={{ opacity: 0.85, color: '#4b5563', fontSize: 13 }}>
-                    {prettyCategory(l.category)} · {l.business_age_years ?? 0} years · {[l.city, l.state, l.country].filter(Boolean).join(', ') || 'Location not set'}
+                    {(businessNames[l.business_id] || 'Business')} · {prettyCategory(l.category)} · {l.business_age_years ?? 0} years · {[l.city, l.state, l.country].filter(Boolean).join(', ') || 'Location not set'}
                   </div>
+                  <div style={{ opacity: 0.75, color: '#6b7280', fontSize: 12 }}>Posted as: {l.lister_role || 'Authorized Representative'}</div>
                   <div style={{ opacity: 0.75, color: '#6b7280', fontSize: 12 }}>{counts.photos} photos · {counts.videos} videos</div>
 
                   {media.length ? (

@@ -63,6 +63,7 @@ export default function AuthNav() {
     <>
       <a href='/dashboard' style={ghostBtn}>Dashboard</a>
       <a href='/profile' style={ghostBtn}>Profile</a>
+      <a href='/businesses' style={ghostBtn}>My Businesses</a>
       <a href='/favorites' style={ghostBtn}>Favorites</a>
       <a href='/listings/new' style={primaryBtn}>Sell</a>
       <a href='/messages' style={ghostBtn}>Messages</a>

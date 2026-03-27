@@ -8,6 +8,7 @@ export default function ListingDetailPage() {
   const [listing, setListing] = useState(null);
   const [media, setMedia] = useState([]);
   const [seller, setSeller] = useState(null);
+  const [business, setBusiness] = useState(null);
   const [viewerId, setViewerId] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
   const [msg, setMsg] = useState('');
@@ -45,7 +46,7 @@ export default function ListingDetailPage() {
       if (lErr) return setMsg(lErr.message);
       setListing(l);
 
-      const [{ data: m, error: mErr }, { data: s }] = await Promise.all([
+      const [{ data: m, error: mErr }, { data: s }, { data: b }] = await Promise.all([
         supabase
           .from('listing_media')
           .select('id,media_type,url,thumbnail_url,sort_order')
@@ -56,11 +57,15 @@ export default function ListingDetailPage() {
           .select('id,full_name,handle,role,avatar_url')
           .eq('id', l.seller_id)
           .maybeSingle(),
+        l.business_id
+          ? supabase.from('businesses').select('id,name').eq('id', l.business_id).maybeSingle()
+          : Promise.resolve({ data: null }),
       ]);
 
       if (mErr) return setMsg(mErr.message);
       setMedia(m || []);
       setSeller(s || null);
+      setBusiness(b || null);
     }
 
     load();
@@ -99,7 +104,7 @@ export default function ListingDetailPage() {
     <main style={wrap}>
       <div style={card}>
         <h1 style={{ marginTop: 0 }}>{listing.title}</h1>
-        <p style={{ opacity: 0.85 }}>{listing.category} · {listing.business_age_years ?? 0} years · {[listing.city, listing.state, listing.country].filter(Boolean).join(', ')}</p>
+        <p style={{ opacity: 0.85 }}>{business?.name || 'Business'} · {listing.category} · {listing.business_age_years ?? 0} years · {[listing.city, listing.state, listing.country].filter(Boolean).join(', ')}</p>
         <h2 style={{ marginTop: 8 }}>${Number(listing.asking_price || 0).toLocaleString()}</h2>
 
         <section style={section}>

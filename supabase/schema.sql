@@ -8,7 +8,7 @@ create table if not exists public.profiles (
   handle text unique,
   full_name text,
   phone text,
-  role text check (role in ('buyer','seller','not_sure')) default 'buyer',
+  role text check (role in ('buyer','seller','broker','not_sure')) default 'buyer',
   marketing_opt_in boolean default false,
   terms_accepted_at timestamptz,
   avatar_url text,
@@ -16,6 +16,30 @@ create table if not exists public.profiles (
   created_at timestamptz default now() not null,
   updated_at timestamptz default now() not null
 );
+
+create table if not exists public.businesses (
+  id uuid primary key default uuid_generate_v4(),
+  name text not null,
+  slug text unique,
+  status text not null default 'approved' check (status in ('pending','approved','rejected')),
+  created_by uuid not null references public.profiles(id) on delete cascade,
+  created_at timestamptz default now() not null,
+  updated_at timestamptz default now() not null
+);
+
+create table if not exists public.business_memberships (
+  id uuid primary key default uuid_generate_v4(),
+  business_id uuid not null references public.businesses(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  role text not null default 'owner',
+  is_admin boolean not null default false,
+  status text not null default 'approved' check (status in ('pending','approved','rejected')),
+  created_at timestamptz default now() not null,
+  unique (business_id, user_id)
+);
+
+create index if not exists idx_business_memberships_user on public.business_memberships(user_id);
+create index if not exists idx_business_memberships_business on public.business_memberships(business_id);
 
 create type public.listing_category as enum (
   'established',
@@ -27,6 +51,7 @@ create type public.listing_category as enum (
 create table if not exists public.listings (
   id uuid primary key default uuid_generate_v4(),
   seller_id uuid not null references public.profiles(id) on delete cascade,
+  business_id uuid references public.businesses(id) on delete set null,
   title text not null,
   description text,
   category public.listing_category not null,
@@ -50,6 +75,7 @@ create index if not exists idx_listings_category on public.listings(category);
 create index if not exists idx_listings_price on public.listings(asking_price);
 create index if not exists idx_listings_age on public.listings(business_age_years);
 create index if not exists idx_listings_geo on public.listings(lat, lng);
+create index if not exists idx_listings_business on public.listings(business_id);
 
 create table if not exists public.listing_media (
   id uuid primary key default uuid_generate_v4(),
@@ -104,6 +130,11 @@ create trigger trg_listings_updated_at
 before update on public.listings
 for each row execute procedure public.set_updated_at();
 
+drop trigger if exists trg_businesses_updated_at on public.businesses;
+create trigger trg_businesses_updated_at
+before update on public.businesses
+for each row execute procedure public.set_updated_at();
+
 -- Auto-create profile row for every auth user (prevents listings FK errors)
 create or replace function public.handle_new_user()
 returns trigger
@@ -139,6 +170,8 @@ for each row execute function public.handle_new_user();
 
 -- RLS
 alter table public.profiles enable row level security;
+alter table public.businesses enable row level security;
+alter table public.business_memberships enable row level security;
 alter table public.listings enable row level security;
 alter table public.listing_media enable row level security;
 alter table public.favorites enable row level security;
@@ -150,6 +183,58 @@ create policy "profiles are public readable" on public.profiles
 for select using (true);
 create policy "users can upsert own profile" on public.profiles
 for all using (auth.uid() = id) with check (auth.uid() = id);
+
+-- Policies: businesses
+drop policy if exists "businesses public readable" on public.businesses;
+create policy "businesses public readable" on public.businesses
+for select using (status = 'approved');
+drop policy if exists "businesses creator manages" on public.businesses;
+create policy "businesses creator manages" on public.businesses
+for all using (auth.uid() = created_by) with check (auth.uid() = created_by);
+
+-- Policies: business memberships
+drop policy if exists "members read memberships" on public.business_memberships;
+create policy "members read memberships" on public.business_memberships
+for select using (
+  auth.uid() = user_id
+  or exists(
+    select 1 from public.business_memberships bm
+    where bm.business_id = business_memberships.business_id
+      and bm.user_id = auth.uid()
+      and bm.status = 'approved'
+  )
+);
+
+drop policy if exists "creator seeds own membership" on public.business_memberships;
+create policy "creator seeds own membership" on public.business_memberships
+for insert with check (
+  auth.uid() = user_id
+  and exists(
+    select 1 from public.businesses b
+    where b.id = business_memberships.business_id
+      and b.created_by = auth.uid()
+  )
+);
+
+drop policy if exists "admins manage memberships" on public.business_memberships;
+create policy "admins manage memberships" on public.business_memberships
+for all using (
+  exists(
+    select 1 from public.business_memberships bm
+    where bm.business_id = business_memberships.business_id
+      and bm.user_id = auth.uid()
+      and bm.is_admin = true
+      and bm.status = 'approved'
+  )
+) with check (
+  exists(
+    select 1 from public.business_memberships bm
+    where bm.business_id = business_memberships.business_id
+      and bm.user_id = auth.uid()
+      and bm.is_admin = true
+      and bm.status = 'approved'
+  )
+);
 
 -- Policies: listings
 create policy "listings readable" on public.listings
@@ -196,9 +281,11 @@ alter table public.profiles add column if not exists marketing_opt_in boolean de
 alter table public.profiles add column if not exists terms_accepted_at timestamptz;
 alter table public.profiles alter column role set default 'buyer';
 alter table public.profiles drop constraint if exists profiles_role_check;
-alter table public.profiles add constraint profiles_role_check check (role in ('buyer','seller','not_sure'));
+alter table public.profiles add constraint profiles_role_check check (role in ('buyer','seller','broker','not_sure'));
 
 -- Search support (name/category/keywords only, not description)
+alter table public.listings
+  add column if not exists business_id uuid references public.businesses(id) on delete set null;
 alter table public.listings
   add column if not exists lister_role text;
 alter table public.listings

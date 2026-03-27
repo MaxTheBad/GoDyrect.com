@@ -107,6 +107,7 @@ export default function SignupPage() {
             <select style={input} value={role} onChange={(e) => setRole(e.target.value)}>
               <option value='buyer'>Buyer</option>
               <option value='seller'>Seller</option>
+              <option value='broker'>Broker</option>
               <option value='not_sure'>Not sure yet</option>
             </select>
 
