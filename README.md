@@ -26,3 +26,5 @@ Cross-platform business marketplace:
 - Media: Cloudinary (initial)
 - Hosting: Cloudflare (web) + Supabase backend
 
+
+Deployment note: use latest commit on main.
