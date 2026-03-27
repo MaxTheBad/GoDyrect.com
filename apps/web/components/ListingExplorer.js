@@ -300,14 +300,32 @@ export default function ListingExplorer() {
     const isFollowing = sellerFollowIds.includes(sellerId);
     if (isFollowing) {
       const { error } = await supabase.from('user_follows').delete().eq('follower_user_id', viewerId).eq('followed_user_id', sellerId);
-      if (error) return;
+      if (error) {
+        setToast(error.message || 'Could not unfollow seller');
+        setTimeout(() => setToast(''), 2200);
+        return;
+      }
       setSellerFollowIds((prev) => prev.filter((id) => id !== sellerId));
+      setToast('Unfollowed seller');
+      setTimeout(() => setToast(''), 1200);
       return;
     }
 
     const { error } = await supabase.from('user_follows').insert({ follower_user_id: viewerId, followed_user_id: sellerId });
-    if (error) return;
+    if (error) {
+      if (error.message?.includes('duplicate key')) {
+        setSellerFollowIds((prev) => (prev.includes(sellerId) ? prev : [...prev, sellerId]));
+        setToast('Already following this seller');
+        setTimeout(() => setToast(''), 1200);
+        return;
+      }
+      setToast(error.message || 'Could not follow seller');
+      setTimeout(() => setToast(''), 2200);
+      return;
+    }
     setSellerFollowIds((prev) => [...prev, sellerId]);
+    setToast('Following seller');
+    setTimeout(() => setToast(''), 1200);
   }
 
   async function toggleFollowBusiness(businessId) {
@@ -341,6 +359,11 @@ export default function ListingExplorer() {
       .insert({ follower_user_id: viewerId, business_id: businessId });
 
     if (error) {
+      if (error.message?.includes('schema cache') || error.message?.includes("public.business_follows")) {
+        setToast('Business follows DB table is missing. Run latest Supabase SQL migration.');
+        setTimeout(() => setToast(''), 3200);
+        return;
+      }
       if (error.message?.includes('duplicate key')) {
         setBusinessFollowIds((prev) => (prev.includes(businessId) ? prev : [...prev, businessId]));
         setToast('Already following this business');
@@ -510,7 +533,12 @@ export default function ListingExplorer() {
                     {seller?.avatar_url ? <img src={seller.avatar_url} alt='seller' style={sellerAvatar} /> : <div style={sellerAvatarFallback}>{(seller?.full_name || seller?.handle || '?').slice(0,1).toUpperCase()}</div>}
                     <span>{seller?.full_name || seller?.handle || 'Seller'}</span>
                   </a>
-                  {l.business_id ? <a href={`/business/view?id=${l.business_id}`} style={bizLink}>{businessNames[l.business_id] || 'Business'}</a> : null}
+                  {l.business_id ? (
+                    <a href={`/business/view?id=${l.business_id}`} style={bizIdentityLink}>
+                      <div style={bizLogoPlaceholder}>{(businessNames[l.business_id] || 'B').slice(0, 1).toUpperCase()}</div>
+                      <span>{businessNames[l.business_id] || 'Business'}</span>
+                    </a>
+                  ) : null}
                 </div>
 
                 <a href={`/listing?id=${l.id}`} style={titleLink}>{l.title}</a>
@@ -658,7 +686,8 @@ const cardTop = { display: 'flex', justifyContent: 'space-between', alignItems: 
 const identityLink = { display: 'inline-flex', alignItems: 'center', gap: 8, color: '#111827', textDecoration: 'none', fontWeight: 600 };
 const sellerAvatar = { width: 30, height: 30, borderRadius: 999, objectFit: 'cover', border: '1px solid #eceff5' };
 const sellerAvatarFallback = { width: 30, height: 30, borderRadius: 999, display: 'grid', placeItems: 'center', background: '#f3f4f6', color: '#374151', fontSize: 12, fontWeight: 700, border: '1px solid #eceff5' };
-const bizLink = { color: '#4b5563', textDecoration: 'none', fontSize: 13, fontWeight: 600 };
+const bizIdentityLink = { display: 'inline-flex', alignItems: 'center', gap: 8, color: '#4b5563', textDecoration: 'none', fontSize: 13, fontWeight: 600 };
+const bizLogoPlaceholder = { width: 26, height: 26, borderRadius: 8, display: 'grid', placeItems: 'center', background: '#eef2ff', color: '#334155', fontSize: 12, fontWeight: 700, border: '1px solid #e5e7eb' };
 const titleLink = { color: '#111827', textDecoration: 'none', fontWeight: 700, fontSize: 17 };
 const mediaStageWrap = { position: 'relative', borderRadius: 14, overflow: 'hidden', border: '1px solid #eceff5', background: '#f3f4f6' };
 const mediaMainBtn = { border: 0, padding: 0, background: 'transparent', width: '100%', cursor: 'pointer' };

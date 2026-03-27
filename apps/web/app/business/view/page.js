@@ -88,8 +88,8 @@ export default function BusinessProfilePage() {
   );
 }
 
-const wrap = { minHeight: '100vh', padding: 24, background: '#0b1020', color: '#fff' };
-const card = { maxWidth: 860, margin: '0 auto', display: 'grid', gap: 10, background: '#121b3f', border: '1px solid #2a3c78', borderRadius: 12, padding: 16 };
-const section = { marginTop: 10, background: '#0e1738', border: '1px solid #304178', borderRadius: 10, padding: 10 };
-const rowLink = { display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', padding: '8px 10px', border: '1px solid #304178', borderRadius: 8, color: '#fff', textDecoration: 'none' };
+const wrap = { minHeight: '100vh', padding: 24, background: 'radial-gradient(circle at top right, #ffe7f1 0%, #f8fafc 40%, #f8fafc 100%)', color: '#111827' };
+const card = { maxWidth: 860, margin: '0 auto', display: 'grid', gap: 10, background: '#fff', border: '1px solid #eceff5', borderRadius: 12, padding: 16, boxShadow: '0 8px 24px rgba(17,24,39,0.06)' };
+const section = { marginTop: 10, background: '#fff', border: '1px solid #eceff5', borderRadius: 10, padding: 10 };
+const rowLink = { display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', padding: '8px 10px', border: '1px solid #eceff5', borderRadius: 8, color: '#111827', textDecoration: 'none' };
 const btn = { border: 0, borderRadius: 999, background: '#2e7dff', color: '#fff', padding: '8px 12px', width: 'fit-content', cursor: 'pointer' };

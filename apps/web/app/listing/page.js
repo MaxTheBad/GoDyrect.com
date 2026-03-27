@@ -145,13 +145,21 @@ export default function ListingDetailPage() {
       if (error) return setMsg(error.message);
       setIsFollowingSeller(false);
       setSellerFollowerCount((c) => Math.max(c - 1, 0));
+      setMsg('Unfollowed seller');
       return;
     }
 
     const { error } = await supabase.from('user_follows').insert({ follower_user_id: viewerId, followed_user_id: listing.seller_id });
-    if (error) return setMsg(error.message);
+    if (error) {
+      if (error.message?.includes('duplicate key')) {
+        setIsFollowingSeller(true);
+        return setMsg('Already following this seller');
+      }
+      return setMsg(error.message);
+    }
     setIsFollowingSeller(true);
     setSellerFollowerCount((c) => c + 1);
+    setMsg('Following seller');
   }
 
   async function toggleFollowBusiness() {
@@ -167,6 +175,9 @@ export default function ListingDetailPage() {
 
     const { error } = await supabase.from('business_follows').insert({ follower_user_id: viewerId, business_id: listing.business_id });
     if (error) {
+      if (error.message?.includes('schema cache') || error.message?.includes("public.business_follows")) {
+        return setMsg('Business follows table is missing in Supabase cache. Run latest SQL migration and refresh.');
+      }
       if (error.message?.includes('duplicate key')) {
         setIsFollowingBusiness(true);
         return setMsg('Already following this business');
@@ -182,7 +193,16 @@ export default function ListingDetailPage() {
     <main style={wrap}>
       <div style={card}>
         <h1 style={{ marginTop: 0 }}>{listing.title}</h1>
-        <p style={{ opacity: 0.85 }}>{business?.name || 'Business'} · {listing.category} · {listing.business_age_years ?? 0} years · {[listing.city, listing.state, listing.country].filter(Boolean).join(', ')}</p>
+        <p style={{ opacity: 0.85 }}>{listing.category} · {listing.business_age_years ?? 0} years · {[listing.city, listing.state, listing.country].filter(Boolean).join(', ')}</p>
+        {business?.id ? (
+          <a href={`/business/view?id=${business.id}`} style={businessIdentityWrap}>
+            <div style={businessLogoFallback}>{(business.name || 'B').slice(0, 1).toUpperCase()}</div>
+            <div>
+              <strong>{business.name}</strong>
+              <div style={{ opacity: 0.72, fontSize: 12 }}>Business profile</div>
+            </div>
+          </a>
+        ) : null}
         <h2 style={{ marginTop: 8 }}>${Number(listing.asking_price || 0).toLocaleString()}</h2>
 
         <section style={section}>
@@ -250,13 +270,15 @@ function initial(name) {
   return name.trim().charAt(0).toUpperCase();
 }
 
-const wrap = { minHeight: '100vh', padding: 24, background: '#0b1020', color: '#fff' };
-const card = { maxWidth: 1000, margin: '0 auto', background: '#121b3f', border: '1px solid #2a3c78', borderRadius: 12, padding: 16 };
-const section = { marginTop: 14, background: '#0e1738', border: '1px solid #304178', borderRadius: 10, padding: 12 };
-const sellerWrap = { display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: '#fff' };
-const avatar = { width: 40, height: 40, borderRadius: 999, objectFit: 'cover', border: '1px solid #3a4f8f' };
-const avatarFallback = { width: 40, height: 40, borderRadius: 999, display: 'grid', placeItems: 'center', background: '#243569', border: '1px solid #3a4f8f' };
-const mediaCard = { border: '1px solid #304178', borderRadius: 10, overflow: 'hidden', background: '#0b1431' };
+const wrap = { minHeight: '100vh', padding: 24, background: 'radial-gradient(circle at top right, #ffe7f1 0%, #f8fafc 40%, #f8fafc 100%)', color: '#111827' };
+const card = { maxWidth: 1000, margin: '0 auto', background: '#fff', border: '1px solid #eceff5', borderRadius: 12, padding: 16, boxShadow: '0 8px 24px rgba(17,24,39,0.06)' };
+const section = { marginTop: 14, background: '#fff', border: '1px solid #eceff5', borderRadius: 10, padding: 12 };
+const sellerWrap = { display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: '#111827' };
+const avatar = { width: 40, height: 40, borderRadius: 999, objectFit: 'cover', border: '1px solid #e5e7eb' };
+const avatarFallback = { width: 40, height: 40, borderRadius: 999, display: 'grid', placeItems: 'center', background: '#f3f4f6', border: '1px solid #e5e7eb' };
+const businessIdentityWrap = { marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: '#111827' };
+const businessLogoFallback = { width: 34, height: 34, borderRadius: 10, display: 'grid', placeItems: 'center', background: '#eef2ff', border: '1px solid #e5e7eb', color: '#334155', fontWeight: 700 };
+const mediaCard = { border: '1px solid #eceff5', borderRadius: 10, overflow: 'hidden', background: '#fff' };
 const mediaEl = { width: '100%', height: 170, objectFit: 'cover', display: 'block' };
 const btn = { border: 0, borderRadius: 8, background: '#2e7dff', color: '#fff', padding: '10px 12px', textDecoration: 'none' };
-const ghostBtn = { border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '10px 12px', textDecoration: 'none' };
+const ghostBtn = { border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', color: '#111827', padding: '10px 12px', textDecoration: 'none' };
