@@ -64,6 +64,7 @@ export default function MyBusinessesPage() {
   const [newBusinessCountry, setNewBusinessCountry] = useState('United States');
   const [inviteByBusiness, setInviteByBusiness] = useState({});
   const [focusBusinessId, setFocusBusinessId] = useState('');
+  const [savedBusinessId, setSavedBusinessId] = useState('');
   const [msg, setMsg] = useState('');
 
   async function loadAll() {
@@ -203,7 +204,18 @@ export default function MyBusinessesPage() {
     };
 
     const { error } = await supabase.from('businesses').update(payload).eq('id', businessId);
-    setMsg(error ? error.message : 'Business details saved.');
+    if (error) {
+      setMsg(error.message);
+      setSavedBusinessId('');
+      return;
+    }
+
+    setSavedBusinessId(businessId);
+    setMsg('Business saved.');
+    setTimeout(() => {
+      const el = document.getElementById(`members-${businessId}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   }
 
   async function inviteMember(businessId) {
@@ -301,7 +313,15 @@ export default function MyBusinessesPage() {
                   <button style={btnPrimary} type='button' onClick={() => saveDetails(row.business_id)}>Save Business Details</button>
                 </div>
 
-                <div style={{ marginTop: 8 }}>
+                {savedBusinessId === row.business_id ? (
+                  <div style={savedBanner}>
+                    <strong>✅ Business saved</strong>
+                    <span style={{ opacity: 0.9 }}>Now manage people/members below.</span>
+                    <button type='button' style={savedManageBtn} onClick={() => document.getElementById(`members-${row.business_id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>Manage Members</button>
+                  </div>
+                ) : null}
+
+                <div id={`members-${row.business_id}`} style={{ marginTop: 8 }}>
                   <strong style={{ fontSize: 13 }}>People</strong>
                   <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
                     {members.map((m) => (
@@ -353,3 +373,5 @@ const input = { borderRadius: 8, border: '1px solid #304178', background: '#0b14
 const btn = { border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '8px 10px', textDecoration: 'none', cursor: 'pointer' };
 const btnPrimary = { border: 0, borderRadius: 8, background: '#2e7dff', color: '#fff', padding: '10px 12px', cursor: 'pointer' };
 const label = { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 };
+const savedBanner = { marginTop: 10, border: '1px solid #2f8f5b', borderRadius: 10, background: '#123825', color: '#d8ffe9', padding: '10px 12px', display: 'grid', gap: 6 };
+const savedManageBtn = { width: 'fit-content', border: '1px solid #57b987', borderRadius: 999, background: '#16472f', color: '#e9fff3', padding: '6px 10px', cursor: 'pointer', fontWeight: 600 };
