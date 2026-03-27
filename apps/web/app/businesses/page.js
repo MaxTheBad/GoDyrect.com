@@ -14,6 +14,24 @@ function yearsSince(startDate) {
   return Math.max(0, years);
 }
 
+function completeness(details) {
+  const fields = [
+    !!details.description,
+    !!details.category,
+    !!details.start_date,
+    details.annual_revenue !== '' && details.annual_revenue !== null,
+    details.annual_profit !== '' && details.annual_profit !== null,
+    details.default_asking_price !== '' && details.default_asking_price !== null,
+    !!details.city,
+    !!details.state,
+    !!details.country,
+    !!details.county,
+    !!details.keywords,
+  ];
+  const done = fields.filter(Boolean).length;
+  return Math.round((done / fields.length) * 100);
+}
+
 const emptyDetails = {
   description: '',
   category: 'established',
@@ -212,6 +230,7 @@ export default function MyBusinessesPage() {
             const invite = inviteByBusiness[row.business_id] || { user_id: '', role: 'Authorized Representative', is_admin: false };
             const details = detailsByBusiness[row.business_id] || emptyDetails;
             const age = yearsSince(details.start_date);
+            const completePct = completeness(details);
 
             return (
               <section key={row.business_id} style={bizCard}>
@@ -220,6 +239,7 @@ export default function MyBusinessesPage() {
                     <strong>{row.business?.name || 'Business'}</strong>
                     <div style={{ opacity: 0.8, fontSize: 13 }}>Your role: {row.role}{row.is_admin ? ' · Admin' : ''}</div>
                     <div style={{ opacity: 0.72, fontSize: 12 }}>{age !== null ? `Calculated age: ${age} year${age === 1 ? '' : 's'}` : 'Set start date to auto-calculate age'}</div>
+                    <div style={{ opacity: 0.72, fontSize: 12 }}>Profile completeness: {completePct}%</div>
                   </div>
                   <a href={`/listings/new?business=${row.business_id}`} style={btn}>Post as this business</a>
                 </div>

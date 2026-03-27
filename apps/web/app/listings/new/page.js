@@ -15,6 +15,23 @@ function yearsSince(startDate) {
   return Math.max(0, years);
 }
 
+function completeness(business) {
+  const fields = [
+    !!business?.description,
+    !!business?.category,
+    !!business?.start_date,
+    business?.annual_revenue != null,
+    business?.annual_profit != null,
+    business?.default_asking_price != null,
+    !!business?.city,
+    !!business?.state,
+    !!business?.country,
+    !!business?.county,
+    Array.isArray(business?.keywords) && business.keywords.length > 0,
+  ];
+  return Math.round((fields.filter(Boolean).length / fields.length) * 100);
+}
+
 export default function NewListingPage() {
   const router = useRouter();
   const [form, setForm] = useState({ business_id: '', title: '', lister_role: 'Owner', asking_price: '' });
@@ -23,6 +40,7 @@ export default function NewListingPage() {
   const [isAuthed, setIsAuthed] = useState(false);
   const [approvedBusinesses, setApprovedBusinesses] = useState([]);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
+  const [useDefaultAskingPrice, setUseDefaultAskingPrice] = useState(true);
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -84,7 +102,9 @@ export default function NewListingPage() {
           ...s,
           business_id: value,
           lister_role: selected?.role || s.lister_role,
-          asking_price: selected?.business?.default_asking_price ? String(selected.business.default_asking_price) : s.asking_price,
+          asking_price: useDefaultAskingPrice && selected?.business?.default_asking_price
+            ? String(selected.business.default_asking_price)
+            : s.asking_price,
         };
       }
       return { ...s, [key]: value };
@@ -92,6 +112,13 @@ export default function NewListingPage() {
   }
 
   const computedAge = useMemo(() => yearsSince(selectedBusiness?.start_date), [selectedBusiness]);
+  const completenessPct = useMemo(() => completeness(selectedBusiness || {}), [selectedBusiness]);
+
+  useEffect(() => {
+    if (useDefaultAskingPrice && selectedBusiness?.default_asking_price) {
+      setForm((prev) => ({ ...prev, asking_price: String(selectedBusiness.default_asking_price) }));
+    }
+  }, [useDefaultAskingPrice, selectedBusiness]);
 
   async function submit(e) {
     e.preventDefault();
@@ -117,6 +144,27 @@ export default function NewListingPage() {
     if (!membership) return setMsg('You are not approved to post for this business.');
 
     const business = membership.businesses || {};
+
+    const { count: existingListingsCount } = await supabase
+      .from('listings')
+      .select('id', { count: 'exact', head: true })
+      .eq('business_id', form.business_id);
+
+    const isFirstPostForBusiness = !existingListingsCount;
+    if (isFirstPostForBusiness) {
+      const missing = [];
+      if (!business.description) missing.push('description');
+      if (!business.category) missing.push('category');
+      if (!business.start_date) missing.push('start date');
+      if (business.annual_revenue == null) missing.push('annual revenue');
+      if (business.annual_profit == null) missing.push('annual profit');
+      if (!business.city || !business.state || !business.country) missing.push('location (city/state/country)');
+      if (!Array.isArray(business.keywords) || business.keywords.length === 0) missing.push('keywords');
+
+      if (missing.length) {
+        return setMsg(`Before first post, complete business profile fields in My Businesses: ${missing.join(', ')}.`);
+      }
+    }
 
     const { data: listing, error } = await supabase
       .from('listings')
@@ -193,7 +241,18 @@ export default function NewListingPage() {
         <label style={label}>Posting as role</label>
         <input style={input} value={form.lister_role} readOnly />
 
-        <input style={withError('asking_price')} placeholder='Asking price' value={form.asking_price} onChange={(e) => update('asking_price', e.target.value)} required />
+        <label style={{ ...label, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <input type='checkbox' checked={useDefaultAskingPrice} onChange={(e) => setUseDefaultAskingPrice(e.target.checked)} />
+          Use business default asking price
+        </label>
+        <input
+          style={withError('asking_price')}
+          placeholder='Asking price'
+          value={form.asking_price}
+          onChange={(e) => update('asking_price', e.target.value)}
+          disabled={useDefaultAskingPrice && !!selectedBusiness?.default_asking_price}
+          required
+        />
 
         {selectedBusiness ? (
           <div style={infoBox}>
@@ -202,6 +261,7 @@ export default function NewListingPage() {
             <div style={small}>Business age: {computedAge !== null ? `${computedAge} years (from start date)` : '—'}</div>
             <div style={small}>Revenue: {selectedBusiness.annual_revenue ?? '—'} · Profit: {selectedBusiness.annual_profit ?? '—'}</div>
             <div style={small}>Location: {[selectedBusiness.city, selectedBusiness.state, selectedBusiness.country].filter(Boolean).join(', ') || '—'}</div>
+            <div style={small}>Profile completeness: {completenessPct}%</div>
           </div>
         ) : null}
 
