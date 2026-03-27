@@ -37,6 +37,7 @@ export default function NewListingPage() {
   const [files, setFiles] = useState([]);
   const [msg, setMsg] = useState('');
   const [isAuthed, setIsAuthed] = useState(false);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
     async function checkAuth() {
@@ -53,6 +54,9 @@ export default function NewListingPage() {
 
   async function submit(e) {
     e.preventDefault();
+    setErrors({});
+    if (!form.title.trim()) return setErrors((p)=>({ ...p, title: 'Title is required.' }));
+    if (!form.asking_price || Number(form.asking_price) <= 0) return setErrors((p)=>({ ...p, asking_price: 'Enter a valid asking price.' }));
     if (!supabase) return setMsg('Supabase env vars missing.');
 
     const { data: userData } = await supabase.auth.getUser();
@@ -108,6 +112,8 @@ export default function NewListingPage() {
     setTimeout(() => router.push('/listings'), 400);
   }
 
+  const withError = (key) => ({ ...input, border: errors[key] ? '1px solid #ef5350' : input.border });
+
   if (!isAuthed) {
     return (
       <main style={wrap}>
@@ -125,7 +131,8 @@ export default function NewListingPage() {
     <main style={wrap}>
       <form onSubmit={submit} style={card}>
         <h1>Post Business</h1>
-        <input style={input} placeholder='Title' value={form.title} onChange={(e) => update('title', e.target.value)} required />
+        <input style={withError('title')} placeholder='Title' value={form.title} onChange={(e) => update('title', e.target.value)} required />
+        {errors.title ? <small style={errText}>{errors.title}</small> : null}
         <textarea style={input} placeholder='Description' value={form.description} onChange={(e) => update('description', e.target.value)} rows={4} />
         <select style={input} value={form.category} onChange={(e) => update('category', e.target.value)}>
           <option value='established'>Established Businesses</option>
@@ -139,7 +146,8 @@ export default function NewListingPage() {
           {ages.map((age) => <option key={age} value={age}>{age}</option>)}
         </select>
 
-        <input style={input} placeholder='Asking price' value={form.asking_price} onChange={(e) => update('asking_price', e.target.value)} required />
+        <input style={withError('asking_price')} placeholder='Asking price' value={form.asking_price} onChange={(e) => update('asking_price', e.target.value)} required />
+        {errors.asking_price ? <small style={errText}>{errors.asking_price}</small> : null}
         <input style={input} placeholder='Annual revenue (optional)' value={form.annual_revenue} onChange={(e) => update('annual_revenue', e.target.value)} />
         <input style={input} placeholder='Annual profit (optional)' value={form.annual_profit} onChange={(e) => update('annual_profit', e.target.value)} />
         <input style={input} placeholder='City' value={form.city} onChange={(e) => update('city', e.target.value)} />
@@ -169,3 +177,4 @@ const card = { maxWidth: 680, display: 'grid', gap: 10, background: '#121b3f', p
 const label = { fontSize: 13, opacity: 0.85 };
 const input = { borderRadius: 8, border: '1px solid #304178', background: '#0b1431', color: '#fff', padding: '10px 12px' };
 const btn = { border: 0, borderRadius: 8, background: '#2e7dff', color: '#fff', padding: '10px 12px' };
+const errText = { color: '#ff8a80', fontSize: 12, marginTop: -4 };

@@ -14,9 +14,11 @@ export default function SignupPage() {
   const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [confirmationSent, setConfirmationSent] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [errors, setErrors] = useState({});
 
   async function submit(e) {
     e.preventDefault();
+    setErrors({});
     if (!supabase) return setMsg('Supabase env vars are missing.');
     if (!agree) return setMsg('Please agree to the policy before creating an account.');
 
@@ -70,6 +72,12 @@ export default function SignupPage() {
     }, 1000);
   }
 
+
+
+  function markInvalid(field, message) {
+    setErrors((prev) => ({ ...prev, [field]: message }));
+  }
+
   return (
     <main style={wrap}>
       <div style={card}>
@@ -84,13 +92,16 @@ export default function SignupPage() {
             <p style={{ marginTop: 4, opacity: 0.85 }}>Start as a buyer, seller, or choose later.</p>
 
             <label style={label}>Full name</label>
-            <input style={input} placeholder='John Smith' value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+            <input style={inputError(errors.fullName)} placeholder='John Smith' value={fullName} onChange={(e) => setFullName(e.target.value)} onInvalid={(e)=>{e.preventDefault(); markInvalid('fullName','Full name is required.');}} onInput={()=>setErrors((p)=>({ ...p, fullName: '' }))} required />
+            {errors.fullName ? <small style={errText}>{errors.fullName}</small> : null}
 
             <label style={label}>Email (confirmation required)</label>
-            <input style={input} type='email' name='email' autoComplete='email' placeholder='you@email.com' value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <input style={inputError(errors.email)} type='email' name='email' autoComplete='email' placeholder='you@email.com' value={email} onChange={(e) => setEmail(e.target.value)} onInvalid={(e)=>{e.preventDefault(); markInvalid('email','Valid email is required.');}} onInput={()=>setErrors((p)=>({ ...p, email: '' }))} required />
+            {errors.email ? <small style={errText}>{errors.email}</small> : null}
 
             <label style={label}>Phone number</label>
-            <input style={input} placeholder='+1 (555) 555-5555' value={phone} onChange={(e) => setPhone(e.target.value)} required />
+            <input style={inputError(errors.phone)} placeholder='+1 (555) 555-5555' value={phone} onChange={(e) => setPhone(e.target.value)} onInvalid={(e)=>{e.preventDefault(); markInvalid('phone','Phone number is required.');}} onInput={()=>setErrors((p)=>({ ...p, phone: '' }))} required />
+            {errors.phone ? <small style={errText}>{errors.phone}</small> : null}
 
             <label style={label}>I am joining as</label>
             <select style={input} value={role} onChange={(e) => setRole(e.target.value)}>
@@ -101,7 +112,7 @@ export default function SignupPage() {
 
             <label style={label}>Password</label>
             <input
-              style={input}
+              style={inputError(errors.password)}
               placeholder='Create a password'
               type='password'
               name='password'
@@ -109,13 +120,17 @@ export default function SignupPage() {
               autoComplete='new-password'
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onInvalid={(e)=>{e.preventDefault(); markInvalid('password','Password is required.');}}
+              onInput={()=>setErrors((p)=>({ ...p, password: '' }))}
               required
             />
+            {errors.password ? <small style={errText}>{errors.password}</small> : null}
 
             <label style={{ ...label, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input type='checkbox' checked={agree} onChange={(e) => setAgree(e.target.checked)} required />
+              <input type='checkbox' checked={agree} onChange={(e) => setAgree(e.target.checked)} onInvalid={(e)=>{e.preventDefault(); markInvalid('agree','You must agree before creating an account.');}} onInput={()=>setErrors((p)=>({ ...p, agree: '' }))} required />
               I agree to the <a href='/legal/privacy' style={{ color: '#8fb7ff' }}>Privacy & Terms</a>
             </label>
+            {errors.agree ? <small style={errText}>{errors.agree}</small> : null}
 
             <label style={{ ...label, display: 'flex', alignItems: 'center', gap: 8 }}>
               <input type='checkbox' checked={marketingOptIn} onChange={(e) => setMarketingOptIn(e.target.checked)} />
@@ -190,3 +205,8 @@ const ghostBtn = {
   color: '#fff',
   padding: '12px 12px',
 };
+const inputError = (message) => ({
+  ...input,
+  border: message ? '1px solid #ef5350' : input.border,
+});
+const errText = { color: '#ff8a80', fontSize: 12, marginTop: -4 };
