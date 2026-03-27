@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { US_STATES } from '../lib/us-states';
 
@@ -39,6 +39,10 @@ export default function ListingExplorer() {
   const [businessNames, setBusinessNames] = useState({});
   const [sellerFollowIds, setSellerFollowIds] = useState([]);
   const [businessFollowIds, setBusinessFollowIds] = useState([]);
+  const [sellerProfiles, setSellerProfiles] = useState({});
+  const [actionMenuFor, setActionMenuFor] = useState('');
+  const [cardMediaIndex, setCardMediaIndex] = useState({});
+  const swipeStartX = useRef({});
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 900);
@@ -89,10 +93,16 @@ export default function ListingExplorer() {
         }
 
         if (sellerIds.length) {
-          const { data: sellerFollowers } = await supabase
-            .from('user_follows')
-            .select('followed_user_id')
-            .in('followed_user_id', sellerIds);
+          const { data: sellers } = await supabase
+            .from('profiles')
+            .select('id,full_name,handle,avatar_url')
+            .in('id', sellerIds);
+          const profileMap = {};
+          (sellers || []).forEach((u) => {
+            profileMap[u.id] = u;
+          });
+          setSellerProfiles(profileMap);
+
           if (uid) {
             const { data: mySellerFollows } = await supabase
               .from('user_follows')
@@ -104,10 +114,6 @@ export default function ListingExplorer() {
         }
 
         if (businessIds.length) {
-          const { data: businessFollowers } = await supabase
-            .from('business_follows')
-            .select('business_id')
-            .in('business_id', businessIds);
           if (uid) {
             const { data: myBusinessFollows } = await supabase
               .from('business_follows')
@@ -345,6 +351,14 @@ export default function ListingExplorer() {
     setMediaModal((prev) => ({ ...prev, index: next }));
   }
 
+  function stepCardMedia(listingId, direction) {
+    const items = mediaPreview[listingId] || [];
+    if (!items.length) return;
+    const curr = cardMediaIndex[listingId] || 0;
+    const next = (curr + direction + items.length) % items.length;
+    setCardMediaIndex((prev) => ({ ...prev, [listingId]: next }));
+  }
+
 
   return (
     <>
@@ -456,42 +470,77 @@ export default function ListingExplorer() {
         <div style={{ display: 'grid', gap: 10 }}>
           {filteredListings.map((l) => {
             const media = mediaPreview[l.id] || [];
+            const currentIndex = cardMediaIndex[l.id] || 0;
+            const currentMedia = media[currentIndex];
             const isOwner = viewerId && viewerId === l.seller_id;
             const isFavorite = favoriteIds.includes(l.id);
             const followsSeller = sellerFollowIds.includes(l.seller_id);
             const followsBusiness = l.business_id ? businessFollowIds.includes(l.business_id) : false;
+            const seller = sellerProfiles[l.seller_id];
             return (
-              <div key={l.id} style={listingCard}>
-                <div style={{ display: 'grid', gap: 8, flex: 1, minWidth: 0 }}>
-                  <strong>{l.title}</strong>
-                  <div style={{ opacity: 0.85, color: '#4b5563', fontSize: 13 }}>
-                    {(businessNames[l.business_id] || 'Business')} · {prettyCategory(l.category)} · {l.business_age_years ?? 0} years · {[l.city, l.state, l.country].filter(Boolean).join(', ') || 'Location not set'}
-                  </div>
-                  {media.length ? (
-                    <div style={mediaScroller}>
-                      {media.slice(0, 10).map((m, i) => (
-                        <button key={m.url + i} type='button' onClick={() => openMediaModal(l.id, i)} style={mediaThumbWrap} title='Preview media'>
-                          {m.media_type === 'video' ? (
-                            <div style={{ ...mediaThumb, ...videoThumb }}>▶</div>
-                          ) : (
-                            <img src={m.thumbnail_url || m.url} alt='preview' style={mediaThumb} />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  ) : null}
+              <article key={l.id} style={listingCard}>
+                <div style={cardTop}>
+                  <a href={`/profile/view?id=${l.seller_id}`} style={identityLink}>
+                    {seller?.avatar_url ? <img src={seller.avatar_url} alt='seller' style={sellerAvatar} /> : <div style={sellerAvatarFallback}>{(seller?.full_name || seller?.handle || '?').slice(0,1).toUpperCase()}</div>}
+                    <span>{seller?.full_name || seller?.handle || 'Seller'}</span>
+                  </a>
+                  {l.business_id ? <a href={`/business/view?id=${l.business_id}`} style={bizLink}>{businessNames[l.business_id] || 'Business'}</a> : null}
                 </div>
-                <div style={{ display: 'grid', gap: 6, justifyItems: 'end' }}>
+
+                <a href={`/listing?id=${l.id}`} style={titleLink}>{l.title}</a>
+                <div style={{ opacity: 0.85, color: '#4b5563', fontSize: 13 }}>
+                  {prettyCategory(l.category)} · {l.business_age_years ?? 0} years · {[l.city, l.state, l.country].filter(Boolean).join(', ') || 'Location not set'}
+                </div>
+
+                {currentMedia ? (
+                  <div style={mediaStageWrap}>
+                    <button
+                      type='button'
+                      onClick={() => openMediaModal(l.id, currentIndex)}
+                      onTouchStart={(e) => { swipeStartX.current[l.id] = e.touches[0].clientX; }}
+                      onTouchEnd={(e) => {
+                        const start = swipeStartX.current[l.id];
+                        if (typeof start !== 'number') return;
+                        const delta = e.changedTouches[0].clientX - start;
+                        if (Math.abs(delta) < 35) return;
+                        stepCardMedia(l.id, delta < 0 ? 1 : -1);
+                      }}
+                      style={mediaMainBtn}
+                    >
+                      {currentMedia.media_type === 'video' ? (
+                        <video src={currentMedia.url} style={mediaMain} muted playsInline />
+                      ) : (
+                        <img src={currentMedia.url} alt='preview' style={mediaMain} />
+                      )}
+                    </button>
+                    {media.length > 1 ? (
+                      <>
+                        <button type='button' style={mediaNavLeft} onClick={() => stepCardMedia(l.id, -1)}>‹</button>
+                        <button type='button' style={mediaNavRight} onClick={() => stepCardMedia(l.id, 1)}>›</button>
+                        <div style={dotWrap}>
+                          {media.map((_, i) => <span key={i} style={i === currentIndex ? dotActive : dot} />)}
+                        </div>
+                      </>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                <div style={cardBottom}>
                   <strong>${Number(l.asking_price || 0).toLocaleString()}</strong>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                    <button type='button' onClick={() => toggleFavorite(l.id)} style={miniBtn}>{isFavorite ? '★ Saved' : '☆ Favorite'}</button>
-                    {!isOwner ? <button type='button' onClick={() => toggleFollowSeller(l.seller_id)} style={miniBtn}>{followsSeller ? 'Unfollow Seller' : 'Follow Seller'}</button> : null}
-                    {l.business_id ? <button type='button' onClick={() => toggleFollowBusiness(l.business_id)} style={miniBtn}>{followsBusiness ? 'Unfollow Biz' : 'Follow Biz'}</button> : null}
-                    <a href={`/listing?id=${l.id}`} style={miniBtn}>View</a>
-                    {isOwner ? <a href={`/listings/edit?id=${l.id}`} style={miniBtn}>Edit</a> : <a href={`/messages?seller=${l.seller_id}&listing=${l.id}`} style={miniBtn}>Message</a>}
+                  <div style={{ position: 'relative' }}>
+                    <button type='button' style={menuBtn} onClick={() => setActionMenuFor((v) => (v === l.id ? '' : l.id))}>⋯</button>
+                    {actionMenuFor === l.id ? (
+                      <div style={menuPanel}>
+                        <button type='button' onClick={() => { toggleFavorite(l.id); setActionMenuFor(''); }} style={menuItem}>{isFavorite ? '★ Saved' : '☆ Favorite'}</button>
+                        {!isOwner ? <button type='button' onClick={() => { toggleFollowSeller(l.seller_id); setActionMenuFor(''); }} style={menuItem}>{followsSeller ? 'Unfollow Seller' : 'Follow Seller'}</button> : null}
+                        {l.business_id ? <button type='button' onClick={() => { toggleFollowBusiness(l.business_id); setActionMenuFor(''); }} style={menuItem}>{followsBusiness ? 'Unfollow Business' : 'Follow Business'}</button> : null}
+                        <a href={`/listing?id=${l.id}`} style={menuLink}>View</a>
+                        {isOwner ? <a href={`/listings/edit?id=${l.id}`} style={menuLink}>Edit</a> : <a href={`/messages?seller=${l.seller_id}&listing=${l.id}`} style={menuLink}>Message</a>}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
-              </div>
+              </article>
             );
           })}
         </div>
@@ -578,12 +627,26 @@ const dropWrap = { background: '#f9fafb', border: '1px solid #eceff5', borderRad
 const dropBtn = { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #e5e7eb', borderRadius: 12, background: '#fff', color: '#111827', padding: '10px 12px', cursor: 'pointer', fontWeight: 600 };
 const rowLabel = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: '#374151' };
 const toastStyle = { position: 'fixed', bottom: 92, right: 20, background: '#111827', color: '#fff', padding: '10px 14px', borderRadius: 12, boxShadow: '0 10px 24px rgba(17,24,39,0.25)' };
-const listingCard = { border: '1px solid #eceff5', borderRadius: 16, background: '#fff', padding: 12, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'nowrap' };
-const mediaScroller = { display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 };
-const mediaThumbWrap = { border: 0, background: 'transparent', padding: 0, cursor: 'pointer' };
-const mediaThumb = { width: 108, height: 108, borderRadius: 14, objectFit: 'cover', border: '1px solid #eceff5', display: 'block' };
-const videoThumb = { display: 'grid', placeItems: 'center', background: '#f3f4f6', color: '#374151', fontSize: 14 };
-const miniBtn = { border: '1px solid #eceff5', borderRadius: 999, background: '#fff', color: '#111827', padding: '6px 10px', textDecoration: 'none', fontSize: 12, fontWeight: 600 };
+const listingCard = { border: '1px solid #eceff5', borderRadius: 16, background: '#fff', padding: 12, display: 'grid', gap: 10 };
+const cardTop = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 };
+const identityLink = { display: 'inline-flex', alignItems: 'center', gap: 8, color: '#111827', textDecoration: 'none', fontWeight: 600 };
+const sellerAvatar = { width: 30, height: 30, borderRadius: 999, objectFit: 'cover', border: '1px solid #eceff5' };
+const sellerAvatarFallback = { width: 30, height: 30, borderRadius: 999, display: 'grid', placeItems: 'center', background: '#f3f4f6', color: '#374151', fontSize: 12, fontWeight: 700, border: '1px solid #eceff5' };
+const bizLink = { color: '#4b5563', textDecoration: 'none', fontSize: 13, fontWeight: 600 };
+const titleLink = { color: '#111827', textDecoration: 'none', fontWeight: 700, fontSize: 17 };
+const mediaStageWrap = { position: 'relative', borderRadius: 14, overflow: 'hidden', border: '1px solid #eceff5', background: '#f3f4f6' };
+const mediaMainBtn = { border: 0, padding: 0, background: 'transparent', width: '100%', cursor: 'pointer' };
+const mediaMain = { width: '100%', height: 420, objectFit: 'cover', display: 'block' };
+const mediaNavLeft = { position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', border: 0, borderRadius: 999, width: 30, height: 30, background: 'rgba(17,24,39,0.6)', color: '#fff', cursor: 'pointer' };
+const mediaNavRight = { position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', border: 0, borderRadius: 999, width: 30, height: 30, background: 'rgba(17,24,39,0.6)', color: '#fff', cursor: 'pointer' };
+const dotWrap = { position: 'absolute', left: 0, right: 0, bottom: 10, display: 'flex', justifyContent: 'center', gap: 6 };
+const dot = { width: 6, height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.55)' };
+const dotActive = { width: 8, height: 8, borderRadius: 999, background: '#fff' };
+const cardBottom = { display: 'flex', justifyContent: 'space-between', alignItems: 'center' };
+const menuBtn = { border: '1px solid #eceff5', borderRadius: 999, background: '#fff', color: '#111827', width: 34, height: 34, fontSize: 18, lineHeight: 1, cursor: 'pointer' };
+const menuPanel = { position: 'absolute', right: 0, top: 40, background: '#fff', border: '1px solid #eceff5', borderRadius: 10, minWidth: 180, display: 'grid', zIndex: 5, boxShadow: '0 10px 24px rgba(17,24,39,0.1)' };
+const menuItem = { border: 0, borderBottom: '1px solid #f1f5f9', background: '#fff', textAlign: 'left', padding: '10px 12px', cursor: 'pointer', color: '#111827' };
+const menuLink = { padding: '10px 12px', textDecoration: 'none', color: '#111827', borderBottom: '1px solid #f1f5f9' };
 
 const modalBackdrop = { position: 'fixed', inset: 0, background: 'rgba(17,24,39,0.72)', display: 'grid', placeItems: 'center', zIndex: 1200, padding: 16 };
 const modalCard = { width: 'min(780px, 96vw)', background: '#0b1228', border: '1px solid #2e3f73', borderRadius: 14, padding: 10 };
