@@ -257,3 +257,68 @@ drop policy if exists "profile photos owner delete" on storage.objects;
 create policy "profile photos owner delete"
 on storage.objects for delete
 using (bucket_id = 'profile-photos' and owner = auth.uid());
+
+-- Location filtering support
+alter table public.listings add column if not exists county text;
+create index if not exists idx_listings_country on public.listings(country);
+create index if not exists idx_listings_state on public.listings(state);
+create index if not exists idx_listings_county on public.listings(county);
+create index if not exists idx_listings_city on public.listings(city);
+
+create extension if not exists cube;
+create extension if not exists earthdistance;
+
+create or replace function public.search_listings_by_radius(
+  origin_lat double precision,
+  origin_lng double precision,
+  radius_miles double precision
+)
+returns setof public.listings
+language sql
+stable
+as $$
+  select l.*
+  from public.listings l
+  where l.is_active = true
+    and l.is_sold = false
+    and l.lat is not null
+    and l.lng is not null
+    and earth_distance(
+      ll_to_earth(origin_lat, origin_lng),
+      ll_to_earth(l.lat, l.lng)
+    ) <= (radius_miles * 1609.34)
+  order by earth_distance(
+    ll_to_earth(origin_lat, origin_lng),
+    ll_to_earth(l.lat, l.lng)
+  ) asc;
+$$;
+
+-- Optional lookup tables for full dropdown coverage
+create table if not exists public.us_counties (
+  id bigserial primary key,
+  state_name text not null,
+  county_name text not null,
+  unique (state_name, county_name)
+);
+
+create table if not exists public.us_cities (
+  id bigserial primary key,
+  state_name text not null,
+  city_name text not null,
+  county_name text
+);
+
+create unique index if not exists idx_us_cities_unique
+  on public.us_cities(state_name, city_name, coalesce(county_name, ''));
+create index if not exists idx_us_counties_state on public.us_counties(state_name);
+create index if not exists idx_us_cities_state on public.us_cities(state_name);
+create index if not exists idx_us_cities_state_county on public.us_cities(state_name, county_name);
+
+alter table public.us_counties enable row level security;
+alter table public.us_cities enable row level security;
+
+drop policy if exists "us_counties read" on public.us_counties;
+create policy "us_counties read" on public.us_counties for select using (true);
+
+drop policy if exists "us_cities read" on public.us_cities;
+create policy "us_cities read" on public.us_cities for select using (true);

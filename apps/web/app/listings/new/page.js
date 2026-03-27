@@ -32,6 +32,7 @@ export default function NewListingPage() {
     city: '',
     state: 'Florida',
     country: 'United States',
+    county: '',
     keywords: '',
   });
   const [files, setFiles] = useState([]);
@@ -84,6 +85,7 @@ export default function NewListingPage() {
         city: form.city,
         state: form.state,
         country: form.country,
+        county: form.county,
         keywords: form.keywords.split(',').map((k) => k.trim()).filter(Boolean),
       })
       .select('id')
@@ -162,6 +164,7 @@ export default function NewListingPage() {
           {countries.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
 
+        <input style={input} placeholder='County' value={form.county} onChange={(e) => update('county', e.target.value)} />
         <input style={input} placeholder='Keywords (comma separated)' value={form.keywords} onChange={(e) => update('keywords', e.target.value)} />
         <input style={input} type='file' multiple accept='image/*,video/*' onChange={(e) => setFiles(Array.from(e.target.files || []))} />
         <button style={btn} type='submit'>Publish Listing</button>

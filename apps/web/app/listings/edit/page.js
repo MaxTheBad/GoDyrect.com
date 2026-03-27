@@ -19,7 +19,7 @@ export default function EditListingPage() {
       if (!supabase || !id) return;
       const { data, error } = await supabase
         .from('listings')
-        .select('id,title,description,category,business_age_years,asking_price,annual_revenue,annual_profit,city,state,country,is_active,is_sold,keywords')
+        .select('id,title,description,category,business_age_years,asking_price,annual_revenue,annual_profit,city,state,country,county,is_active,is_sold,keywords')
         .eq('id', id)
         .single();
       if (error) return setMsg(error.message);
@@ -47,6 +47,7 @@ export default function EditListingPage() {
       city: form.city,
       state: form.state,
       country: form.country,
+      county: form.county,
       is_active: !!form.is_active,
       is_sold: !!form.is_sold,
       keywords: (form.keywords || '').split(',').map((x) => x.trim()).filter(Boolean),
@@ -83,6 +84,7 @@ export default function EditListingPage() {
         <input style={input} value={form.city || ''} onChange={(e) => update('city', e.target.value)} placeholder='City' />
         <input style={input} value={form.state || ''} onChange={(e) => update('state', e.target.value)} placeholder='State' />
         <input style={input} value={form.country || ''} onChange={(e) => update('country', e.target.value)} placeholder='Country' />
+        <input style={input} value={form.county || ''} onChange={(e) => update('county', e.target.value)} placeholder='County' />
         <input style={input} value={form.keywords || ''} onChange={(e) => update('keywords', e.target.value)} placeholder='Keywords (comma separated)' />
         <label style={label}><input type='checkbox' checked={!!form.is_active} onChange={(e) => update('is_active', e.target.checked)} /> Active</label>
         <label style={label}><input type='checkbox' checked={!!form.is_sold} onChange={(e) => update('is_sold', e.target.checked)} /> Mark as sold</label>
