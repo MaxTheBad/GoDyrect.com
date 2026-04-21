@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
+const VideoEditor = dynamic(() => import('../../../components/VideoEditor'), { ssr: false });
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../../lib/supabase';
 
@@ -288,8 +290,25 @@ export default function NewListingPage() {
           </div>
         ) : null}
 
-        <input style={input} type='file' multiple accept='image/*,video/*' onChange={(e) => setFiles(Array.from(e.target.files || []))} />
-        <button style={btn} type='submit'>Publish Listing</button>
+        {/* Video editor uploader with multiple clips, draggable text and transitions */}
+        <VideoEditor onChange={({ clips, manifest }) => {
+          // clips = Array<File>
+          // build files list: include clips and a manifest JSON file so server can render later
+          const filesToUpload = [].concat(clips || []);
+          try {
+            const blob = new Blob([JSON.stringify(manifest || {}, null, 2)], { type: 'application/json' });
+            const manifestFile = new File([blob], `project-manifest-${Date.now()}.json`, { type: 'application/json' });
+            filesToUpload.push(manifestFile);
+          } catch (err) {
+            // ignore manifest if it fails
+          }
+          setFiles(filesToUpload);
+        }} />
+
+        <div style={{ display: 'grid', gap: 6 }}>
+          <div style={{ color: '#9fb7ff', fontSize: 13 }}>{files.length} file(s) ready to upload</div>
+          <button style={btn} type='submit'>Publish Listing</button>
+        </div>
         {msg ? <p>{msg}</p> : null}
         {missingFields.length ? (
           <div style={infoBox}>
