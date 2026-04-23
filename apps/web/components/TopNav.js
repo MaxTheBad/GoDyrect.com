@@ -7,17 +7,23 @@ export default function TopNav() {
   const pathname = usePathname();
   const isLanding = pathname === '/' || pathname === '/landing';
 
+  const headerStyle = isLanding
+    ? { ...wrap, background: 'transparent', borderBottom: 'none' }
+    : wrap;
+
+  const brandTextColor = isLanding ? '#e6eef8' : '#111827';
+
   return (
-    <header style={wrap}>
+    <header style={headerStyle}>
       <div style={inner}>
-        <a href='/' style={brand}>
+        <a href='/' style={{ ...brand, color: brandTextColor }}>
           <div style={brandIcon}>◎</div>
-          <strong style={{ fontSize: 21, color: '#111827', letterSpacing: '-0.01em' }}>GoDyrect</strong>
+          <strong style={{ fontSize: 21, color: brandTextColor, letterSpacing: '-0.01em' }}>GoDyrect</strong>
         </a>
         {isLanding ? (
-          <nav style={{ display: 'flex', gap: 12 }}>
-            <a href='/about' style={linkStyle}>About</a>
-            <a href='/contactus' style={linkStyle}>Contact</a>
+          <nav style={{ display: 'flex', gap: 16 }}>
+            <a href='/about' style={landingLink}>About</a>
+            <a href='/contactus' style={landingLink}>Contact</a>
           </nav>
         ) : (
           <AuthNav />
@@ -59,5 +65,7 @@ const brandIcon = {
   color: '#fff',
   background: 'linear-gradient(135deg, #f58529 0%, #dd2a7b 45%, #8134af 75%, #515bd4 100%)',
 };
+
+const landingLink = { color: '#cfeffd', textDecoration: 'none', fontWeight: 600, padding: '8px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.02)' };
 
 const linkStyle = { color: '#111827', textDecoration: 'none', fontWeight: 600 };
