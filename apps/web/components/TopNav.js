@@ -17,8 +17,8 @@ export default function TopNav() {
     <header style={headerStyle}>
       <div style={inner}>
         <a href='/' style={{ ...brand, color: brandTextColor }}>
-          <div style={brandIcon}>◎</div>
-          <strong style={{ fontSize: 21, color: brandTextColor, letterSpacing: '-0.01em' }}>GoDyrect</strong>
+          <img src='/logo.png' alt='GoDyrect' style={{width:36,height:36,objectFit:'contain',borderRadius:8}} />
+          <strong style={{ fontSize: 21, color: brandTextColor, letterSpacing: '-0.01em', marginLeft:10 }}>GoDyrect</strong>
         </a>
         {isLanding ? (
           <nav style={{ display: 'flex', gap: 16 }}>
