@@ -40,21 +40,50 @@ export default function ContactForm(){
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{display:'flex',flexDirection:'column',gap:12,maxWidth:600}}>
-      <label>Name<input value={name} onChange={e=>setName(e.target.value)} required /></label>
-      <label>Email<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required /></label>
-      <label>Role
-        <select value={role} onChange={e=>setRole(e.target.value)}>
+    <form onSubmit={handleSubmit} className="form">
+      <div className="field">
+        <label className="label">Name</label>
+        <input className="input" value={name} onChange={e=>setName(e.target.value)} required />
+      </div>
+
+      <div className="field">
+        <label className="label">Email</label>
+        <input className="input" type="email" value={email} onChange={e=>setEmail(e.target.value)} required />
+      </div>
+
+      <div className="field">
+        <label className="label">Role</label>
+        <select className="input" value={role} onChange={e=>setRole(e.target.value)}>
           <option value="">Select role</option>
           <option value="owner">Owner</option>
           <option value="buyer">Buyer</option>
           <option value="broker">Broker</option>
         </select>
-      </label>
-      <label>Message<textarea value={message} onChange={e=>setMessage(e.target.value)} rows={6} required /></label>
-      <button type="submit">Send</button>
-      {status && <p>Status: {status}</p>}
-      <p style={{fontSize:12,color:'#666'}}>Note: replace the Formspree endpoint in components/ContactForm.jsx with your form ID or set up a server endpoint.</p>
+      </div>
+
+      <div className="field">
+        <label className="label">Message</label>
+        <textarea className="input textarea" value={message} onChange={e=>setMessage(e.target.value)} rows={6} required />
+      </div>
+
+      <div style={{display:'flex',gap:12,alignItems:'center'}}>
+        <button type="submit" className="submit">Send</button>
+        {status && <p style={{margin:0}}>Status: {status}</p>}
+      </div>
+
+      <p className="note">Note: replace the Formspree endpoint in components/ContactForm.jsx with your form ID or set up a server endpoint.</p>
+
+      <style jsx>{`
+        .form{display:flex;flex-direction:column;gap:14px;max-width:680px}
+        .field{display:flex;flex-direction:column;gap:8px}
+        .label{font-size:14px;color:rgba(230,238,248,0.85);font-weight:700}
+        .input{padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:#e6eef8}
+        .input:focus{outline:none;box-shadow:0 6px 18px rgba(6,182,212,0.12);border-color:#06b6d4}
+        .textarea{min-height:140px}
+        .submit{background:#06b6d4;color:#fff;border:0;padding:10px 18px;border-radius:10px;font-weight:700;cursor:pointer}
+        .submit:hover{transform:translateY(-2px)}
+        .note{font-size:12px;color:rgba(230,238,248,0.7);margin:6px 0 0}
+      `}</style>
     </form>
   )
 }
