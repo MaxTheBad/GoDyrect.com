@@ -11,7 +11,7 @@ export default function TopNav() {
     ? { ...wrap, background: 'transparent', borderBottom: 'none' }
     : wrap;
 
-  const brandTextColor = isLanding ? '#e6eef8' : '#111827';
+  const brandTextColor = isLanding ? '#ffffff' : '#111827';
 
   return (
     <header style={headerStyle}>
@@ -66,6 +66,6 @@ const brandIcon = {
   background: 'linear-gradient(135deg, #f58529 0%, #dd2a7b 45%, #8134af 75%, #515bd4 100%)',
 };
 
-const landingLink = { color: '#cfeffd', textDecoration: 'none', fontWeight: 600, padding: '8px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.02)' };
+const landingLink = { color: '#ffffff', textDecoration: 'none', fontWeight: 600, padding: '8px 12px', borderRadius: 8, background: '#06b6d4' };
 
 const linkStyle = { color: '#111827', textDecoration: 'none', fontWeight: 600 };
