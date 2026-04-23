@@ -6,7 +6,7 @@ export default function Landing() {
     <main className="hero">
       <div className="container">
         <header className="header">
-          <div className="logo"><img src="/logo.png" alt="GoDyrect" style={{width:42,height:42,objectFit:'contain',borderRadius:8}}/></div>
+          <div className="logo">G<span>o</span>Dyrect</div>
         </header>
 
         <section className="content">
