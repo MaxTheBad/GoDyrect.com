@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 
 export default function TopNav() {
   const pathname = usePathname();
-  const isLanding = pathname === '/' || pathname === '/landing';
+  const isLanding = ['/', '/landing', '/about', '/contactus'].includes(pathname);
 
   const headerStyle = isLanding
     ? { ...wrap, background: '#06b6d4', borderBottom: 'none', backdropFilter: 'none' }
