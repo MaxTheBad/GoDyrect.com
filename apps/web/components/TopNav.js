@@ -1,16 +1,27 @@
 'use client';
 
 import AuthNav from './AuthNav';
+import { usePathname } from 'next/navigation';
 
 export default function TopNav() {
+  const pathname = usePathname();
+  const isLanding = pathname === '/' || pathname === '/landing';
+
   return (
     <header style={wrap}>
       <div style={inner}>
-        <a href='/feed' style={brand}>
+        <a href='/' style={brand}>
           <div style={brandIcon}>◎</div>
           <strong style={{ fontSize: 21, color: '#111827', letterSpacing: '-0.01em' }}>GoDyrect</strong>
         </a>
-        <AuthNav />
+        {isLanding ? (
+          <nav style={{ display: 'flex', gap: 12 }}>
+            <a href='/about' style={linkStyle}>About</a>
+            <a href='/contactus' style={linkStyle}>Contact</a>
+          </nav>
+        ) : (
+          <AuthNav />
+        )}
       </div>
     </header>
   );
@@ -48,3 +59,5 @@ const brandIcon = {
   color: '#fff',
   background: 'linear-gradient(135deg, #f58529 0%, #dd2a7b 45%, #8134af 75%, #515bd4 100%)',
 };
+
+const linkStyle = { color: '#111827', textDecoration: 'none', fontWeight: 600 };
