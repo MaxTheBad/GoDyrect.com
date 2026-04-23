@@ -1,6 +1,5 @@
 'use client'
 import {useState,useEffect} from 'react'
-import {useSearchParams} from 'next/navigation'
 
 export default function ContactForm(){
   const [name,setName]=useState('')
@@ -8,12 +7,14 @@ export default function ContactForm(){
   const [role,setRole]=useState('')
   const [message,setMessage]=useState('')
   const [status,setStatus]=useState(null)
-  const searchParams = useSearchParams()
 
   useEffect(()=>{
-    const r = searchParams.get('role')
-    if(r) setRole(r)
-  },[searchParams])
+    try{
+      const params = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
+      const r = params.get('role')
+      if(r) setRole(r)
+    }catch(e){/* ignore */}
+  },[])
 
   async function handleSubmit(e){
     e.preventDefault()
