@@ -7,7 +7,6 @@ export default function Landing() {
       <div className="container">
         <header className="header">
           <div className="logo">G<span>o</span>Dyrect</div>
-          <nav className="nav"><Link href="/about">About</Link><Link href="/contactus">Contact</Link></nav>
         </header>
 
         <section className="content">
