@@ -8,7 +8,7 @@ export default function TopNav() {
   const isLanding = pathname === '/' || pathname === '/landing';
 
   const headerStyle = isLanding
-    ? { ...wrap, background: 'transparent', borderBottom: 'none' }
+    ? { ...wrap, background: '#06b6d4', borderBottom: 'none', backdropFilter: 'none' }
     : wrap;
 
   const brandTextColor = isLanding ? '#ffffff' : '#111827';
