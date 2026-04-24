@@ -37,9 +37,9 @@ export default function Landing() {
         .logo span{color:#06b6d4}
         .nav a{color:#0f172a;margin-left:1rem;text-decoration:none}
 
-        .content{background:#ffffff;padding:48px;border-radius:16px;box-shadow:0 10px 30px rgba(15,23,42,0.06)}
-        .title{font-size:2.25rem;margin:0 0 12px;color:#071129}
-        .subtitle{margin:0 0 20px;color:#374151;max-width:680px}
+        .content{background:linear-gradient(180deg, rgba(7,10,14,0.88), rgba(8,12,20,0.82));padding:48px;border-radius:16px;box-shadow:0 10px 30px rgba(7,10,14,0.32);color:#e6eef8}
+        .title{font-size:2.25rem;margin:0 0 12px;color:#e6eef8}
+        .subtitle{margin:0 0 20px;color:rgba(230,238,248,0.8);max-width:680px}
 
         .buttons{display:flex;gap:12px;flex-wrap:wrap}
         .btn{padding:12px 20px;border-radius:10px;font-weight:600;text-decoration:none;display:inline-block;transition:transform .18s ease,box-shadow .18s ease}
