@@ -25,7 +25,7 @@ export default function ContactPage(){
       </div>
 
       <style jsx>{`
-        .hero{min-height:80vh;display:flex;align-items:center;justify-content:center;background:#ffffff;color:#0f172a;padding:48px;}
+        .hero{min-height:80vh;display:flex;align-items:center;justify-content:center;background-image: url('/bg.jpg'), linear-gradient(135deg,#ffffff,#ffffff);background-size:cover;background-position:center;color:#0f172a;padding:48px;}
         .container{width:100%;max-width:900px;position:relative}
         .header{display:flex;justify-content:flex-start;align-items:center;margin-bottom:2rem}
         .logo{font-weight:800;font-size:1.25rem;letter-spacing:0.5px}
