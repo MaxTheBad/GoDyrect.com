@@ -30,7 +30,7 @@ export default function Landing() {
       </div>
 
       <style jsx>{`
-        .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;background-image: url('/bg.jpg'), linear-gradient(135deg,#ffffff,#ffffff);background-size:cover;background-position:center;color:#0f172a;padding:48px;}
+        .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;background: linear-gradient(rgba(0,0,0,0.28), rgba(0,0,0,0.28)), url('/bg.jpg');background-size:cover;background-position:center;color:#0f172a;padding:48px;}
         .container{width:100%;max-width:1100px;position:relative}
         .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem}
         .logo{font-weight:800;font-size:1.25rem;letter-spacing:0.5px}
