@@ -1,5 +1,6 @@
 import BottomNav from '../components/BottomNav';
 import TopNav from '../components/TopNav';
+import Footer from '../components/Footer';
 
 export const metadata = {
   title: 'GoDyrect',
@@ -12,6 +13,7 @@ export default function RootLayout({ children }) {
       <body style={{ margin: 0, fontFamily: 'Inter, Arial, sans-serif', background: '#f8fafc', color: '#111827', paddingBottom: 84 }}>
         <TopNav />
         {children}
+        <Footer />
         <BottomNav />
       </body>
     </html>
