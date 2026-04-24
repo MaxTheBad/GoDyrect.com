@@ -1,9 +1,29 @@
 'use client'
 import Link from 'next/link'
 
+'use client'
+import { useEffect, useRef } from 'react'
+
 export default function Landing() {
+  const ref = useRef(null)
+
+  useEffect(()=>{
+    const el = ref.current
+    if(!el) return
+    let last = 0
+    function onScroll(){
+      const rect = el.getBoundingClientRect()
+      const offset = -rect.top * 0.12 // parallax factor
+      el.style.backgroundPosition = `center calc(50% + ${offset}px)`
+      last = offset
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return ()=> window.removeEventListener('scroll', onScroll)
+  },[])
+
   return (
-    <main className="hero">
+    <main ref={ref} className="hero">
       <div className="container">
         <header className="header">
           <div className="logo">G<span>o</span>Dyrect</div>
