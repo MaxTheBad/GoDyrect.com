@@ -51,9 +51,9 @@ export default function Landing() {
 
         .animation{position:absolute;right:-40px;top:40px;width:320px;height:320px;pointer-events:none}
         .card{position:absolute;width:160px;height:100px;border-radius:14px;filter:blur(0.6px);opacity:0.95}
-        .c1{background:linear-gradient(135deg,rgba(125,211,252,0.14),rgba(6,182,212,0.08));top:0;left:20px;transform:rotate(-8deg);animation:float 6s ease-in-out infinite}
-        .c2{background:linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.06));top:90px;left:80px;transform:rotate(6deg);animation:float 5s ease-in-out .3s infinite}
-        .c3{background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(34,197,94,0.06));top:160px;left:10px;transform:rotate(-4deg);animation:float 7s ease-in-out .6s infinite}
+        .c1{background:linear-gradient(135deg,rgba(7,10,14,0.88),rgba(17,24,39,0.8));top:0;left:20px;transform:rotate(-8deg);animation:float 6s ease-in-out infinite}
+        .c2{background:linear-gradient(135deg,rgba(12,16,22,0.8),rgba(26,32,44,0.72));top:90px;left:80px;transform:rotate(6deg);animation:float 5s ease-in-out .3s infinite}
+        .c3{background:linear-gradient(135deg,rgba(10,14,20,0.78),rgba(20,28,40,0.7));top:160px;left:10px;transform:rotate(-4deg);animation:float 7s ease-in-out .6s infinite}
 
         @keyframes float{0%{transform:translateY(0) rotate(var(--r))}50%{transform:translateY(-14px) rotate(calc(var(--r) + 2deg))}100%{transform:translateY(0) rotate(var(--r))}}
 
