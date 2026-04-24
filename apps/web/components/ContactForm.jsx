@@ -76,13 +76,14 @@ export default function ContactForm(){
       <style jsx>{`
         .form{display:flex;flex-direction:column;gap:14px;max-width:680px}
         .field{display:flex;flex-direction:column;gap:8px}
-        .label{font-size:14px;color:rgba(230,238,248,0.85);font-weight:700}
-        .input{padding:12px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:#e6eef8}
-        .input:focus{outline:none;box-shadow:0 6px 18px rgba(6,182,212,0.12);border-color:#06b6d4}
+        .label{font-size:14px;color:#374151;font-weight:700}
+        .input{padding:12px 14px;border-radius:10px;border:1px solid #e6eef3;background:#ffffff;color:#0f172a}
+        .input::placeholder{color:#9aa4ad}
+        .input:focus{outline:none;box-shadow:0 6px 18px rgba(6,182,212,0.08);border-color:#06b6d4}
         .textarea{min-height:140px}
         .submit{background:#06b6d4;color:#fff;border:0;padding:10px 18px;border-radius:10px;font-weight:700;cursor:pointer}
         .submit:hover{transform:translateY(-2px)}
-        .note{font-size:12px;color:rgba(230,238,248,0.7);margin:6px 0 0}
+        .note{font-size:12px;color:#475569;margin:6px 0 0}
       `}</style>
     </form>
   )
