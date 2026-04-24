@@ -30,16 +30,16 @@ export default function Landing() {
       </div>
 
       <style jsx>{`
-        .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a 0%,#0b1220 50%,#071129 100%);color:#e6eef8;padding:48px;}
+        .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#ffffff;color:#0f172a;padding:48px;}
         .container{width:100%;max-width:1100px;position:relative}
         .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem}
         .logo{font-weight:800;font-size:1.25rem;letter-spacing:0.5px}
-        .logo span{color:#7dd3fc}
-        .nav a{color:rgba(230,238,248,0.9);margin-left:1rem;text-decoration:none}
+        .logo span{color:#06b6d4}
+        .nav a{color:#0f172a;margin-left:1rem;text-decoration:none}
 
-        .content{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:48px;border-radius:16px;box-shadow:0 10px 30px rgba(2,6,23,0.6);backdrop-filter:blur(6px)}
-        .title{font-size:2.25rem;margin:0 0 12px}
-        .subtitle{margin:0 0 20px;color:rgba(230,238,248,0.8);max-width:680px}
+        .content{background:#ffffff;padding:48px;border-radius:16px;box-shadow:0 10px 30px rgba(15,23,42,0.06)}
+        .title{font-size:2.25rem;margin:0 0 12px;color:#071129}
+        .subtitle{margin:0 0 20px;color:#374151;max-width:680px}
 
         .buttons{display:flex;gap:12px;flex-wrap:wrap}
         .btn{padding:12px 20px;border-radius:10px;font-weight:600;text-decoration:none;display:inline-block;transition:transform .18s ease,box-shadow .18s ease}
