@@ -86,7 +86,7 @@ export default function Landing() {
 
         @keyframes float{0%{transform:translateY(0) rotate(var(--r))}50%{transform:translateY(-14px) rotate(calc(var(--r) + 2deg))}100%{transform:translateY(0) rotate(var(--r))}}
 
-        .foot{margin-top:20px;color:rgba(230,238,248,0.6);font-size:0.9rem}
+        .foot{margin-top:20px;color:rgba(230,238,248,0.6);font-size:0.9rem; background: rgba(255,255,255,0.02); padding:8px 12px; border-radius:8px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);}
 
         @media (max-width:880px){
           .animation{display:none}
