@@ -63,7 +63,7 @@ export default function Landing() {
         .logo span{color:#06b6d4}
         .nav a{color:#0f172a;margin-left:1rem;text-decoration:none}
 
-        .content{background:linear-gradient(180deg, rgba(7,10,14,0.88), rgba(8,12,20,0.82));padding:12px;border-radius:12px;box-shadow:0 8px 24px rgba(7,10,14,0.28);color:#e6eef8;max-height:calc(100vh - 100px);overflow:auto}
+        .content{background:linear-gradient(180deg, rgba(7,10,14,0.88), rgba(8,12,20,0.82));padding:12px 12px 6px;border-radius:12px;box-shadow:0 8px 24px rgba(7,10,14,0.28);color:#e6eef8;max-height:calc(100vh - 100px);overflow:auto}
         .title{font-size:2.25rem;margin:0 0 12px;color:#e6eef8}
         .subtitle{margin:0 0 20px;color:rgba(230,238,248,0.8);max-width:680px}
 
