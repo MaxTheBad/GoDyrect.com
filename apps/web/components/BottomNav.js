@@ -71,23 +71,23 @@ const wrap = {
   left: 12,
   right: 12,
   bottom: 12,
-  background: 'rgba(255,255,255,0.95)',
-  border: '1px solid #eceff5',
+  background: '#000',
+  border: '1px solid rgba(255,255,255,0.06)',
   borderRadius: 18,
   display: 'grid',
   gridTemplateColumns: 'repeat(6, minmax(0, 1fr))',
   gap: 8,
   padding: 8,
   zIndex: 1000,
-  boxShadow: '0 10px 30px rgba(17,24,39,0.12)',
+  boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
 };
 
 const item = {
   textDecoration: 'none',
-  color: '#111827',
-  border: '1px solid #eceff5',
+  color: '#fff',
+  border: '1px solid rgba(255,255,255,0.04)',
   borderRadius: 12,
-  background: '#fff',
+  background: 'rgba(255,255,255,0.02)',
   display: 'grid',
   placeItems: 'center',
   padding: '8px 6px',
@@ -99,4 +99,4 @@ const center = {
   border: '0',
 };
 
-const label = { fontSize: 11, marginTop: 4, color: '#4b5563' };
+const label = { fontSize: 11, marginTop: 4, color: '#fff' };

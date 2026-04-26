@@ -7,11 +7,10 @@ export default function TopNav() {
   const pathname = usePathname();
   const isLanding = ['/', '/landing', '/about', '/contactus'].includes(pathname);
 
-  const headerStyle = isLanding
-    ? { ...wrap, background: '#06b6d4', borderBottom: 'none', backdropFilter: 'none' }
-    : wrap;
+  // Make the site nav solid black with white text
+  const headerStyle = { ...wrap, background: '#000', borderBottom: 'none', backdropFilter: 'none' };
 
-  const brandTextColor = isLanding ? '#ffffff' : '#111827';
+  const brandTextColor = '#ffffff';
 
   return (
     <header style={headerStyle}>
@@ -37,9 +36,10 @@ const wrap = {
   position: 'sticky',
   top: 0,
   zIndex: 50,
-  background: 'rgba(255,255,255,0.92)',
-  backdropFilter: 'blur(10px)',
-  borderBottom: '1px solid #eceff5',
+  background: '#000',
+  color: '#fff',
+  backdropFilter: 'none',
+  borderBottom: '1px solid rgba(255,255,255,0.06)',
 };
 
 const inner = {
