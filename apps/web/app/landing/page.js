@@ -57,14 +57,14 @@ export default function Landing() {
         /* prevent page scrolling and center the landing container */
         html, body { height: 100%; margin: 0 }
 
-        .hero{height:100vh;display:flex;align-items:center;justify-content:center;background: linear-gradient(rgba(0,0,0,0.12), rgba(0,0,0,0.12)), url('/bg.jpg');background-size:cover;background-position:center;background-attachment:fixed;color:#0f172a;padding:48px;}
+        .hero{height:100vh;display:flex;align-items:center;justify-content:center;background: linear-gradient(rgba(0,0,0,0.12), rgba(0,0,0,0.12)), url('/bg.jpg');background-size:cover;background-position:center;background-attachment:fixed;color:#0f172a;padding:24px;}
         .container{width:100%;max-width:1100px;position:relative;display:flex;flex-direction:column;align-items:center}
         .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;width:100%}
         .logo{font-weight:800;font-size:1.25rem;letter-spacing:0.5px}
         .logo span{color:#06b6d4}
         .nav a{color:#0f172a;margin-left:1rem;text-decoration:none}
 
-        .content{background:linear-gradient(180deg, rgba(7,10,14,0.88), rgba(8,12,20,0.82));padding:48px;border-radius:16px;box-shadow:0 10px 30px rgba(7,10,14,0.32);color:#e6eef8;max-height:calc(100vh - 220px);overflow:auto}
+        .content{background:linear-gradient(180deg, rgba(7,10,14,0.88), rgba(8,12,20,0.82));padding:32px;border-radius:16px;box-shadow:0 10px 30px rgba(7,10,14,0.32);color:#e6eef8;max-height:calc(100vh - 180px);overflow:auto}
         .title{font-size:2.25rem;margin:0 0 12px;color:#e6eef8}
         .subtitle{margin:0 0 20px;color:rgba(230,238,248,0.8);max-width:680px}
 
