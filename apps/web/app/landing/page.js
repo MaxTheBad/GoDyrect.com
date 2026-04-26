@@ -22,6 +22,31 @@ export default function Landing() {
     return ()=> window.removeEventListener('scroll', onScroll)
   },[])
 
+  // disable page scroll while on landing and keep card centered
+  useEffect(()=>{
+    const docEl = document.documentElement
+    const body = document.body
+    const prevOverflow = docEl.style.overflow
+    const prevBodyDisplay = body.style.display
+    const prevBodyAlign = body.style.alignItems
+    const prevBodyJustify = body.style.justifyContent
+    const prevBodyMinHeight = body.style.minHeight
+
+    docEl.style.overflow = 'hidden'
+    body.style.display = 'flex'
+    body.style.alignItems = 'center'
+    body.style.justifyContent = 'center'
+    body.style.minHeight = '100vh'
+
+    return ()=>{
+      docEl.style.overflow = prevOverflow || ''
+      body.style.display = prevBodyDisplay || ''
+      body.style.alignItems = prevBodyAlign || ''
+      body.style.justifyContent = prevBodyJustify || ''
+      body.style.minHeight = prevBodyMinHeight || ''
+    }
+  },[])
+
   return (
     <main ref={ref} className="hero">
       <div className="container">
@@ -50,14 +75,17 @@ export default function Landing() {
       </div>
 
       <style jsx>{`
+        /* prevent page scrolling and center the landing container */
+        html, body { height: 100%; margin: 0 }
+
         .hero{min-height:100vh;display:flex;align-items:center;justify-content:center;background: linear-gradient(rgba(0,0,0,0.12), rgba(0,0,0,0.12)), url('/bg.jpg');background-size:cover;background-position:center;background-attachment:fixed;color:#0f172a;padding:48px;}
-        .container{width:100%;max-width:1100px;position:relative}
-        .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem}
+        .container{width:100%;max-width:1100px;position:relative;display:flex;flex-direction:column;align-items:center}
+        .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;width:100%}
         .logo{font-weight:800;font-size:1.25rem;letter-spacing:0.5px}
         .logo span{color:#06b6d4}
         .nav a{color:#0f172a;margin-left:1rem;text-decoration:none}
 
-        .content{background:linear-gradient(180deg, rgba(7,10,14,0.88), rgba(8,12,20,0.82));padding:48px;border-radius:16px;box-shadow:0 10px 30px rgba(7,10,14,0.32);color:#e6eef8}
+        .content{background:linear-gradient(180deg, rgba(7,10,14,0.88), rgba(8,12,20,0.82));padding:48px;border-radius:16px;box-shadow:0 10px 30px rgba(7,10,14,0.32);color:#e6eef8;max-height:90vh;overflow:auto}
         .title{font-size:2.25rem;margin:0 0 12px;color:#e6eef8}
         .subtitle{margin:0 0 20px;color:rgba(230,238,248,0.8);max-width:680px}
 
@@ -83,6 +111,7 @@ export default function Landing() {
           .animation{display:none}
           .content{padding:28px}
           .title{font-size:1.6rem}
+          .hero{padding:24px}
         }
       `}</style>
     </main>
