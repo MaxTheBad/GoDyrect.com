@@ -30,7 +30,7 @@ export default function Landing() {
     <main ref={ref} className="hero">
       <div className="container">
         <header className="header">
-          <div className="logo">G<span>o</span>Dyrect</div>
+         
         </header>
 
         <section className="content">
