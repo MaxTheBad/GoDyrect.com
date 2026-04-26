@@ -65,6 +65,6 @@ const brandIcon = {
   background: 'linear-gradient(135deg, #f58529 0%, #dd2a7b 45%, #8134af 75%, #515bd4 100%)',
 };
 
-const landingLink = { color: '#ffffff', textDecoration: 'none', fontWeight: 600, padding: '8px 12px', borderRadius: 8, background: '#06b6d4' };
+const landingLink = { color: '#ffffff', textDecoration: 'none', fontWeight: 600, padding: '8px 12px', borderRadius: 8, background: '#0080e9' };
 
 const linkStyle = { color: '#111827', textDecoration: 'none', fontWeight: 600 };
