@@ -50,7 +50,6 @@ export default function Landing() {
           <div className="card c3"/>
         </div>
 
-        <footer className="foot">© {new Date().getFullYear()} GoDyrect</footer>
       </div>
 
       <style jsx>{`
