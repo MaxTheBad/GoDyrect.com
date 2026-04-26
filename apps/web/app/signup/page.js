@@ -81,9 +81,8 @@ export default function SignupPage() {
   return (
     <main style={wrap}>
       <div style={card}>
-        <a href='/' style={brandWrap}>
+        <a href='/' style={brandWrap} aria-label="GoDyrect Home">
           <div style={brandIcon} />
-          <strong style={{ fontSize: 20, color: '#fff' }}>GoDyrect</strong>
         </a>
 
         {!confirmationSent ? (
