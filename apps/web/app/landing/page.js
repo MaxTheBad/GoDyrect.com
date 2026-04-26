@@ -70,8 +70,8 @@ export default function Landing() {
 
         .buttons{display:flex;gap:12px;flex-wrap:wrap}
         .btn{padding:12px 20px;border-radius:10px;font-weight:600;text-decoration:none;display:inline-block;transition:transform .18s ease,box-shadow .18s ease}
-        .btn.primary{background:linear-gradient(90deg,#06b6d4,#06b6b8);color:#021025;box-shadow:0 8px 20px rgba(6,182,212,0.12)}
-        .btn.primary:hover{transform:translateY(-4px);box-shadow:0 16px 30px rgba(6,182,212,0.18)}
+        .btn.primary{background:#0080e9;color:#fff;box-shadow:0 8px 20px rgba(0,128,233,0.12)}
+        .btn.primary:hover{transform:translateY(-4px);box-shadow:0 16px 30px rgba(0,128,233,0.18)}
         .btn.outline{background:transparent;border:1px solid rgba(230,238,248,0.12);color:#e6eef8}
         .btn.outline:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(14,30,52,0.4)}
         .btn.ghost{background:rgba(255,255,255,0.03);color:#a8d5ef}
