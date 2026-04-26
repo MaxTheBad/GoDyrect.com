@@ -20,29 +20,12 @@ export default function Landing() {
     return ()=> window.removeEventListener('scroll', onScroll)
   },[])
 
-  // disable page scroll while on landing and keep card centered
+  // disable page scroll while on landing (do NOT mutate body layout)
   useEffect(()=>{
     const docEl = document.documentElement
-    const body = document.body
     const prevOverflow = docEl.style.overflow
-    const prevBodyDisplay = body.style.display
-    const prevBodyAlign = body.style.alignItems
-    const prevBodyJustify = body.style.justifyContent
-    const prevBodyMinHeight = body.style.minHeight
-
     docEl.style.overflow = 'hidden'
-    body.style.display = 'flex'
-    body.style.alignItems = 'center'
-    body.style.justifyContent = 'center'
-    body.style.minHeight = '100vh'
-
-    return ()=>{
-      docEl.style.overflow = prevOverflow || ''
-      body.style.display = prevBodyDisplay || ''
-      body.style.alignItems = prevBodyAlign || ''
-      body.style.justifyContent = prevBodyJustify || ''
-      body.style.minHeight = prevBodyMinHeight || ''
-    }
+    return ()=>{ docEl.style.overflow = prevOverflow || '' }
   },[])
 
   return (
