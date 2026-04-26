@@ -1,7 +1,5 @@
 'use client'
 import Link from 'next/link'
-
-'use client'
 import { useEffect, useRef } from 'react'
 
 export default function Landing() {
