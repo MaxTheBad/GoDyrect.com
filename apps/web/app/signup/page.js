@@ -82,7 +82,7 @@ export default function SignupPage() {
     <main style={wrap}>
       <div style={card}>
         <a href='/' style={brandWrap} aria-label="GoDyrect Home">
-          <div style={brandIcon} />
+          <img src="/logo-square.png" alt="brand" style={{ width: 32, height: 32, borderRadius: 9, objectFit: 'contain' }} />
         </a>
 
         {!confirmationSent ? (

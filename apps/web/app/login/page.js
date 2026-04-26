@@ -18,7 +18,7 @@ export default function LoginPage() {
   return (
     <main style={wrap}>
       <form onSubmit={submit} style={card}>
-        <a href='/' style={brand} aria-label="GoDyrect Home"><div style={brandIcon} /></a>
+        <a href='/' style={brand} aria-label="GoDyrect Home"><img src="/logo-square.png" alt="brand" style={{ width: 28, height: 28, borderRadius: 8, objectFit: 'contain' }} /></a>
         <h1 style={{ margin: 0 }}>Log in</h1>
         <input style={input} placeholder='Email' type='email' name='email' autoComplete='email' value={email} onChange={(e) => setEmail(e.target.value)} />
         <input style={input} placeholder='Password' type='password' name='password' id='login-password' autoComplete='current-password' value={password} onChange={(e) => setPassword(e.target.value)} />
