@@ -37,7 +37,7 @@ export default function ContactPage(){
           <p style={{marginTop:20, color: '#ffffff'}}>Or <Link href="/landing">return to landing</Link>.</p>
         </section>
 
-        <footer className="foot">© {new Date().getFullYear()} GoDyrect</footer>
+        <footer className="foot">© {new Date().getFullYear()}</footer>
       </div>
 
       <style jsx>{`

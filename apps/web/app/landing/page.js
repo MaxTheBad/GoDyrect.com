@@ -35,7 +35,7 @@ export default function Landing() {
 
         <section className="content">
           <h1 className="title">Buy, Sell, or Broker — Fast & Direct</h1>
-          <p className="subtitle">GoDyrect connects owners, buyers, and brokers with a simple marketplace to list, find, and close deals faster.</p>
+          <p className="subtitle">We connect owners, buyers, and brokers with a simple marketplace to list, find, and close deals faster.</p>
 
           <div className="buttons">
             <Link href="/contactus?role=owner"><a className="btn primary">I'm an Owner</a></Link>

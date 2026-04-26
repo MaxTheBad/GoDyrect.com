@@ -2,7 +2,7 @@ export default function Footer(){
   return (
     <footer style={wrap}>
       <div style={inner}>
-        <div style={text}>© {new Date().getFullYear()} GoDyrect</div>
+        <div style={text}>© {new Date().getFullYear()}</div>
         <nav style={{display:'flex',gap:12}}>
           <a href="/about" style={link}>About</a>
           <a href="/contactus" style={link}>Contact</a>
