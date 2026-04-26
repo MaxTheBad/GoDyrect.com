@@ -17,8 +17,9 @@ const wrap = {
   borderTop: 'none',
   background: '#000',
   padding: '18px 0',
-  marginTop: 40,
-  color: '#fff'
+  marginTop: 0,
+  color: '#fff',
+  width: '100%'
 }
 const inner = { maxWidth:1120, margin:'0 auto', padding:'0 20px', display:'flex', justifyContent:'space-between', alignItems:'center' }
 const link = { color:'#ffffff', textDecoration:'none', fontWeight:600 }
