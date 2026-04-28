@@ -6,7 +6,6 @@ export default function Footer(){
         <nav style={{display:'flex',gap:12}}>
           <a href="/about" style={link}>About</a>
           <a href="/contactus" style={link}>Contact</a>
-          <a href="/legal/privacy" style={link}>Privacy</a>
         </nav>
       </div>
     </footer>
