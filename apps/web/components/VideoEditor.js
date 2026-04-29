@@ -1,33 +1,70 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
-// Lightweight IG-style editor: add clips, single transition selector (None/Crossfade), and draggable text overlays.
+const TRANSITIONS = [
+  { value: 'none', label: 'None' },
+  { value: 'cut', label: 'Cut' },
+  { value: 'crossfade', label: 'Crossfade' },
+];
+
+function createOverlay(id) {
+  return {
+    id,
+    text: 'Tap to edit',
+    x: 50,
+    y: 72,
+    startTime: 0,
+    endTime: 3,
+  };
+}
+
 export default function VideoEditor({ onChange }) {
   const [clips, setClips] = useState([]);
   const [textOverlays, setTextOverlays] = useState([]);
   const [transitionType, setTransitionType] = useState('crossfade');
+  const [activeClipIndex, setActiveClipIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [playhead, setPlayhead] = useState(0);
   const [duration, setDuration] = useState(0);
-  const videoRef = useRef();
-  const fileInputRef = useRef();
+  const [selectedOverlayId, setSelectedOverlayId] = useState(null);
+  const [currentClipUrl, setCurrentClipUrl] = useState('');
+  const videoRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const previewRef = useRef(null);
+  const dragStateRef = useRef(null);
 
   useEffect(() => {
     let total = 0;
-    clips.forEach((c) => {
-      total += (c.trimEnd || c.duration || 0);
+    clips.forEach((clip) => {
+      total += clip.trimEnd || clip.duration || 0;
     });
     setDuration(total);
   }, [clips]);
 
-  function addFiles(files) {
-    const arr = Array.from(files).map((f, i) => ({ file: f, id: Date.now() + i, title: f.name, trimStart: 0, trimEnd: 0, duration: 0 }));
-    const next = clips.concat(arr);
-    setClips(next);
-    arr.forEach((item, idx) => loadDuration(item, clips.length + idx));
-    propagate(next, textOverlays, transitionType);
-  }
+  useEffect(() => {
+    if (activeClipIndex > Math.max(0, clips.length - 1)) {
+      setActiveClipIndex(Math.max(0, clips.length - 1));
+    }
+  }, [activeClipIndex, clips.length]);
+
+  useEffect(() => {
+    if (!clips.length) {
+      setActiveClipIndex(0);
+      setSelectedOverlayId(null);
+    }
+  }, [clips.length]);
+
+  useEffect(() => {
+    const clip = clips[activeClipIndex];
+    if (!clip?.file) {
+      setCurrentClipUrl('');
+      return undefined;
+    }
+    const url = URL.createObjectURL(clip.file);
+    setCurrentClipUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [activeClipIndex, clips]);
 
   function loadDuration(item, idx) {
     const url = URL.createObjectURL(item.file);
@@ -39,140 +76,676 @@ export default function VideoEditor({ onChange }) {
       URL.revokeObjectURL(url);
       setClips((prev) => {
         const next = prev.slice();
+        if (!next[idx]) return prev;
         next[idx] = { ...next[idx], duration: dur, trimEnd: dur };
         return next;
       });
     };
   }
 
-  function onDragStart(e, idx) {
-    e.dataTransfer.setData('text/plain', String(idx));
-  }
-  function onDrop(e, idx) {
-    e.preventDefault();
-    const from = Number(e.dataTransfer.getData('text/plain'));
-    if (Number.isNaN(from)) return;
-    const next = clips.slice();
-    const [item] = next.splice(from, 1);
-    next.splice(idx, 0, item);
+  function addFiles(files) {
+    const incoming = Array.from(files || []).map((file, i) => ({
+      file,
+      id: `${Date.now()}-${i}`,
+      title: file.name,
+      trimStart: 0,
+      trimEnd: 0,
+      duration: 0,
+    }));
+    if (!incoming.length) return;
+    const next = clips.concat(incoming);
     setClips(next);
+    incoming.forEach((item, idx) => loadDuration(item, clips.length + idx));
+    setActiveClipIndex((current) => (current === 0 && clips.length === 0 ? 0 : current));
     propagate(next, textOverlays, transitionType);
   }
-  function allowDrop(e) { e.preventDefault(); }
 
   function removeClip(idx) {
     const next = clips.slice();
     next.splice(idx, 1);
     setClips(next);
+    setActiveClipIndex((current) => {
+      if (next.length === 0) return 0;
+      return Math.min(current, next.length - 1);
+    });
+    propagate(next, textOverlays, transitionType);
+  }
+
+  function moveClip(from, to) {
+    if (from === to || from < 0 || to < 0 || from >= clips.length || to >= clips.length) return;
+    const next = clips.slice();
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item);
+    setClips(next);
+    setActiveClipIndex(to);
     propagate(next, textOverlays, transitionType);
   }
 
   function addTextOverlay() {
-    const overlay = { id: Date.now(), text: 'New text', x: 40, y: 40, startTime: 0, endTime: Math.max(3, duration) };
+    const overlay = createOverlay(Date.now());
     const next = textOverlays.concat(overlay);
     setTextOverlays(next);
+    setSelectedOverlayId(overlay.id);
     propagate(clips, next, transitionType);
   }
 
   function updateOverlay(id, data) {
-    const next = textOverlays.map((o) => (o.id === id ? { ...o, ...data } : o));
+    const next = textOverlays.map((overlay) => (overlay.id === id ? { ...overlay, ...data } : overlay));
     setTextOverlays(next);
     propagate(clips, next, transitionType);
   }
 
   function removeOverlay(id) {
-    const next = textOverlays.filter((o) => o.id !== id);
+    const next = textOverlays.filter((overlay) => overlay.id !== id);
     setTextOverlays(next);
+    if (selectedOverlayId === id) setSelectedOverlayId(null);
     propagate(clips, next, transitionType);
   }
 
-  function changeTransition(t) {
-    setTransitionType(t);
-    propagate(clips, textOverlays, t);
+  function changeTransition(nextTransition) {
+    setTransitionType(nextTransition);
+    propagate(clips, textOverlays, nextTransition);
   }
 
-  function propagate(c, o, t) {
+  function propagate(nextClips, overlays, nextTransition) {
     if (!onChange) return;
     const manifest = {
       created_at: new Date().toISOString(),
-      clips: c.map((cItem, i) => ({ id: cItem.id, name: cItem.file.name, index: i, trimStart: cItem.trimStart || 0, trimEnd: cItem.trimEnd || cItem.duration || 0 })),
-      textOverlays: o,
-      transition: { type: t, duration: t === 'crossfade' ? 0.6 : 0 },
+      clips: nextClips.map((clip, index) => ({
+        id: clip.id,
+        name: clip.file.name,
+        index,
+        trimStart: clip.trimStart || 0,
+        trimEnd: clip.trimEnd || clip.duration || 0,
+      })),
+      textOverlays: overlays,
+      transition: {
+        type: nextTransition,
+        duration: nextTransition === 'crossfade' ? 0.35 : 0,
+      },
     };
-    onChange({ clips: c.map((cItem) => cItem.file), manifest });
+    onChange({
+      clips: nextClips.map((clip) => clip.file),
+      manifest,
+    });
   }
 
   function togglePlay() {
-    const v = videoRef.current;
-    if (!v) return;
-    if (playing) { v.pause(); setPlaying(false); }
-    else { v.play(); setPlaying(true); }
+    const video = videoRef.current;
+    if (!video || !clips.length) return;
+    if (playing) {
+      video.pause();
+      setPlaying(false);
+      return;
+    }
+    video.play();
+    setPlaying(true);
   }
 
-  function onTimeUpdate(e) { setPlayhead(e.target.currentTime); }
-  function seekTo(seconds) { const v = videoRef.current; if (!v) return; v.currentTime = seconds; setPlayhead(seconds); }
+  function onTimeUpdate(event) {
+    setPlayhead(event.target.currentTime);
+  }
+
+  function seekTo(seconds) {
+    const video = videoRef.current;
+    if (!video || !clips.length) return;
+    video.currentTime = seconds;
+    setPlayhead(seconds);
+  }
+
+  function onPreviewPointerDown(event, overlay) {
+    if (!previewRef.current) return;
+    event.preventDefault();
+    const rect = previewRef.current.getBoundingClientRect();
+    dragStateRef.current = {
+      overlayId: overlay.id,
+      offsetX: event.clientX - rect.left - overlay.x,
+      offsetY: event.clientY - rect.top - overlay.y,
+    };
+    setSelectedOverlayId(overlay.id);
+    window.addEventListener('pointermove', onPreviewPointerMove);
+    window.addEventListener('pointerup', onPreviewPointerUp);
+  }
+
+  function onPreviewPointerMove(event) {
+    if (!dragStateRef.current || !previewRef.current) return;
+    const { overlayId, offsetX, offsetY } = dragStateRef.current;
+    const rect = previewRef.current.getBoundingClientRect();
+    const x = Math.max(10, Math.min(rect.width - 120, event.clientX - rect.left - offsetX));
+    const y = Math.max(10, Math.min(rect.height - 60, event.clientY - rect.top - offsetY));
+    updateOverlay(overlayId, { x, y });
+  }
+
+  function onPreviewPointerUp() {
+    dragStateRef.current = null;
+    window.removeEventListener('pointermove', onPreviewPointerMove);
+    window.removeEventListener('pointerup', onPreviewPointerUp);
+  }
+
+  const currentClip = clips[activeClipIndex];
+  const currentTimeLabel = useMemo(() => `${Math.round(playhead * 10) / 10}s`, [playhead]);
 
   return (
-    <div style={{ display: 'grid', gap: 12 }}>
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <input ref={fileInputRef} type="file" multiple accept="video/*,image/*" onChange={(e) => addFiles(e.target.files)} />
-        <button onClick={togglePlay} style={btn}>{playing ? 'Pause' : 'Play'}</button>
-        <button onClick={addTextOverlay} style={btn}>Add Text</button>
-        <label style={{ marginLeft: 8 }}>Transition:</label>
-        <select value={transitionType} onChange={(e) => changeTransition(e.target.value)} style={select}>
-          <option value="none">None</option>
-          <option value="crossfade">Crossfade</option>
-        </select>
+    <div style={shell}>
+      <div style={header}>
+        <div>
+          <div style={eyebrow}>Video Editor</div>
+          <h2 style={title}>Build a short-form cut</h2>
+          <p style={subtitle}>Add clips, choose a transition between them, and drag text around the frame.</p>
+        </div>
+        <div style={actions}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="video/*,image/*"
+            onChange={(e) => addFiles(e.target.files)}
+            style={hiddenInput}
+          />
+          <button type="button" onClick={() => fileInputRef.current?.click()} style={primaryBtn}>Add clips</button>
+          <button type="button" onClick={addTextOverlay} style={secondaryBtn}>Add text</button>
+        </div>
       </div>
 
-      <div style={{ position: 'relative', background: '#000', height: 520, borderRadius: 12, overflow: 'hidden', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <video ref={videoRef} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onTimeUpdate={onTimeUpdate} onEnded={() => setPlaying(false)} controls={false} />
-        {textOverlays.map((o) => (
-          <div key={o.id}
-            style={{ position: 'absolute', left: `${o.x}px`, top: `${o.y}px`, color: '#fff', padding: 8, background: 'rgba(0,0,0,0.4)', borderRadius: 8, cursor: 'move' }}
-            draggable
-            onDragEnd={(e) => updateOverlay(o.id, { x: e.clientX - e.target.getBoundingClientRect().left, y: e.clientY - e.target.getBoundingClientRect().top })}
-          >
-            {o.text}
+      <div style={workspace}>
+        <div style={previewPane}>
+          <div style={previewFrame} ref={previewRef}>
+            {currentClip ? (
+              <>
+                <video
+                  key={currentClip.id}
+                  ref={videoRef}
+                  style={video}
+                  src={currentClipUrl}
+                  onTimeUpdate={onTimeUpdate}
+                  onEnded={() => setPlaying(false)}
+                  playsInline
+                  controls={false}
+                />
+                <div style={gradientOverlay} />
+                {textOverlays.map((overlay) => (
+                  <button
+                    key={overlay.id}
+                    type="button"
+                    onPointerDown={(event) => onPreviewPointerDown(event, overlay)}
+                    onClick={() => setSelectedOverlayId(overlay.id)}
+                    style={{
+                      ...overlayChip,
+                      left: overlay.x,
+                      top: overlay.y,
+                      borderColor: selectedOverlayId === overlay.id ? '#ffffff' : 'rgba(255,255,255,0.2)',
+                      boxShadow: selectedOverlayId === overlay.id ? '0 10px 24px rgba(0,0,0,0.28)' : 'none',
+                    }}
+                  >
+                    {overlay.text}
+                  </button>
+                ))}
+                <div style={playControls}>
+                  <button type="button" onClick={togglePlay} style={playBtn}>{playing ? 'Pause' : 'Play'}</button>
+                  <div style={timePill}>{currentTimeLabel}</div>
+                </div>
+              </>
+            ) : (
+              <div style={emptyState}>
+                <div style={emptyIcon}>+</div>
+                <div style={emptyText}>Drop in a clip to start editing.</div>
+                <button type="button" onClick={() => fileInputRef.current?.click()} style={primaryBtn}>Add your first clip</button>
+              </div>
+            )}
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Timeline area with big Add (+) button on the right */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', overflowX: 'auto' }}>
-          {clips.map((c, idx) => (
-            <div key={c.id} draggable onDragStart={(e) => onDragStart(e, idx)} onDragOver={allowDrop} onDrop={(e) => onDrop(e, idx)} style={{ minWidth: 120, background: '#111827', padding: 8, borderRadius: 8, color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.title}</div>
-              <div style={{ fontSize: 12, opacity: 0.8, marginTop: 6 }}>{Math.round((c.duration || 0) * 10) / 10}s</div>
-              <button type="button" onClick={() => removeClip(idx)} style={{ marginTop: 8, ...smallBtn }}>Remove</button>
+        <div style={sidebar}>
+          <section style={panel}>
+            <div style={panelLabel}>Transitions</div>
+            <div style={transitionRow}>
+              {TRANSITIONS.map((transition) => (
+                <button
+                  key={transition.value}
+                  type="button"
+                  onClick={() => changeTransition(transition.value)}
+                  style={{
+                    ...chip,
+                    ...(transitionType === transition.value ? chipActive : null),
+                  }}
+                >
+                  {transition.label}
+                </button>
+              ))}
             </div>
-          ))}
+            <div style={hint}>Use one transition style for the cut. Crossfade feels closest to IG/TikTok.</div>
+          </section>
 
-          <div style={{ minWidth: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <button onClick={() => fileInputRef.current && fileInputRef.current.click()} style={{ ...addBtn }}>+</button>
-          </div>
-        </div>
+          <section style={panel}>
+            <div style={panelHeader}>
+              <div style={panelLabel}>Clips</div>
+              <div style={smallMuted}>{clips.length} total</div>
+            </div>
+            <div style={clipRail}>
+              {clips.map((clip, idx) => (
+                <div
+                  key={clip.id}
+                  draggable
+                  onDragStart={(e) => e.dataTransfer.setData('text/plain', String(idx))}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const from = Number(e.dataTransfer.getData('text/plain'));
+                    moveClip(from, idx);
+                  }}
+                  onClick={() => setActiveClipIndex(idx)}
+                  style={{
+                    ...clipCard,
+                    ...(idx === activeClipIndex ? clipCardActive : null),
+                  }}
+                >
+                  <div style={clipName}>{clip.title}</div>
+                  <div style={clipMeta}>{Math.round((clip.duration || 0) * 10) / 10}s</div>
+                  <div style={clipActions}>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); moveClip(idx, idx - 1); }} style={miniBtn} disabled={idx === 0}>Up</button>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); moveClip(idx, idx + 1); }} style={miniBtn} disabled={idx === clips.length - 1}>Down</button>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); removeClip(idx); }} style={miniDangerBtn}>Remove</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
 
-        {/* Simple playhead bar */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <div style={{ flex: 1, height: 8, background: '#e5e7eb', borderRadius: 6, position: 'relative', cursor: 'pointer' }} onClick={(e) => {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const pct = (e.clientX - rect.left) / rect.width;
-            seekTo(pct * Math.max(1, duration));
-          }}>
-            <div style={{ position: 'absolute', left: `${(playhead / Math.max(1, duration)) * 100}%`, top: -6, width: 12, height: 20, background: '#2e7dff', borderRadius: 6 }} />
-          </div>
-          <div style={{ width: 60, textAlign: 'right', fontSize: 13 }}>{Math.round(playhead * 10) / 10}s</div>
+          <section style={panel}>
+            <div style={panelHeader}>
+              <div style={panelLabel}>Text</div>
+              <button type="button" onClick={addTextOverlay} style={miniAccentBtn}>Add</button>
+            </div>
+            <div style={overlayList}>
+              {textOverlays.map((overlay) => (
+                <div key={overlay.id} style={overlayCard}>
+                  <input
+                    value={overlay.text}
+                    onChange={(e) => updateOverlay(overlay.id, { text: e.target.value })}
+                    style={overlayInput}
+                  />
+                  <div style={overlayMeta}>
+                    <label style={fieldLabel}>
+                      X
+                      <input
+                        type="number"
+                        value={Math.round(overlay.x)}
+                        onChange={(e) => updateOverlay(overlay.id, { x: Number(e.target.value) || 0 })}
+                        style={smallInput}
+                      />
+                    </label>
+                    <label style={fieldLabel}>
+                      Y
+                      <input
+                        type="number"
+                        value={Math.round(overlay.y)}
+                        onChange={(e) => updateOverlay(overlay.id, { y: Number(e.target.value) || 0 })}
+                        style={smallInput}
+                      />
+                    </label>
+                  </div>
+                  <button type="button" onClick={() => removeOverlay(overlay.id)} style={miniDangerBtn}>Delete text</button>
+                </div>
+              ))}
+              {!textOverlays.length ? <div style={hint}>Add a caption or title, then drag it on the preview.</div> : null}
+            </div>
+          </section>
         </div>
       </div>
 
-      <div style={{ color: '#6b7280', fontSize: 13 }}>Tip: Tap + to add clips. Drag to reorder. Add text overlays and drag them around. This is a lightweight editor — final rendering happens on the server.</div>
+      <div style={timelineWrap}>
+        <div style={timelineTrack} onClick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const pct = (e.clientX - rect.left) / rect.width;
+          seekTo(pct * Math.max(1, duration));
+        }}>
+          <div style={{ ...timelineFill, width: `${(playhead / Math.max(1, duration)) * 100}%` }} />
+          <div style={{ ...timelineHead, left: `${(playhead / Math.max(1, duration)) * 100}%` }} />
+        </div>
+        <div style={timelineLabel}>{currentTimeLabel} / {Math.round(duration * 10) / 10 || 0}s</div>
+      </div>
+
+      <div style={footerNote}>
+        This editor keeps the experience focused on the three core moves: add clips, set transitions, and drag text on the frame.
+      </div>
     </div>
   );
 }
 
-const btn = { border: 0, borderRadius: 8, background: '#2563eb', color: '#fff', padding: '8px 12px' };
-const smallBtn = { border: 0, borderRadius: 6, background: '#374151', color: '#fff', padding: '6px 8px' };
-const select = { background: '#fff', color: '#111827', border: '1px solid #d1d5db', padding: '8px', borderRadius: 8 };
-const addBtn = { width: 48, height: 48, borderRadius: 12, background: '#10b981', color: '#fff', fontSize: 24, border: 0 };
+const shell = {
+  display: 'grid',
+  gap: 16,
+  color: '#e5eefc',
+};
+const header = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  gap: 16,
+  alignItems: 'end',
+  flexWrap: 'wrap',
+};
+const eyebrow = {
+  fontSize: 12,
+  letterSpacing: '0.18em',
+  textTransform: 'uppercase',
+  color: '#7da8ff',
+};
+const title = {
+  margin: '6px 0 6px',
+  fontSize: 28,
+  lineHeight: 1.1,
+  color: '#ffffff',
+};
+const subtitle = {
+  margin: 0,
+  maxWidth: 620,
+  color: '#a8b7d6',
+};
+const actions = {
+  display: 'flex',
+  gap: 10,
+  flexWrap: 'wrap',
+};
+const hiddenInput = { display: 'none' };
+const primaryBtn = {
+  border: 0,
+  borderRadius: 999,
+  background: 'linear-gradient(135deg, #f58529 0%, #dd2a7b 50%, #8134af 100%)',
+  color: '#fff',
+  padding: '11px 16px',
+  fontWeight: 700,
+  cursor: 'pointer',
+};
+const secondaryBtn = {
+  border: '1px solid rgba(134,160,215,0.35)',
+  borderRadius: 999,
+  background: 'rgba(10, 16, 34, 0.72)',
+  color: '#e5eefc',
+  padding: '11px 16px',
+  fontWeight: 700,
+  cursor: 'pointer',
+};
+const workspace = {
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1.35fr) minmax(280px, 0.75fr)',
+  gap: 16,
+  alignItems: 'start',
+};
+const previewPane = {
+  background: 'radial-gradient(circle at top, rgba(61, 92, 169, 0.25), rgba(5, 10, 22, 0.95))',
+  border: '1px solid rgba(125, 168, 255, 0.14)',
+  borderRadius: 24,
+  padding: 14,
+  boxShadow: '0 24px 60px rgba(0,0,0,0.25)',
+};
+const previewFrame = {
+  position: 'relative',
+  width: '100%',
+  aspectRatio: '9 / 16',
+  maxHeight: 760,
+  borderRadius: 20,
+  overflow: 'hidden',
+  background: '#020617',
+  border: '1px solid rgba(255,255,255,0.08)',
+};
+const video = {
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  display: 'block',
+};
+const gradientOverlay = {
+  position: 'absolute',
+  inset: 0,
+  background: 'linear-gradient(180deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.38) 100%)',
+  pointerEvents: 'none',
+};
+const overlayChip = {
+  position: 'absolute',
+  border: '1px solid rgba(255,255,255,0.2)',
+  borderRadius: 16,
+  padding: '10px 14px',
+  background: 'rgba(13, 18, 30, 0.66)',
+  color: '#fff',
+  fontWeight: 700,
+  fontSize: 15,
+  cursor: 'grab',
+  userSelect: 'none',
+  backdropFilter: 'blur(10px)',
+};
+const playControls = {
+  position: 'absolute',
+  left: 14,
+  right: 14,
+  bottom: 14,
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  gap: 12,
+  pointerEvents: 'none',
+};
+const playBtn = {
+  border: 0,
+  borderRadius: 999,
+  padding: '10px 14px',
+  background: 'rgba(255,255,255,0.9)',
+  color: '#0f172a',
+  fontWeight: 800,
+  cursor: 'pointer',
+  pointerEvents: 'auto',
+};
+const timePill = {
+  borderRadius: 999,
+  padding: '8px 12px',
+  background: 'rgba(15, 23, 42, 0.65)',
+  color: '#fff',
+  fontSize: 13,
+  fontWeight: 700,
+};
+const emptyState = {
+  width: '100%',
+  height: '100%',
+  display: 'grid',
+  placeItems: 'center',
+  gap: 14,
+  textAlign: 'center',
+  padding: 32,
+  color: '#c5d3ef',
+};
+const emptyIcon = {
+  width: 84,
+  height: 84,
+  borderRadius: 28,
+  display: 'grid',
+  placeItems: 'center',
+  fontSize: 42,
+  background: 'rgba(255,255,255,0.08)',
+  color: '#fff',
+};
+const emptyText = {
+  maxWidth: 280,
+  fontSize: 17,
+  lineHeight: 1.4,
+};
+const sidebar = {
+  display: 'grid',
+  gap: 14,
+};
+const panel = {
+  borderRadius: 20,
+  background: 'rgba(8, 13, 27, 0.78)',
+  border: '1px solid rgba(125, 168, 255, 0.14)',
+  padding: 14,
+  boxShadow: '0 18px 40px rgba(0,0,0,0.18)',
+};
+const panelLabel = {
+  color: '#ffffff',
+  fontSize: 14,
+  fontWeight: 800,
+  marginBottom: 10,
+};
+const panelHeader = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 12,
+};
+const smallMuted = {
+  color: '#9bb0d3',
+  fontSize: 12,
+};
+const transitionRow = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+};
+const chip = {
+  borderRadius: 999,
+  border: '1px solid rgba(125, 168, 255, 0.22)',
+  background: 'rgba(255,255,255,0.03)',
+  color: '#d6e2fb',
+  padding: '8px 12px',
+  cursor: 'pointer',
+  fontWeight: 700,
+};
+const chipActive = {
+  background: 'rgba(46, 125, 255, 0.2)',
+  borderColor: 'rgba(46, 125, 255, 0.7)',
+  color: '#fff',
+};
+const hint = {
+  marginTop: 10,
+  color: '#8fa2c8',
+  fontSize: 13,
+  lineHeight: 1.45,
+};
+const clipRail = {
+  display: 'grid',
+  gap: 10,
+};
+const clipCard = {
+  borderRadius: 16,
+  border: '1px solid rgba(125, 168, 255, 0.16)',
+  background: 'rgba(255,255,255,0.03)',
+  padding: 12,
+  color: '#fff',
+  cursor: 'pointer',
+};
+const clipCardActive = {
+  borderColor: 'rgba(46, 125, 255, 0.82)',
+  boxShadow: '0 0 0 1px rgba(46, 125, 255, 0.24) inset',
+};
+const clipName = {
+  fontSize: 14,
+  fontWeight: 800,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+};
+const clipMeta = {
+  marginTop: 4,
+  color: '#9bb0d3',
+  fontSize: 12,
+};
+const clipActions = {
+  display: 'flex',
+  gap: 8,
+  marginTop: 10,
+  flexWrap: 'wrap',
+};
+const miniBtn = {
+  border: '1px solid rgba(125, 168, 255, 0.18)',
+  borderRadius: 999,
+  background: 'rgba(255,255,255,0.04)',
+  color: '#e5eefc',
+  padding: '7px 10px',
+  cursor: 'pointer',
+};
+const miniDangerBtn = {
+  ...miniBtn,
+  borderColor: 'rgba(255, 126, 126, 0.3)',
+  color: '#ffb7b7',
+};
+const miniAccentBtn = {
+  ...miniBtn,
+  borderColor: 'rgba(46, 125, 255, 0.42)',
+  color: '#bcd4ff',
+};
+const overlayList = {
+  display: 'grid',
+  gap: 10,
+};
+const overlayCard = {
+  display: 'grid',
+  gap: 10,
+  padding: 12,
+  borderRadius: 16,
+  border: '1px solid rgba(125, 168, 255, 0.12)',
+  background: 'rgba(255,255,255,0.03)',
+};
+const overlayInput = {
+  width: '100%',
+  borderRadius: 12,
+  border: '1px solid rgba(125, 168, 255, 0.2)',
+  background: 'rgba(2, 6, 23, 0.85)',
+  color: '#fff',
+  padding: '10px 12px',
+};
+const overlayMeta = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gap: 8,
+};
+const fieldLabel = {
+  display: 'grid',
+  gap: 6,
+  fontSize: 12,
+  color: '#9bb0d3',
+};
+const smallInput = {
+  width: '100%',
+  borderRadius: 10,
+  border: '1px solid rgba(125, 168, 255, 0.2)',
+  background: 'rgba(2, 6, 23, 0.85)',
+  color: '#fff',
+  padding: '9px 10px',
+};
+const timelineWrap = {
+  display: 'grid',
+  gap: 10,
+  padding: 14,
+  borderRadius: 18,
+  background: 'rgba(8, 13, 27, 0.76)',
+  border: '1px solid rgba(125, 168, 255, 0.14)',
+};
+const timelineTrack = {
+  position: 'relative',
+  height: 10,
+  borderRadius: 999,
+  background: 'rgba(255,255,255,0.08)',
+  cursor: 'pointer',
+};
+const timelineFill = {
+  height: '100%',
+  borderRadius: 999,
+  background: 'linear-gradient(90deg, #2e7dff, #dd2a7b)',
+};
+const timelineHead = {
+  position: 'absolute',
+  top: '50%',
+  width: 16,
+  height: 16,
+  borderRadius: 999,
+  background: '#fff',
+  transform: 'translate(-50%, -50%)',
+  boxShadow: '0 6px 18px rgba(0,0,0,0.35)',
+};
+const timelineLabel = {
+  fontSize: 13,
+  color: '#a8b7d6',
+};
+const footerNote = {
+  color: '#8fa2c8',
+  fontSize: 13,
+  lineHeight: 1.5,
+};
