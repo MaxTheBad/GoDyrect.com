@@ -313,14 +313,7 @@ export default function NewListingPage() {
           };
 
           const primaryClip = Array.isArray(clips) && clips.length ? [clips[0]] : [];
-          const uploadSet = [...primaryClip];
-          try {
-            const blob = new Blob([JSON.stringify(manifest || {}, null, 2)], { type: 'application/json' });
-            uploadSet.push(new File([blob], `project-manifest-${Date.now()}.json`, { type: 'application/json' }));
-          } catch (err) {
-            // ignore manifest if it fails
-          }
-          setFiles(uploadSet);
+          setFiles(primaryClip);
           queueRender();
         }} />
 
