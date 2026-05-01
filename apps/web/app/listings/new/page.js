@@ -290,19 +290,29 @@ export default function NewListingPage() {
           </div>
         ) : null}
 
-        {/* Video editor uploader with multiple clips, draggable text and transitions */}
+        {/* Video editor queues a single render manifest instead of uploading raw clips */}
         <VideoEditor onChange={({ clips, manifest }) => {
-          // clips = Array<File>
-          // build files list: include clips and a manifest JSON file so server can render later
-          const filesToUpload = [].concat(clips || []);
-          try {
-            const blob = new Blob([JSON.stringify(manifest || {}, null, 2)], { type: 'application/json' });
-            const manifestFile = new File([blob], `project-manifest-${Date.now()}.json`, { type: 'application/json' });
-            filesToUpload.push(manifestFile);
-          } catch (err) {
-            // ignore manifest if it fails
-          }
-          setFiles(filesToUpload);
+          const queueRender = async () => {
+            try {
+              const payload = {
+                ...manifest,
+                clipCount: Array.isArray(clips) ? clips.length : 0,
+              };
+              const response = await fetch('/api/render', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+              });
+              const result = await response.json().catch(() => ({}));
+              setFiles([]);
+              setMsg(result?.status === 'queued'
+                ? 'Video render queued. The final single video will appear after processing.'
+                : 'Render request saved.');
+            } catch (err) {
+              setMsg(err?.message || 'Could not queue render.');
+            }
+          };
+          queueRender();
         }} />
 
         <div style={{ display: 'grid', gap: 6 }}>

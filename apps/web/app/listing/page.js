@@ -237,17 +237,19 @@ export default function ListingDetailPage() {
         <section style={section}>
           <h3 style={{ marginTop: 0 }}>Photos & Videos</h3>
           {media.length === 0 ? <p>No media uploaded yet.</p> : null}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10 }}>
-            {media.map((m) => (
-              <div key={m.id} style={mediaCard}>
-                {m.media_type === 'video' ? (
-                  <video controls style={mediaEl} src={m.url} />
-                ) : (
-                  <img alt='Listing media' style={mediaEl} src={m.url} />
-                )}
-              </div>
-            ))}
-          </div>
+          {media.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
+              {media.slice(0, 1).map((m) => (
+                <div key={m.id} style={mediaCard}>
+                  {m.media_type === 'video' ? (
+                    <video controls style={mediaEl} src={m.url} />
+                  ) : (
+                    <img alt='Listing media' style={mediaEl} src={m.url} />
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : null}
         </section>
 
         <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
