@@ -304,7 +304,6 @@ export default function NewListingPage() {
                 body: JSON.stringify(payload),
               });
               const result = await response.json().catch(() => ({}));
-              setFiles([]);
               setMsg(result?.status === 'queued'
                 ? 'Video render queued. The final single video will appear after processing.'
                 : 'Render request saved.');
@@ -312,6 +311,16 @@ export default function NewListingPage() {
               setMsg(err?.message || 'Could not queue render.');
             }
           };
+
+          const primaryClip = Array.isArray(clips) && clips.length ? [clips[0]] : [];
+          const uploadSet = [...primaryClip];
+          try {
+            const blob = new Blob([JSON.stringify(manifest || {}, null, 2)], { type: 'application/json' });
+            uploadSet.push(new File([blob], `project-manifest-${Date.now()}.json`, { type: 'application/json' }));
+          } catch (err) {
+            // ignore manifest if it fails
+          }
+          setFiles(uploadSet);
           queueRender();
         }} />
 
