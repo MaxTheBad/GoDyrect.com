@@ -66,6 +66,16 @@ export default function VideoEditor({ onChange }) {
     return () => URL.revokeObjectURL(url);
   }, [activeClipIndex, clips]);
 
+  useEffect(() => {
+    if (!playing) return;
+    const video = videoRef.current;
+    if (!video) return;
+    const playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch(() => {});
+    }
+  }, [currentClipUrl, playing]);
+
   function loadDuration(item, idx) {
     const url = URL.createObjectURL(item.file);
     const v = document.createElement('video');
@@ -193,6 +203,15 @@ export default function VideoEditor({ onChange }) {
     setPlayhead(seconds);
   }
 
+  function handleEnded() {
+    if (activeClipIndex < clips.length - 1) {
+      setActiveClipIndex((current) => Math.min(current + 1, clips.length - 1));
+      setPlayhead(0);
+      return;
+    }
+    setPlaying(false);
+  }
+
   function onPreviewPointerDown(event, overlay) {
     if (!previewRef.current) return;
     event.preventDefault();
@@ -258,7 +277,7 @@ export default function VideoEditor({ onChange }) {
                   style={video}
                   src={currentClipUrl}
                   onTimeUpdate={onTimeUpdate}
-                  onEnded={() => setPlaying(false)}
+                  onEnded={handleEnded}
                   playsInline
                   controls={false}
                 />
@@ -405,9 +424,6 @@ export default function VideoEditor({ onChange }) {
         <div style={timelineLabel}>{currentTimeLabel} / {Math.round(duration * 10) / 10 || 0}s</div>
       </div>
 
-      <div style={footerNote}>
-        This editor keeps the experience focused on the three core moves: add clips, set transitions, and drag text on the frame.
-      </div>
     </div>
   );
 }
@@ -743,9 +759,4 @@ const timelineHead = {
 const timelineLabel = {
   fontSize: 13,
   color: '#a8b7d6',
-};
-const footerNote = {
-  color: '#8fa2c8',
-  fontSize: 13,
-  lineHeight: 1.5,
 };
