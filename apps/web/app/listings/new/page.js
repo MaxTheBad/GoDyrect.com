@@ -60,6 +60,7 @@ export default function NewListingPage() {
   const [useDefaultAskingPrice, setUseDefaultAskingPrice] = useState(true);
   const [missingFields, setMissingFields] = useState([]);
   const [errors, setErrors] = useState({});
+  const [editorState, setEditorState] = useState({ clips: [], manifest: null });
 
   useEffect(() => {
     async function checkAuth() {
@@ -211,19 +212,37 @@ export default function NewListingPage() {
 
     if (error) return setMsg(error.message);
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const ext = file.name.split('.').pop();
-      const path = `${user.id}/${listing.id}/${Date.now()}-${i}.${ext}`;
-      const upload = await supabase.storage.from('listing-media').upload(path, file, { upsert: true });
+    const renderClips = Array.isArray(editorState.clips) ? editorState.clips : [];
+    if (renderClips.length) {
+      const renderForm = new FormData();
+      renderClips.forEach((clip) => renderForm.append('clips', clip, clip.name));
+      renderForm.append('manifest', JSON.stringify({
+        ...(editorState.manifest || {}),
+        listing_id: listing.id,
+        user_id: user.id,
+      }));
+
+      const renderResponse = await fetch('/api/render', {
+        method: 'POST',
+        body: renderForm,
+      });
+
+      if (!renderResponse.ok) {
+        const payload = await renderResponse.json().catch(() => ({}));
+        return setMsg(payload?.error || 'Could not render final video.');
+      }
+
+      const renderedBlob = await renderResponse.blob();
+      const renderFile = new File([renderedBlob], `listing-${listing.id}.mp4`, { type: 'video/mp4' });
+      const pathName = `${user.id}/${listing.id}/final-${Date.now()}.mp4`;
+      const upload = await supabase.storage.from('listing-media').upload(pathName, renderFile, { upsert: true });
       if (upload.error) return setMsg(upload.error.message);
-      const { data: pub } = supabase.storage.from('listing-media').getPublicUrl(path);
-      const mediaType = file.type.startsWith('video') ? 'video' : 'image';
+      const { data: pub } = supabase.storage.from('listing-media').getPublicUrl(pathName);
       const mediaInsert = await supabase.from('listing_media').insert({
         listing_id: listing.id,
-        media_type: mediaType,
+        media_type: 'video',
         url: pub.publicUrl,
-        sort_order: i,
+        sort_order: 0,
       });
       if (mediaInsert.error) return setMsg(mediaInsert.error.message);
     }
@@ -292,29 +311,8 @@ export default function NewListingPage() {
 
         {/* Video editor queues a single render manifest instead of uploading raw clips */}
         <VideoEditor onChange={({ clips, manifest }) => {
-          const queueRender = async () => {
-            try {
-              const payload = {
-                ...manifest,
-                clipCount: Array.isArray(clips) ? clips.length : 0,
-              };
-              const response = await fetch('/api/render', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-              });
-              const result = await response.json().catch(() => ({}));
-              setMsg(result?.status === 'queued'
-                ? 'Video render queued. The final single video will appear after processing.'
-                : 'Render request saved.');
-            } catch (err) {
-              setMsg(err?.message || 'Could not queue render.');
-            }
-          };
-
-          const primaryClip = Array.isArray(clips) && clips.length ? [clips[0]] : [];
-          setFiles(primaryClip);
-          queueRender();
+          setEditorState({ clips: Array.isArray(clips) ? clips : [], manifest: manifest || null });
+          setFiles(Array.isArray(clips) ? clips : []);
         }} />
 
         <div style={{ display: 'grid', gap: 6 }}>
