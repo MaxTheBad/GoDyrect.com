@@ -133,6 +133,9 @@ create table if not exists public.conversations (
   unique (buyer_id, seller_id, business_id)
 );
 
+alter table public.conversations
+  drop constraint if exists conversations_buyer_id_seller_id_listing_id_key;
+
 create table if not exists public.messages (
   id uuid primary key default uuid_generate_v4(),
   conversation_id uuid not null references public.conversations(id) on delete cascade,

@@ -117,7 +117,17 @@ export default function FeedPage() {
 
         {loading ? <p>Loading feed...</p> : null}
         {msg ? <p>{msg}</p> : null}
-        {!loading && !msg && rows.length === 0 ? <p>No posts yet. Follow people or businesses to populate your feed.</p> : null}
+        {!loading && !msg && rows.length === 0 ? (
+          <div style={emptyState}>
+            <p style={{ marginTop: 0, marginBottom: 8 }}>
+              No posts yet. Follow people or businesses to populate your feed.
+            </p>
+            <p style={{ marginTop: 0, marginBottom: 8 }}>
+              You can also visit Explore to discover new listings and businesses.
+            </p>
+            <a href="/explore" style={exploreBtn}>Go to Explore</a>
+          </div>
+        ) : null}
 
         <div style={{ display: 'grid', gap: 12 }}>
           {rows.map((r) => {
@@ -154,6 +164,10 @@ export default function FeedPage() {
             );
           })}
         </div>
+
+        <div style={bottomExploreWrap}>
+          <a href="/explore" style={exploreBtn}>Explore more listings</a>
+        </div>
       </div>
     </main>
   );
@@ -166,3 +180,6 @@ const btn = { border: '1px solid #e5e7eb', borderRadius: 999, background: '#fff'
 const mediaWrap = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8, marginTop: 10 };
 const thumbCard = { border: '1px solid #eceff5', borderRadius: 10, overflow: 'hidden', background: '#f8fafc' };
 const thumb = { width: '100%', height: 120, objectFit: 'cover', display: 'block' };
+const emptyState = { marginTop: 12, padding: 14, borderRadius: 14, border: '1px solid #dbe6ff', background: '#f8fbff', display: 'grid', gap: 8 };
+const bottomExploreWrap = { marginTop: 16, display: 'flex', justifyContent: 'center' };
+const exploreBtn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #2e7dff', borderRadius: 999, background: '#2e7dff', color: '#fff', padding: '10px 14px', textDecoration: 'none', fontWeight: 700 };

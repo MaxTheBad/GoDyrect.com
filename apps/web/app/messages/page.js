@@ -76,7 +76,10 @@ export default function MessagesPage() {
           (c) =>
             c.buyer_id === me.id &&
             c.seller_id === startSellerId &&
-            (businessId ? c.business_id === businessId : true)
+            (
+              (businessId ? c.business_id === businessId : true) ||
+              (startListingId ? c.listing_id === startListingId : false)
+            )
         );
 
         if (!convo) {
