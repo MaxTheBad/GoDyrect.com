@@ -8,17 +8,29 @@ export default function MessagesPage() {
   const [conversations, setConversations] = useState([]);
   const [profiles, setProfiles] = useState({});
   const [listings, setListings] = useState({});
+  const [businesses, setBusinesses] = useState({});
   const [activeId, setActiveId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [body, setBody] = useState('');
   const [msg, setMsg] = useState('');
   const [startSellerId, setStartSellerId] = useState('');
   const [startListingId, setStartListingId] = useState('');
+  const [startBusinessId, setStartBusinessId] = useState('');
+  const [replyListingId, setReplyListingId] = useState('');
 
   const activeConversation = useMemo(
     () => conversations.find((c) => c.id === activeId) || null,
     [conversations, activeId]
   );
+
+  const activeConversationGroup = useMemo(() => {
+    if (!activeConversation) return [];
+    const counterpart = activeConversation.buyer_id === user?.id ? activeConversation.seller_id : activeConversation.buyer_id;
+    return conversations.filter((c) => {
+      const cCounterpart = c.buyer_id === user?.id ? c.seller_id : c.buyer_id;
+      return cCounterpart === counterpart && c.business_id === activeConversation.business_id;
+    });
+  }, [activeConversation, conversations, user?.id]);
 
   const counterpartId = activeConversation
     ? activeConversation.buyer_id === user?.id
@@ -26,11 +38,14 @@ export default function MessagesPage() {
       : activeConversation.buyer_id
     : null;
 
+  const activeBusinessId = activeConversation?.business_id || null;
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const qp = new URLSearchParams(window.location.search);
     setStartSellerId(qp.get('seller') || '');
     setStartListingId(qp.get('listing') || '');
+    setStartBusinessId(qp.get('business') || '');
   }, []);
 
   useEffect(() => {
@@ -52,17 +67,22 @@ export default function MessagesPage() {
       let list = convos || [];
 
       if (startSellerId && startSellerId !== me.id) {
+        let businessId = startBusinessId || null;
+        if (!businessId && startListingId) {
+          const { data: listingRow } = await supabase.from('listings').select('id,business_id').eq('id', startListingId).maybeSingle();
+          businessId = listingRow?.business_id || null;
+        }
         let convo = list.find(
           (c) =>
             c.buyer_id === me.id &&
             c.seller_id === startSellerId &&
-            (startListingId ? c.listing_id === startListingId : true)
+            (businessId ? c.business_id === businessId : true)
         );
 
         if (!convo) {
           const { data: created, error: cErr } = await supabase
             .from('conversations')
-            .insert({ buyer_id: me.id, seller_id: startSellerId, listing_id: startListingId || null })
+            .insert({ buyer_id: me.id, seller_id: startSellerId, business_id: businessId, listing_id: startListingId || null })
             .select('*')
             .single();
           if (cErr) setMsg(cErr.message);
@@ -81,6 +101,7 @@ export default function MessagesPage() {
       const counterpartIds = [...new Set(list.map((c) => (c.buyer_id === me.id ? c.seller_id : c.buyer_id)).filter(Boolean))];
       const profileIds = [...new Set([me.id, ...counterpartIds])];
       const listingIds = [...new Set(list.map((c) => c.listing_id).filter(Boolean))];
+      const businessIds = [...new Set(list.map((c) => c.business_id).filter(Boolean))];
 
       if (profileIds.length) {
         const { data: prof } = await supabase.from('profiles').select('id,full_name,role,avatar_url').in('id', profileIds);
@@ -95,44 +116,65 @@ export default function MessagesPage() {
         (l || []).forEach((x) => (map[x.id] = x));
         setListings(map);
       }
+
+      if (businessIds.length) {
+        const { data: b } = await supabase.from('businesses').select('id,name,slug').in('id', businessIds);
+        const map = {};
+        (b || []).forEach((x) => (map[x.id] = x));
+        setBusinesses(map);
+      }
+
+      const grouped = list.reduce((acc, convo) => {
+        const businessKey = convo.business_id || convo.listing_id || convo.id;
+        const counterpartKey = convo.buyer_id === me.id ? convo.seller_id : convo.buyer_id;
+        const key = `${counterpartKey}:${businessKey}`;
+        if (!acc[key]) acc[key] = convo;
+        return acc;
+      }, {});
+      const mergedList = Object.values(grouped);
+      setConversations(mergedList);
     }
 
     init();
-  }, [startSellerId, startListingId]);
+  }, [startSellerId, startListingId, startBusinessId]);
 
   useEffect(() => {
     async function loadMessages() {
-      if (!supabase || !activeId) return setMessages([]);
+      if (!supabase || !activeConversationGroup.length) return setMessages([]);
+      const convoIds = activeConversationGroup.map((c) => c.id);
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .eq('conversation_id', activeId)
+        .in('conversation_id', convoIds)
         .order('created_at', { ascending: true });
       if (error) return setMsg(error.message);
       setMessages(data || []);
+      const latestReply = (data || []).slice().reverse().find((m) => m.listing_id)?.listing_id || '';
+      setReplyListingId(latestReply);
     }
 
     loadMessages();
-  }, [activeId]);
+  }, [activeConversationGroup, activeId]);
 
   async function sendMessage(e) {
     e.preventDefault();
-    if (!supabase || !activeId || !user || !body.trim()) return;
+    if (!supabase || !activeConversationGroup.length || !user || !body.trim()) return;
 
     const { error } = await supabase.from('messages').insert({
-      conversation_id: activeId,
+      conversation_id: activeConversationGroup[0].id,
       sender_id: user.id,
+      listing_id: replyListingId || null,
       body: body.trim(),
     });
 
     if (error) return setMsg(error.message);
     setBody('');
 
-    const { data } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('conversation_id', activeId)
-      .order('created_at', { ascending: true });
+      const { data } = await supabase
+        .from('messages')
+        .select('*')
+        .in('conversation_id', activeConversationGroup.map((c) => c.id))
+        .order('created_at', { ascending: true });
     setMessages(data || []);
   }
 
@@ -153,11 +195,15 @@ export default function MessagesPage() {
           {conversations.map((c) => {
             const otherId = c.buyer_id === user.id ? c.seller_id : c.buyer_id;
             const p = profiles[otherId];
+            const business = c.business_id ? businesses[c.business_id] : null;
             return (
               <button key={c.id} onClick={() => setActiveId(c.id)} style={{ ...threadBtn, borderColor: c.id === activeId ? '#2e7dff' : '#304178' }}>
+                <strong>{business?.name || 'Business conversation'}</strong>
                 <strong>{p?.full_name || 'User'}</strong>
                 {p?.role ? <span style={badge(p.role)}>{p.role === 'not_sure' ? 'Not sure yet' : p.role}</span> : null}
-                <span style={{ opacity: 0.75, fontSize: 12 }}>{c.listing_id ? listings[c.listing_id]?.title || 'Listing' : 'General chat'}</span>
+                <span style={{ opacity: 0.75, fontSize: 12 }}>
+                  {c.listing_id ? listings[c.listing_id]?.title || 'Listing' : 'General chat'}
+                </span>
               </button>
             );
           })}
@@ -167,31 +213,42 @@ export default function MessagesPage() {
           <h2 style={{ marginTop: 0 }}>Conversation</h2>
           {activeConversation ? (
             <>
+              <h3 style={{ marginTop: 0, marginBottom: 4 }}>{businesses[activeBusinessId]?.name || 'Business'}</h3>
               <p style={{ marginTop: 0, opacity: 0.85 }}>
                 With {profiles[counterpartId]?.full_name || 'User'}
                 {profiles[counterpartId]?.role ? ` · ${profiles[counterpartId].role === 'not_sure' ? 'Not sure yet' : profiles[counterpartId].role}` : ''}
               </p>
               {activeConversation.listing_id ? (
                 <a href={`/listing?id=${activeConversation.listing_id}`} style={{ color: '#8fb7ff', fontSize: 13 }}>
-                  Listing: {listings[activeConversation.listing_id]?.title || 'View listing'}
+                  Open original post: {listings[activeConversation.listing_id]?.title || 'View listing'}
                 </a>
               ) : null}
 
               <div style={messagesWrap}>
-                {messages.map((m) => {
+                {messages.map((m, idx) => {
                   const mine = m.sender_id === user.id;
                   const sender = profiles[m.sender_id];
+                  const prev = messages[idx - 1];
+                  const showListingHeader = m.listing_id && m.listing_id !== prev?.listing_id;
                   return (
-                    <div key={m.id} style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, flexDirection: mine ? 'row-reverse' : 'row' }}>
-                        <a href={`/profile/view?id=${m.sender_id}`} title='View profile' style={{ textDecoration: 'none' }}>
-                          {sender?.avatar_url ? (
-                            <img src={sender.avatar_url} alt='avatar' style={avatar} />
-                          ) : (
-                            <div style={avatarFallback}>{initial(sender?.full_name)}</div>
-                          )}
-                        </a>
-                        <div style={{ ...bubble, background: mine ? '#2e7dff' : '#1a2754' }}>{m.body}</div>
+                    <div key={m.id} style={{ display: 'grid', gap: 8 }}>
+                      {showListingHeader ? (
+                        <div style={listingHeaderBlock}>
+                          <div style={listingHeaderTitle}>Post: {listings[m.listing_id]?.title || 'View listing'}</div>
+                          <a href={`/listing?id=${m.listing_id}`} style={listingLink}>Open linked post</a>
+                        </div>
+                      ) : null}
+                      <div style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, flexDirection: mine ? 'row-reverse' : 'row' }}>
+                          <a href={`/profile/view?id=${m.sender_id}`} title='View profile' style={{ textDecoration: 'none' }}>
+                            {sender?.avatar_url ? (
+                              <img src={sender.avatar_url} alt='avatar' style={avatar} />
+                            ) : (
+                              <div style={avatarFallback}>{initial(sender?.full_name)}</div>
+                            )}
+                          </a>
+                          <div style={{ ...bubble, background: mine ? '#2e7dff' : '#1a2754' }}>{m.body}</div>
+                        </div>
                       </div>
                     </div>
                   );
@@ -232,3 +289,6 @@ const avatar = { width: 28, height: 28, borderRadius: 999, objectFit: 'cover', b
 const avatarFallback = { width: 28, height: 28, borderRadius: 999, display: 'grid', placeItems: 'center', background: '#243569', border: '1px solid #3a4f8f', fontSize: 12 };
 const input = { borderRadius: 8, border: '1px solid #304178', background: '#0b1431', color: '#fff', padding: '10px 12px' };
 const btn = { border: 0, borderRadius: 8, background: '#2e7dff', color: '#fff', padding: '10px 12px' };
+const listingHeaderBlock = { padding: '8px 10px', border: '1px solid #304178', borderRadius: 10, background: '#0e1738', display: 'grid', gap: 4 };
+const listingHeaderTitle = { fontWeight: 700, fontSize: 13, color: '#fff' };
+const listingLink = { color: '#8fb7ff', fontSize: 12, textDecoration: 'none' };

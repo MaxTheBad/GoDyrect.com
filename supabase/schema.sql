@@ -127,15 +127,17 @@ create table if not exists public.conversations (
   id uuid primary key default uuid_generate_v4(),
   buyer_id uuid not null references public.profiles(id) on delete cascade,
   seller_id uuid not null references public.profiles(id) on delete cascade,
+  business_id uuid references public.businesses(id) on delete set null,
   listing_id uuid references public.listings(id) on delete set null,
   created_at timestamptz default now() not null,
-  unique (buyer_id, seller_id, listing_id)
+  unique (buyer_id, seller_id, business_id)
 );
 
 create table if not exists public.messages (
   id uuid primary key default uuid_generate_v4(),
   conversation_id uuid not null references public.conversations(id) on delete cascade,
   sender_id uuid not null references public.profiles(id) on delete cascade,
+  listing_id uuid references public.listings(id) on delete set null,
   body text not null,
   created_at timestamptz default now() not null
 );
