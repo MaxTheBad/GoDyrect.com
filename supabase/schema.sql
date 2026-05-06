@@ -29,6 +29,7 @@ create table if not exists public.businesses (
   default_asking_price numeric(14,2),
   city text,
   state text,
+  zip text,
   country text,
   county text,
   keywords text[] default '{}',
@@ -357,6 +358,7 @@ alter table public.businesses add column if not exists annual_profit numeric(14,
 alter table public.businesses add column if not exists default_asking_price numeric(14,2);
 alter table public.businesses add column if not exists city text;
 alter table public.businesses add column if not exists state text;
+alter table public.businesses add column if not exists zip text;
 alter table public.businesses add column if not exists country text;
 alter table public.businesses add column if not exists county text;
 alter table public.businesses add column if not exists keywords text[] default '{}';

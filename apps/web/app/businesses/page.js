@@ -40,6 +40,7 @@ function completeness(details) {
     details.default_asking_price !== '' && details.default_asking_price !== null,
     !!details.city,
     !!details.state,
+    !!details.zip,
     !!details.country,
     !!details.county,
     !!details.keywords,
@@ -62,6 +63,7 @@ const emptyDetails = {
   default_asking_price: '',
   city: '',
   state: '',
+  zip: '',
   country: 'United States',
   county: '',
   keywords: '',
@@ -92,7 +94,7 @@ export default function MyBusinessesPage() {
     const [{ data: memberships, error: membershipsErr }, { data: profiles }] = await Promise.all([
       supabase
         .from('business_memberships')
-        .select('id,business_id,user_id,role,is_admin,status,businesses(id,name,status,created_by,description,category,start_date,annual_revenue,annual_profit,default_asking_price,city,state,country,county,keywords)')
+        .select('id,business_id,user_id,role,is_admin,status,businesses(id,name,status,created_by,description,category,start_date,annual_revenue,annual_profit,default_asking_price,city,state,zip,country,county,keywords)')
         .eq('user_id', uid)
         .eq('status', 'approved'),
       supabase.from('profiles').select('id,full_name,handle').limit(500),
@@ -130,6 +132,7 @@ export default function MyBusinessesPage() {
         default_asking_price: b.default_asking_price != null ? formatCurrency(b.default_asking_price) : '',
         city: b.city || '',
         state: b.state || '',
+        zip: b.zip || '',
         country: b.country || 'United States',
         county: b.county || '',
         keywords: Array.isArray(b.keywords) ? b.keywords.join(', ') : '',
@@ -178,6 +181,7 @@ export default function MyBusinessesPage() {
       .insert({
         name: newBusinessName.trim(),
         state: newBusinessState || null,
+        zip: null,
         country: newBusinessCountry || null,
         created_by: userId,
         status: 'approved',
@@ -213,6 +217,7 @@ export default function MyBusinessesPage() {
       default_asking_price: parseCurrencyInput(details.default_asking_price) ? Number(parseCurrencyInput(details.default_asking_price)) : null,
       city: details.city || null,
       state: details.state || null,
+      zip: details.zip || null,
       country: details.country || null,
       county: details.county || null,
       keywords: (details.keywords || '').split(',').map((k) => k.trim()).filter(Boolean),
@@ -346,6 +351,7 @@ export default function MyBusinessesPage() {
                     <option value=''>State</option>
                     {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
                   </select>
+                  <input style={input} placeholder='ZIP code' value={details.zip} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, zip: e.target.value } }))} />
                   <select style={input} value={details.country} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, country: e.target.value } }))}>
                     <option value=''>Country</option>
                     {countries.map((c) => <option key={c} value={c}>{c}</option>)}
