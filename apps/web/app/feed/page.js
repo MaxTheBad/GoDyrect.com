@@ -7,6 +7,7 @@ export default function FeedPage() {
   const [rows, setRows] = useState([]);
   const [profileNames, setProfileNames] = useState({});
   const [businessNames, setBusinessNames] = useState({});
+  const [businessLocations, setBusinessLocations] = useState({});
   const [mediaByListing, setMediaByListing] = useState({});
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(true);
@@ -20,6 +21,7 @@ export default function FeedPage() {
         r.title,
         r.description,
         businessNames[r.business_id],
+        businessLocations[r.business_id],
         profileNames[r.seller_id],
         r.category,
         r.city,
@@ -31,7 +33,7 @@ export default function FeedPage() {
       const matchesIndustry = industry === 'all' || r.category === industry;
       return matchesSearch && matchesIndustry;
     });
-  }, [rows, searchTerm, industry, businessNames, profileNames]);
+  }, [rows, searchTerm, industry, businessNames, businessLocations, profileNames]);
 
   useEffect(() => {
     async function loadFeed() {
@@ -103,10 +105,13 @@ export default function FeedPage() {
       setProfileNames(pMap);
 
       const bMap = {};
+      const lMap = {};
       (businesses || []).forEach((b) => {
         bMap[b.id] = b.name;
+        lMap[b.id] = [b.city, b.state, b.zip].filter(Boolean).join(' ');
       });
       setBusinessNames(bMap);
+      setBusinessLocations(lMap);
 
       const mMap = {};
       (media || []).forEach((m) => {
@@ -133,38 +138,65 @@ export default function FeedPage() {
 
   return (
     <main style={wrap}>
+      <section style={heroShell}>
+        <div style={heroOverlay} />
+        <div style={heroContent}>
+          <div style={heroPanel}>
+            <div style={heroTopline}>Discover deals, businesses, and brokers</div>
+            <h1 style={heroTitle}>Find a business for sale</h1>
+            <p style={heroSubtitle}>Search by business name, city, state, or ZIP. Keep your feed focused on what you actually want to buy.</p>
+
+            <div style={heroTabs}>
+              <button type='button' style={industry === 'all' ? activeTab : tabButton} onClick={() => setIndustry('all')}>Businesses</button>
+              <button type='button' style={industry === 'startup' ? activeTab : tabButton} onClick={() => setIndustry('startup')}>Franchises</button>
+            </div>
+
+            <div style={searchBar}>
+              <div style={searchFieldWrap}>
+                <label style={srOnly} htmlFor='feed-search'>Search</label>
+                <input
+                  id='feed-search'
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder='California, Miami, 33101, coffee shop...'
+                  style={searchInput}
+                />
+              </div>
+              <div style={divider} />
+              <div style={searchFieldWrap}>
+                <label style={srOnly} htmlFor='feed-industry'>Industry</label>
+                <select id='feed-industry' value={industry} onChange={(e) => setIndustry(e.target.value)} style={searchSelect}>
+                  <option value='all'>All Industries</option>
+                  <option value='established'>Established Businesses</option>
+                  <option value='asset_sale'>Asset Sales</option>
+                  <option value='real_estate'>Real Estate</option>
+                  <option value='startup'>Start-Ups</option>
+                </select>
+              </div>
+              <button type='button' style={searchBtn}>Search</button>
+            </div>
+
+            <div style={statsRow}>
+              <div style={statCard}>
+                <span style={statLabel}>Posts</span>
+                <strong style={statValue}>{rows.length.toLocaleString()}</strong>
+              </div>
+              <div style={statCard}>
+                <span style={statLabel}>Businesses</span>
+                <strong style={statValue}>{Object.keys(businessNames).length.toLocaleString()}</strong>
+              </div>
+              <div style={statCard}>
+                <span style={statLabel}>People</span>
+                <strong style={statValue}>{Object.keys(profileNames).length.toLocaleString()}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <div style={inner}>
-        <section style={heroCard}>
-          <h1 style={heroTitle}>Feed</h1>
-          <div style={heroBadgeRow}>
-            <div style={badge('buyer')}>Businesses</div>
-            <div style={badge('broker')}>Listings</div>
-          </div>
-
-          <input
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder='Search businesses, posts, sellers, cities...'
-            style={field}
-          />
-          <select value={industry} onChange={(e) => setIndustry(e.target.value)} style={field}>
-            <option value='all'>All industries</option>
-            <option value='established'>Established businesses</option>
-            <option value='asset_sale'>Asset sales</option>
-            <option value='real_estate'>Real estate</option>
-            <option value='startup'>Start-ups</option>
-          </select>
-          <button type='button' style={btnPrimary}>Search</button>
-
-          <div style={heroMetaRow}>
-            <span>{rows.length.toLocaleString()} posts</span>
-            <span>{Object.keys(businessNames).length.toLocaleString()} businesses</span>
-            <span>{Object.keys(profileNames).length.toLocaleString()} people</span>
-          </div>
-        </section>
-
-        {loading ? <p>Loading feed...</p> : null}
-        {msg ? <p>{msg}</p> : null}
+        {loading ? <p style={statusText}>Loading feed...</p> : null}
+        {msg ? <p style={statusText}>{msg}</p> : null}
         {!loading && !msg && filteredRows.length === 0 ? (
           <div style={emptyState}>
             <p style={{ marginTop: 0, marginBottom: 8 }}>
@@ -188,7 +220,7 @@ export default function FeedPage() {
                     <div style={{ opacity: 0.8, fontSize: 13 }}>
                       {(businessNames[r.business_id] || 'Business')} · Posted by {profileNames[r.seller_id] || 'User'} · {r.lister_role || 'Authorized Representative'}
                     </div>
-                    <div style={{ opacity: 0.72, fontSize: 12 }}>{[r.city, r.state, r.zip].filter(Boolean).join(', ') || 'Location not set'}</div>
+                    <div style={{ opacity: 0.72, fontSize: 12 }}>{[r.city, r.state, r.zip].filter(Boolean).join(', ') || businessLocations[r.business_id] || 'Location not set'}</div>
                   </div>
                   <a href={`/listing?id=${r.id}`} style={btnGhost}>Open</a>
                 </div>
@@ -240,15 +272,62 @@ function badge(role) {
   };
 }
 
-const wrap = { minHeight: '100vh', background: 'radial-gradient(circle at top right, #ffe7f1 0%, #f8fafc 40%, #f8fafc 100%)', padding: '20px 16px 90px' };
-const inner = { maxWidth: 560, margin: '0 auto' };
-const heroCard = { maxWidth: 560, display: 'grid', gap: 10, background: '#121b3f', padding: 20, borderRadius: 12, border: '1px solid #2a3c78', boxShadow: '0 8px 24px rgba(17,24,39,0.06)', marginBottom: 16 };
-const heroTitle = { margin: 0, fontSize: 40, color: '#fff' };
-const heroBadgeRow = { display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 4 };
-const heroMetaRow = { display: 'flex', gap: 12, flexWrap: 'wrap', color: '#8fb7ff', fontSize: 13, paddingTop: 4 };
-const field = { borderRadius: 8, border: '1px solid #304178', background: '#0b1431', color: '#fff', padding: '10px 12px' };
+const wrap = { minHeight: '100vh', background: '#0b1020', color: '#fff' };
+const heroShell = {
+  position: 'relative',
+  minHeight: '100vh',
+  backgroundImage: "url('/bg.jpg')",
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  overflow: 'hidden',
+};
+const heroOverlay = {
+  position: 'absolute',
+  inset: 0,
+  background: 'linear-gradient(180deg, rgba(6,10,24,0.35) 0%, rgba(11,16,32,0.8) 52%, rgba(11,16,32,0.98) 100%)',
+};
+const heroContent = { position: 'relative', zIndex: 1, minHeight: '100vh', display: 'grid', placeItems: 'center', padding: '48px 16px 40px' };
+const heroPanel = {
+  width: 'min(1040px, 100%)',
+  display: 'grid',
+  gap: 16,
+  justifyItems: 'center',
+  textAlign: 'center',
+  padding: '28px 22px 22px',
+  borderRadius: 24,
+  border: '1px solid rgba(64, 104, 184, 0.45)',
+  background: 'rgba(7, 12, 30, 0.40)',
+  boxShadow: '0 24px 80px rgba(0, 0, 0, 0.35)',
+  backdropFilter: 'blur(8px)',
+};
+const heroTopline = { fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: '#9fc0ff' };
+const heroTitle = { margin: 0, fontSize: 'clamp(40px, 7vw, 78px)', lineHeight: 0.95, fontWeight: 800, color: '#fff', textShadow: '0 8px 24px rgba(0,0,0,0.35)' };
+const heroSubtitle = { margin: 0, maxWidth: 760, fontSize: 18, lineHeight: 1.5, color: 'rgba(235,241,255,0.88)' };
+const heroTabs = { display: 'inline-flex', gap: 8, padding: 6, borderRadius: 999, background: 'rgba(12,18,39,0.72)', border: '1px solid rgba(94,128,202,0.34)' };
+const tabButton = { border: 0, borderRadius: 999, background: 'transparent', color: 'rgba(255,255,255,0.85)', padding: '10px 18px', fontSize: 14, fontWeight: 700, cursor: 'pointer' };
+const activeTab = { ...tabButton, background: '#ffffff', color: '#1457d6', boxShadow: '0 6px 16px rgba(0,0,0,0.18)' };
+const searchBar = {
+  width: 'min(880px, 100%)',
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1.35fr) 1px minmax(220px, 0.95fr) auto',
+  alignItems: 'stretch',
+  borderRadius: 18,
+  overflow: 'hidden',
+  background: '#fff',
+  boxShadow: '0 18px 40px rgba(4, 10, 28, 0.24)',
+};
+const searchFieldWrap = { display: 'grid' };
+const divider = { width: 1, background: '#e1e7f2' };
+const searchInput = { width: '100%', border: 0, padding: '22px 20px', fontSize: 18, outline: 'none', color: '#0f172a' };
+const searchSelect = { width: '100%', border: 0, padding: '22px 18px', fontSize: 18, outline: 'none', color: '#334155', background: 'transparent' };
+const searchBtn = { border: 0, background: '#ff8a00', color: '#fff', padding: '0 28px', fontSize: 18, fontWeight: 800, cursor: 'pointer' };
+const statsRow = { width: 'min(980px, 100%)', display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12, marginTop: 14 };
+const statCard = { borderRadius: 18, padding: '14px 16px', background: 'rgba(12,18,39,0.66)', border: '1px solid rgba(94,128,202,0.28)', textAlign: 'left' };
+const statLabel = { display: 'block', fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase', color: 'rgba(159,192,255,0.92)' };
+const statValue = { display: 'block', marginTop: 8, fontSize: 24, color: '#fff' };
+const inner = { width: 'min(980px, calc(100% - 32px))', margin: '0 auto', padding: '0 0 90px' };
+const statusText = { margin: '16px 0 0', color: '#cdd9ff' };
 const card = { background: '#121b3f', border: '1px solid #2a3c78', borderRadius: 12, padding: 16, boxShadow: '0 8px 24px rgba(17,24,39,0.06)', color: '#fff' };
-const btnPrimary = { border: 0, borderRadius: 8, background: '#2e7dff', color: '#fff', padding: '10px 12px', cursor: 'pointer' };
 const btnGhost = { border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '8px 12px', textDecoration: 'none', fontWeight: 600 };
 const mediaWrap = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8, marginTop: 10 };
 const thumbCard = { border: '1px solid #eceff5', borderRadius: 10, overflow: 'hidden', background: '#f8fafc' };
@@ -256,3 +335,4 @@ const thumb = { width: '100%', height: 120, objectFit: 'cover', display: 'block'
 const emptyState = { marginTop: 12, padding: 14, borderRadius: 14, border: '1px solid #304178', background: '#0e1738', display: 'grid', gap: 8 };
 const bottomExploreWrap = { marginTop: 16, display: 'flex', justifyContent: 'center' };
 const exploreBtn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '10px 14px', textDecoration: 'none', fontWeight: 600 };
+const srOnly = { position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 };

@@ -77,7 +77,9 @@ export default function MyBusinessesPage() {
   const [detailsByBusiness, setDetailsByBusiness] = useState({});
   const [newBusinessName, setNewBusinessName] = useState('');
   const [newBusinessRole, setNewBusinessRole] = useState('Owner');
+  const [newBusinessCity, setNewBusinessCity] = useState('');
   const [newBusinessState, setNewBusinessState] = useState('Florida');
+  const [newBusinessZip, setNewBusinessZip] = useState('');
   const [newBusinessCountry, setNewBusinessCountry] = useState('United States');
   const [inviteByBusiness, setInviteByBusiness] = useState({});
   const [focusBusinessId, setFocusBusinessId] = useState('');
@@ -180,8 +182,9 @@ export default function MyBusinessesPage() {
       .from('businesses')
       .insert({
         name: newBusinessName.trim(),
+        city: newBusinessCity || null,
         state: newBusinessState || null,
-        zip: null,
+        zip: newBusinessZip || null,
         country: newBusinessCountry || null,
         created_by: userId,
         status: 'approved',
@@ -202,6 +205,8 @@ export default function MyBusinessesPage() {
     if (membershipErr) return setMsg(membershipErr.message);
 
     setNewBusinessName('');
+    setNewBusinessCity('');
+    setNewBusinessZip('');
     setMsg('Business created. Fill out details below once, then post without retyping.');
     loadAll();
   }
@@ -275,9 +280,11 @@ export default function MyBusinessesPage() {
           <select style={input} value={newBusinessRole} onChange={(e) => setNewBusinessRole(e.target.value)}>
             <option>Owner</option><option>CEO</option><option>Founder</option><option>Broker</option><option>Managing Partner</option><option>Authorized Representative</option>
           </select>
+          <input style={input} placeholder='City' value={newBusinessCity} onChange={(e) => setNewBusinessCity(e.target.value)} />
           <select style={input} value={newBusinessState} onChange={(e) => setNewBusinessState(e.target.value)}>
             {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
+          <input style={input} placeholder='ZIP code' value={newBusinessZip} onChange={(e) => setNewBusinessZip(e.target.value)} />
           <select style={input} value={newBusinessCountry} onChange={(e) => setNewBusinessCountry(e.target.value)}>
             {countries.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
