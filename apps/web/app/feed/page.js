@@ -12,6 +12,7 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [industry, setIndustry] = useState('all');
+  const [isMobile, setIsMobile] = useState(false);
 
   const filteredRows = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
@@ -31,6 +32,13 @@ export default function FeedPage() {
       return matchesSearch && matchesIndustry;
     });
   }, [rows, searchTerm, industry, businessNames, profileNames]);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 860);
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   useEffect(() => {
     async function loadFeed() {
@@ -147,14 +155,21 @@ export default function FeedPage() {
           <h1 style={heroTitle}>Find a business for sale</h1>
           <p style={heroSubtitle}>Search the feed by business, listing title, seller, city, or category.</p>
 
-          <div style={searchShell}>
+          <div style={{
+            ...searchShell,
+            gridTemplateColumns: isMobile ? '1fr' : searchShell.gridTemplateColumns,
+          }}>
             <input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder='Search businesses, posts, sellers, cities...'
               style={searchInput}
             />
-            <select value={industry} onChange={(e) => setIndustry(e.target.value)} style={searchSelect}>
+            <select value={industry} onChange={(e) => setIndustry(e.target.value)} style={{
+              ...searchSelect,
+              borderLeft: isMobile ? 0 : searchSelect.borderLeft,
+              borderTop: isMobile ? '1px solid #e5e7eb' : 0,
+            }}>
               <option value='all'>All industries</option>
               <option value='established'>Established businesses</option>
               <option value='asset_sale'>Asset sales</option>
@@ -240,28 +255,28 @@ export default function FeedPage() {
 
 const wrap = { minHeight: '100vh', background: 'radial-gradient(circle at top right, #ffe7f1 0%, #f8fafc 40%, #f8fafc 100%)', padding: '20px 16px 90px' };
 const inner = { maxWidth: 980, margin: '0 auto' };
-const hero = {
+  const hero = {
   overflow: 'hidden',
   borderRadius: 28,
   padding: '28px 24px 24px',
   marginBottom: 18,
-  background: 'linear-gradient(135deg, rgba(8, 18, 56, 0.96), rgba(20, 42, 102, 0.92))',
+  background: 'radial-gradient(circle at top right, rgba(46, 125, 255, 0.24), transparent 30%), linear-gradient(135deg, rgba(8, 16, 39, 0.98), rgba(16, 27, 63, 0.95))',
   color: '#fff',
-  boxShadow: '0 22px 48px rgba(8, 18, 56, 0.22)',
-  border: '1px solid rgba(255,255,255,0.08)',
+  boxShadow: '0 22px 48px rgba(8, 18, 56, 0.28)',
+  border: '1px solid rgba(110, 150, 255, 0.18)',
 };
 const heroTopRow = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' };
-const brandPill = { display: 'inline-flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 999, background: 'rgba(255,255,255,0.1)', fontWeight: 700 };
-const brandDot = { width: 12, height: 12, borderRadius: 999, background: 'linear-gradient(135deg, #52c8ff, #2e7dff)' };
+const brandPill = { display: 'inline-flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 999, background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.08)', fontWeight: 700 };
+const brandDot = { width: 12, height: 12, borderRadius: 999, background: 'linear-gradient(135deg, #52c8ff, #2e7dff), linear-gradient(135deg, #ff8a00, #dd2a7b)' };
 const heroTabs = { display: 'inline-flex', gap: 8, flexWrap: 'wrap' };
-const heroTab = { padding: '10px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.86)', fontWeight: 700 };
+const heroTab = { padding: '10px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.86)', fontWeight: 700, border: '1px solid rgba(255,255,255,0.06)' };
 const heroTabActive = { ...heroTab, background: '#fff', color: '#0b1020' };
-const heroTitle = { margin: '22px 0 6px', fontSize: 42, lineHeight: 1.05, letterSpacing: '-0.03em' };
+const heroTitle = { margin: '22px 0 6px', fontSize: 42, lineHeight: 1.05, letterSpacing: '-0.04em' };
 const heroSubtitle = { margin: 0, color: 'rgba(255,255,255,0.82)', fontSize: 16 };
-const searchShell = { display: 'grid', gridTemplateColumns: '1.5fr 0.9fr auto', gap: 0, marginTop: 22, borderRadius: 18, overflow: 'hidden', boxShadow: '0 18px 36px rgba(0,0,0,0.25)' };
+const searchShell = { display: 'grid', gridTemplateColumns: '1.5fr 0.95fr auto', gap: 0, marginTop: 22, borderRadius: 18, overflow: 'hidden', boxShadow: '0 18px 36px rgba(0,0,0,0.28)', border: '1px solid rgba(255,255,255,0.08)' };
 const searchInput = { minHeight: 64, border: 0, padding: '0 18px', fontSize: 17, outline: 'none', background: '#fff', color: '#111827' };
 const searchSelect = { minHeight: 64, border: 0, borderLeft: '1px solid #e5e7eb', padding: '0 16px', fontSize: 16, outline: 'none', background: '#fff', color: '#111827' };
-const searchBtn = { minHeight: 64, border: 0, padding: '0 22px', background: 'linear-gradient(135deg, #ff8a00, #ff6a00)', color: '#fff', fontSize: 17, fontWeight: 800, cursor: 'pointer' };
+const searchBtn = { minHeight: 64, border: 0, padding: '0 22px', background: 'linear-gradient(135deg, #2e7dff, #1b56d6)', color: '#fff', fontSize: 17, fontWeight: 800, cursor: 'pointer' };
 const heroStats = { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12, marginTop: 22 };
 const heroStatsItem = { display: 'grid', gap: 4, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.12)' };
 const card = { background: '#fff', border: '1px solid #eceff5', borderRadius: 16, padding: 12, boxShadow: '0 8px 24px rgba(17,24,39,0.06)' };
