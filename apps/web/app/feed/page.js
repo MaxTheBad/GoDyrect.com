@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 
 export default function FeedPage() {
@@ -10,6 +10,27 @@ export default function FeedPage() {
   const [mediaByListing, setMediaByListing] = useState({});
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [industry, setIndustry] = useState('all');
+
+  const filteredRows = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    return rows.filter((r) => {
+      const haystack = [
+        r.title,
+        r.description,
+        businessNames[r.business_id],
+        profileNames[r.seller_id],
+        r.category,
+        r.city,
+        r.state,
+        r.country,
+      ].filter(Boolean).join(' ').toLowerCase();
+      const matchesSearch = !q || haystack.includes(q);
+      const matchesIndustry = industry === 'all' || r.category === industry;
+      return matchesSearch && matchesIndustry;
+    });
+  }, [rows, searchTerm, industry, businessNames, profileNames]);
 
   useEffect(() => {
     async function loadFeed() {
@@ -112,12 +133,56 @@ export default function FeedPage() {
   return (
     <main style={wrap}>
       <div style={inner}>
-        <h1 style={{ marginTop: 0 }}>Your Feed</h1>
-        <p style={{ opacity: 0.8, marginTop: -4 }}>Posts from people and businesses you follow.</p>
+        <section style={hero}>
+          <div style={heroTopRow}>
+            <div style={brandPill}>
+              <span style={brandDot} />
+              <span>GoDyrect</span>
+            </div>
+            <div style={heroTabs}>
+              <span style={heroTabActive}>Businesses</span>
+              <span style={heroTab}>Franchises</span>
+            </div>
+          </div>
+          <h1 style={heroTitle}>Find a business for sale</h1>
+          <p style={heroSubtitle}>Search the feed by business, listing title, seller, city, or category.</p>
+
+          <div style={searchShell}>
+            <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder='Search businesses, posts, sellers, cities...'
+              style={searchInput}
+            />
+            <select value={industry} onChange={(e) => setIndustry(e.target.value)} style={searchSelect}>
+              <option value='all'>All industries</option>
+              <option value='established'>Established businesses</option>
+              <option value='asset_sale'>Asset sales</option>
+              <option value='real_estate'>Real estate</option>
+              <option value='startup'>Start-ups</option>
+            </select>
+            <button type='button' style={searchBtn}>Search</button>
+          </div>
+
+          <div style={heroStats}>
+            <div style={heroStatsItem}>
+              <strong>{rows.length.toLocaleString()}</strong>
+              <span>Feed posts</span>
+            </div>
+            <div style={heroStatsItem}>
+              <strong>{Object.keys(businessNames).length.toLocaleString()}</strong>
+              <span>Businesses</span>
+            </div>
+            <div style={heroStatsItem}>
+              <strong>{Object.keys(profileNames).length.toLocaleString()}</strong>
+              <span>People</span>
+            </div>
+          </div>
+        </section>
 
         {loading ? <p>Loading feed...</p> : null}
         {msg ? <p>{msg}</p> : null}
-        {!loading && !msg && rows.length === 0 ? (
+        {!loading && !msg && filteredRows.length === 0 ? (
           <div style={emptyState}>
             <p style={{ marginTop: 0, marginBottom: 8 }}>
               No posts yet. Follow people or businesses to populate your feed.
@@ -130,7 +195,7 @@ export default function FeedPage() {
         ) : null}
 
         <div style={{ display: 'grid', gap: 12 }}>
-          {rows.map((r) => {
+          {filteredRows.map((r) => {
             const media = mediaByListing[r.id] || [];
             return (
               <article key={r.id} style={card}>
@@ -175,6 +240,30 @@ export default function FeedPage() {
 
 const wrap = { minHeight: '100vh', background: 'radial-gradient(circle at top right, #ffe7f1 0%, #f8fafc 40%, #f8fafc 100%)', padding: '20px 16px 90px' };
 const inner = { maxWidth: 980, margin: '0 auto' };
+const hero = {
+  overflow: 'hidden',
+  borderRadius: 28,
+  padding: '28px 24px 24px',
+  marginBottom: 18,
+  background: 'linear-gradient(135deg, rgba(8, 18, 56, 0.96), rgba(20, 42, 102, 0.92))',
+  color: '#fff',
+  boxShadow: '0 22px 48px rgba(8, 18, 56, 0.22)',
+  border: '1px solid rgba(255,255,255,0.08)',
+};
+const heroTopRow = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' };
+const brandPill = { display: 'inline-flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 999, background: 'rgba(255,255,255,0.1)', fontWeight: 700 };
+const brandDot = { width: 12, height: 12, borderRadius: 999, background: 'linear-gradient(135deg, #52c8ff, #2e7dff)' };
+const heroTabs = { display: 'inline-flex', gap: 8, flexWrap: 'wrap' };
+const heroTab = { padding: '10px 14px', borderRadius: 999, background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.86)', fontWeight: 700 };
+const heroTabActive = { ...heroTab, background: '#fff', color: '#0b1020' };
+const heroTitle = { margin: '22px 0 6px', fontSize: 42, lineHeight: 1.05, letterSpacing: '-0.03em' };
+const heroSubtitle = { margin: 0, color: 'rgba(255,255,255,0.82)', fontSize: 16 };
+const searchShell = { display: 'grid', gridTemplateColumns: '1.5fr 0.9fr auto', gap: 0, marginTop: 22, borderRadius: 18, overflow: 'hidden', boxShadow: '0 18px 36px rgba(0,0,0,0.25)' };
+const searchInput = { minHeight: 64, border: 0, padding: '0 18px', fontSize: 17, outline: 'none', background: '#fff', color: '#111827' };
+const searchSelect = { minHeight: 64, border: 0, borderLeft: '1px solid #e5e7eb', padding: '0 16px', fontSize: 16, outline: 'none', background: '#fff', color: '#111827' };
+const searchBtn = { minHeight: 64, border: 0, padding: '0 22px', background: 'linear-gradient(135deg, #ff8a00, #ff6a00)', color: '#fff', fontSize: 17, fontWeight: 800, cursor: 'pointer' };
+const heroStats = { display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12, marginTop: 22 };
+const heroStatsItem = { display: 'grid', gap: 4, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.12)' };
 const card = { background: '#fff', border: '1px solid #eceff5', borderRadius: 16, padding: 12, boxShadow: '0 8px 24px rgba(17,24,39,0.06)' };
 const btn = { border: '1px solid #e5e7eb', borderRadius: 999, background: '#fff', color: '#111827', padding: '8px 12px', textDecoration: 'none', fontWeight: 600 };
 const mediaWrap = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8, marginTop: 10 };
