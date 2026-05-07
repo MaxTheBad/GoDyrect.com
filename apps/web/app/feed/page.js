@@ -9,6 +9,7 @@ export default function FeedPage() {
   const [businessNames, setBusinessNames] = useState({});
   const [businessLocations, setBusinessLocations] = useState({});
   const [mediaByListing, setMediaByListing] = useState({});
+  const [activeMediaByListing, setActiveMediaByListing] = useState({});
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -111,6 +112,11 @@ export default function FeedPage() {
       });
       setBusinessNames(bMap);
       setBusinessLocations(lMap);
+      const activeMap = {};
+      listRows.forEach((row) => {
+        activeMap[row.id] = 0;
+      });
+      setActiveMediaByListing(activeMap);
 
       const mMap = {};
       (media || []).forEach((m) => {
@@ -209,11 +215,13 @@ export default function FeedPage() {
         ) : null}
 
         <div style={feedColumn}>
-          {filteredRows.map((r) => {
-            const media = mediaByListing[r.id] || [];
-            const heroMedia = media[0];
-            return (
-              <article key={r.id} style={postCard}>
+        {filteredRows.map((r) => {
+          const media = mediaByListing[r.id] || [];
+          const heroMedia = media[0];
+          const activeIndex = activeMediaByListing[r.id] ?? 0;
+          const activeMedia = media[activeIndex] || heroMedia;
+          return (
+            <article key={r.id} style={postCard}>
                 <div style={postTopRow}>
                   <div style={avatar}>{(r.title || 'B').slice(0, 1).toUpperCase()}</div>
                   <div style={{ minWidth: 0 }}>
@@ -232,13 +240,51 @@ export default function FeedPage() {
 
                 {r.description ? <p style={postDescription}>{r.description}</p> : null}
 
-                {heroMedia ? (
+                {activeMedia ? (
                   <div style={heroMediaFrame}>
-                    {heroMedia.media_type === 'video' ? (
-                      <video src={heroMedia.url} controls playsInline style={heroMediaAsset} />
+                    {activeMedia.media_type === 'video' ? (
+                      <video src={activeMedia.url} controls playsInline style={heroMediaAsset} />
                     ) : (
-                      <img src={heroMedia.thumbnail_url || heroMedia.url} alt='listing media' style={heroMediaAsset} />
+                      <img src={activeMedia.thumbnail_url || activeMedia.url} alt='listing media' style={heroMediaAsset} />
                     )}
+                    {media.length > 1 ? (
+                      <>
+                        <button
+                          type='button'
+                          aria-label='Previous media'
+                          style={carouselArrowLeft}
+                          onClick={() => setActiveMediaByListing((prev) => ({
+                            ...prev,
+                            [r.id]: (activeIndex - 1 + media.length) % media.length,
+                          }))}
+                        >
+                          ‹
+                        </button>
+                        <button
+                          type='button'
+                          aria-label='Next media'
+                          style={carouselArrowRight}
+                          onClick={() => setActiveMediaByListing((prev) => ({
+                            ...prev,
+                            [r.id]: (activeIndex + 1) % media.length,
+                          }))}
+                        >
+                          ›
+                        </button>
+                        <div style={carouselDots}>
+                          {media.map((m, idx) => (
+                            <button
+                              key={m.url + idx}
+                              type='button'
+                              aria-label={`Show media ${idx + 1} of ${media.length}`}
+                              style={idx === activeIndex ? activeDot : dot}
+                              onClick={() => setActiveMediaByListing((prev) => ({ ...prev, [r.id]: idx }))}
+                            />
+                          ))}
+                          <span style={carouselCount}>{activeIndex + 1}/{media.length}</span>
+                        </div>
+                      </>
+                    ) : null}
                   </div>
                 ) : null}
 
@@ -363,6 +409,49 @@ const heroMediaAsset = { width: '100%', aspectRatio: '1 / 1', objectFit: 'cover'
 const thumbStrip = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8, marginTop: 10, maxWidth: 470, marginLeft: 'auto', marginRight: 'auto' };
 const thumbCard = { border: '1px solid #e3e7ef', borderRadius: 14, overflow: 'hidden', background: '#f7f9fc' };
 const thumb = { width: '100%', height: 110, objectFit: 'cover', display: 'block' };
+const carouselArrowBase = {
+  position: 'absolute',
+  top: '50%',
+  transform: 'translateY(-50%)',
+  width: 30,
+  height: 30,
+  borderRadius: 999,
+  border: 0,
+  background: 'rgba(255,255,255,0.88)',
+  color: '#111827',
+  fontSize: 24,
+  lineHeight: '30px',
+  display: 'grid',
+  placeItems: 'center',
+  cursor: 'pointer',
+  boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
+};
+const carouselArrowLeft = { ...carouselArrowBase, left: 10 };
+const carouselArrowRight = { ...carouselArrowBase, right: 10 };
+const carouselDots = {
+  position: 'absolute',
+  left: '50%',
+  bottom: 10,
+  transform: 'translateX(-50%)',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+  padding: '6px 8px',
+  borderRadius: 999,
+  background: 'rgba(15,23,42,0.45)',
+  backdropFilter: 'blur(6px)',
+};
+const dot = {
+  width: 7,
+  height: 7,
+  borderRadius: 999,
+  border: 0,
+  background: 'rgba(255,255,255,0.45)',
+  padding: 0,
+  cursor: 'pointer',
+};
+const activeDot = { ...dot, background: '#fff', width: 8, height: 8 };
+const carouselCount = { marginLeft: 4, color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: 0.2 };
 const emptyState = { marginTop: 12, padding: 14, borderRadius: 14, border: '1px solid #304178', background: '#0e1738', display: 'grid', gap: 8 };
 const bottomExploreWrap = { marginTop: 16, display: 'flex', justifyContent: 'center' };
 const exploreBtn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '10px 14px', textDecoration: 'none', fontWeight: 600 };
