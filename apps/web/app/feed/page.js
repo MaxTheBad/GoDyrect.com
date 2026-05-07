@@ -238,8 +238,6 @@ export default function FeedPage() {
                   <a href={`/listing?id=${r.id}`} style={openPill}>Open</a>
                 </div>
 
-                {r.description ? <p style={postDescription}>{r.description}</p> : null}
-
                 {activeMedia ? (
                   <div style={heroMediaFrame}>
                     {activeMedia.media_type === 'video' ? (
@@ -247,6 +245,9 @@ export default function FeedPage() {
                     ) : (
                       <img src={activeMedia.thumbnail_url || activeMedia.url} alt='listing media' style={heroMediaAsset} />
                     )}
+                    {r.description ? (
+                      <div style={mediaCaption}>{r.description}</div>
+                    ) : null}
                     {media.length > 1 ? (
                       <>
                         <button
@@ -403,12 +404,25 @@ const postCard = {
   color: '#0f172a',
 };
 const btnGhost = { border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '8px 12px', textDecoration: 'none', fontWeight: 600 };
-const postDescription = { margin: '10px 0 12px', fontSize: 15, lineHeight: 1.45, color: '#111827', whiteSpace: 'pre-wrap' };
-const heroMediaFrame = { width: '100%', maxWidth: 470, margin: '0 auto', borderRadius: 20, overflow: 'hidden', background: '#0f172a', border: '1px solid #e5e7eb' };
+const heroMediaFrame = { position: 'relative', width: '100%', maxWidth: 470, margin: '0 auto', borderRadius: 20, overflow: 'hidden', background: '#0f172a', border: '1px solid #e5e7eb' };
 const heroMediaAsset = { width: '100%', aspectRatio: '1 / 1', objectFit: 'cover', display: 'block' };
 const thumbStrip = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8, marginTop: 10, maxWidth: 470, marginLeft: 'auto', marginRight: 'auto' };
 const thumbCard = { border: '1px solid #e3e7ef', borderRadius: 14, overflow: 'hidden', background: '#f7f9fc' };
 const thumb = { width: '100%', height: 110, objectFit: 'cover', display: 'block' };
+const mediaCaption = {
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  bottom: 0,
+  padding: '16px 16px 14px',
+  fontSize: 14,
+  lineHeight: 1.4,
+  color: '#fff',
+  background: 'linear-gradient(180deg, rgba(15,23,42,0) 0%, rgba(15,23,42,0.78) 100%)',
+  textShadow: '0 1px 2px rgba(0,0,0,0.35)',
+  whiteSpace: 'pre-wrap',
+  pointerEvents: 'none',
+};
 const carouselArrowBase = {
   position: 'absolute',
   top: '50%',
