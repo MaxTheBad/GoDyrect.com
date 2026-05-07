@@ -27,7 +27,6 @@ export default function FeedPage() {
         r.city,
         r.state,
         r.country,
-        r.zip,
       ].filter(Boolean).join(' ').toLowerCase();
       const matchesSearch = !q || haystack.includes(q);
       const matchesIndustry = industry === 'all' || r.category === industry;
@@ -63,7 +62,7 @@ export default function FeedPage() {
 
       let query = supabase
         .from('listings')
-        .select('id,seller_id,business_id,title,description,category,lister_role,asking_price,city,state,country,zip,created_at,is_active,is_sold')
+        .select('id,seller_id,business_id,title,description,category,lister_role,asking_price,city,state,country,created_at,is_active,is_sold')
         .eq('is_active', true)
         .eq('is_sold', false)
         .order('created_at', { ascending: false })
@@ -220,7 +219,7 @@ export default function FeedPage() {
                     <div style={{ opacity: 0.8, fontSize: 13 }}>
                       {(businessNames[r.business_id] || 'Business')} · Posted by {profileNames[r.seller_id] || 'User'} · {r.lister_role || 'Authorized Representative'}
                     </div>
-                    <div style={{ opacity: 0.72, fontSize: 12 }}>{[r.city, r.state, r.zip].filter(Boolean).join(', ') || businessLocations[r.business_id] || 'Location not set'}</div>
+                    <div style={{ opacity: 0.72, fontSize: 12 }}>{[r.city, r.state].filter(Boolean).join(', ') || businessLocations[r.business_id] || 'Location not set'}</div>
                   </div>
                   <a href={`/listing?id=${r.id}`} style={btnGhost}>Open</a>
                 </div>
