@@ -211,8 +211,9 @@ export default function FeedPage() {
         <div style={{ display: 'grid', gap: 12 }}>
           {filteredRows.map((r) => {
             const media = mediaByListing[r.id] || [];
+            const heroMedia = media[0];
             return (
-              <article key={r.id} style={card}>
+              <article key={r.id} style={postCard}>
                 <div style={postTopRow}>
                   <div style={avatar}>{(r.title || 'B').slice(0, 1).toUpperCase()}</div>
                   <div style={{ minWidth: 0 }}>
@@ -229,14 +230,24 @@ export default function FeedPage() {
                   <a href={`/listing?id=${r.id}`} style={openPill}>Open</a>
                 </div>
 
-                {r.description ? <p style={{ margin: '8px 0 0', whiteSpace: 'pre-wrap' }}>{r.description}</p> : null}
+                {r.description ? <p style={postDescription}>{r.description}</p> : null}
 
-                {media.length ? (
-                  <div style={mediaWrap}>
-                    {media.slice(0, 6).map((m, i) => (
+                {heroMedia ? (
+                  <div style={heroMediaFrame}>
+                    {heroMedia.media_type === 'video' ? (
+                      <video src={heroMedia.url} controls playsInline style={heroMediaAsset} />
+                    ) : (
+                      <img src={heroMedia.thumbnail_url || heroMedia.url} alt='listing media' style={heroMediaAsset} />
+                    )}
+                  </div>
+                ) : null}
+
+                {media.length > 1 ? (
+                  <div style={thumbStrip}>
+                    {media.slice(1, 5).map((m, i) => (
                       <div key={m.url + i} style={thumbCard}>
                         {m.media_type === 'video' ? (
-                          <video src={m.url} controls style={thumb} />
+                          <video src={m.url} controls playsInline style={thumb} />
                         ) : (
                           <img src={m.thumbnail_url || m.url} alt='listing media' style={thumb} />
                         )}
@@ -331,11 +342,21 @@ const statLabel = { display: 'block', fontSize: 12, letterSpacing: 0.6, textTran
 const statValue = { display: 'block', marginTop: 8, fontSize: 24, color: '#fff' };
 const inner = { width: 'min(980px, calc(100% - 32px))', margin: '0 auto', padding: '0 0 90px' };
 const statusText = { margin: '16px 0 0', color: '#cdd9ff' };
-const card = { background: '#f8f8fb', border: '1px solid #e7e7ee', borderRadius: 24, padding: 18, boxShadow: '0 12px 30px rgba(15,23,42,0.07)', color: '#0f172a' };
+const postCard = {
+  background: '#f8f8fb',
+  border: '1px solid #e7e7ee',
+  borderRadius: 24,
+  padding: 16,
+  boxShadow: '0 12px 30px rgba(15,23,42,0.07)',
+  color: '#0f172a',
+};
 const btnGhost = { border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '8px 12px', textDecoration: 'none', fontWeight: 600 };
-const mediaWrap = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10, marginTop: 12 };
-const thumbCard = { border: '1px solid #e3e7ef', borderRadius: 16, overflow: 'hidden', background: '#f7f9fc' };
-const thumb = { width: '100%', height: 120, objectFit: 'cover', display: 'block' };
+const postDescription = { margin: '10px 0 12px', fontSize: 16, lineHeight: 1.45, color: '#111827', whiteSpace: 'pre-wrap' };
+const heroMediaFrame = { width: '100%', borderRadius: 20, overflow: 'hidden', background: '#0f172a', border: '1px solid #e5e7eb' };
+const heroMediaAsset = { width: '100%', aspectRatio: '1 / 1', objectFit: 'cover', display: 'block' };
+const thumbStrip = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8, marginTop: 10 };
+const thumbCard = { border: '1px solid #e3e7ef', borderRadius: 14, overflow: 'hidden', background: '#f7f9fc' };
+const thumb = { width: '100%', height: 110, objectFit: 'cover', display: 'block' };
 const emptyState = { marginTop: 12, padding: 14, borderRadius: 14, border: '1px solid #304178', background: '#0e1738', display: 'grid', gap: 8 };
 const bottomExploreWrap = { marginTop: 16, display: 'flex', justifyContent: 'center' };
 const exploreBtn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '10px 14px', textDecoration: 'none', fontWeight: 600 };
