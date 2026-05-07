@@ -241,7 +241,7 @@ export default function FeedPage() {
                 {activeMedia ? (
                   <div style={heroMediaFrame}>
                     {activeMedia.media_type === 'video' ? (
-                      <video src={activeMedia.url} controls playsInline style={heroMediaAsset} />
+                      <video src={activeMedia.url} controls playsInline controlsList='nofullscreen noremoteplayback' disablePictureInPicture style={heroMediaAsset} />
                     ) : (
                       <img src={activeMedia.thumbnail_url || activeMedia.url} alt='listing media' style={heroMediaAsset} />
                     )}
@@ -294,7 +294,7 @@ export default function FeedPage() {
                     {media.slice(1, 5).map((m, i) => (
                       <div key={m.url + i} style={thumbCard}>
                         {m.media_type === 'video' ? (
-                          <video src={m.url} controls playsInline style={thumb} />
+                          <video src={m.url} controls playsInline controlsList='nofullscreen noremoteplayback' disablePictureInPicture style={thumb} />
                         ) : (
                           <img src={m.thumbnail_url || m.url} alt='listing media' style={thumb} />
                         )}
