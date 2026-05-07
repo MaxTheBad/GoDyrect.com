@@ -287,7 +287,7 @@ function badge(role) {
   };
 }
 
-const wrap = { minHeight: '100vh', background: '#0b1020', color: '#fff' };
+const wrap = { minHeight: '100vh', background: '#0b1020', color: '#fff', overflowX: 'hidden' };
 const heroShell = {
   position: 'relative',
   minHeight: '100vh',
@@ -301,14 +301,14 @@ const heroOverlay = {
   inset: 0,
   background: 'linear-gradient(180deg, rgba(6,10,24,0.35) 0%, rgba(11,16,32,0.8) 52%, rgba(11,16,32,0.98) 100%)',
 };
-const heroContent = { position: 'relative', zIndex: 1, minHeight: '100vh', display: 'grid', placeItems: 'center', padding: '48px 16px 40px' };
+const heroContent = { position: 'relative', zIndex: 1, minHeight: '100vh', display: 'grid', placeItems: 'center', padding: '48px 16px 32px' };
 const heroPanel = {
-  width: 'min(1040px, 100%)',
+  width: 'min(760px, 100%)',
   display: 'grid',
   gap: 16,
   justifyItems: 'center',
   textAlign: 'center',
-  padding: '28px 22px 22px',
+  padding: '28px 18px 22px',
   borderRadius: 24,
   border: '1px solid rgba(64, 104, 184, 0.45)',
   background: 'rgba(7, 12, 30, 0.40)',
@@ -322,27 +322,27 @@ const heroTabs = { display: 'inline-flex', gap: 8, padding: 6, borderRadius: 999
 const tabButton = { border: 0, borderRadius: 999, background: 'transparent', color: 'rgba(255,255,255,0.85)', padding: '10px 18px', fontSize: 14, fontWeight: 700, cursor: 'pointer' };
 const activeTab = { ...tabButton, background: '#ffffff', color: '#1457d6', boxShadow: '0 6px 16px rgba(0,0,0,0.18)' };
 const searchBar = {
-  width: 'min(880px, 100%)',
+  width: 'min(620px, 100%)',
   display: 'grid',
-  gridTemplateColumns: 'minmax(0, 1.35fr) 1px minmax(220px, 0.95fr) auto',
+  gridTemplateColumns: '1fr',
   alignItems: 'stretch',
   borderRadius: 18,
   overflow: 'hidden',
   background: '#fff',
   boxShadow: '0 18px 40px rgba(4, 10, 28, 0.24)',
 };
-const searchFieldWrap = { display: 'grid' };
-const divider = { width: 1, background: '#e1e7f2' };
-const searchInput = { width: '100%', border: 0, padding: '22px 20px', fontSize: 18, outline: 'none', color: '#0f172a' };
-const searchSelect = { width: '100%', border: 0, padding: '22px 18px', fontSize: 18, outline: 'none', color: '#334155', background: 'transparent' };
-const searchBtn = { border: 0, background: '#ff8a00', color: '#fff', padding: '0 28px', fontSize: 18, fontWeight: 800, cursor: 'pointer' };
-const statsRow = { width: 'min(980px, 100%)', display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12, marginTop: 14 };
+const searchFieldWrap = { display: 'grid', borderBottom: '1px solid #e1e7f2' };
+const divider = { display: 'none' };
+const searchInput = { width: '100%', border: 0, padding: '18px 18px', fontSize: 16, outline: 'none', color: '#0f172a' };
+const searchSelect = { width: '100%', border: 0, padding: '18px 18px', fontSize: 16, outline: 'none', color: '#334155', background: 'transparent' };
+const searchBtn = { border: 0, background: '#ff8a00', color: '#fff', padding: '16px 28px', fontSize: 16, fontWeight: 800, cursor: 'pointer' };
+const statsRow = { width: 'min(620px, 100%)', display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12, marginTop: 14 };
 const statCard = { borderRadius: 18, padding: '14px 16px', background: 'rgba(12,18,39,0.66)', border: '1px solid rgba(94,128,202,0.28)', textAlign: 'left' };
 const statLabel = { display: 'block', fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase', color: 'rgba(159,192,255,0.92)' };
 const statValue = { display: 'block', marginTop: 8, fontSize: 24, color: '#fff' };
 const inner = { width: 'min(980px, calc(100% - 32px))', margin: '0 auto', padding: '0 0 90px' };
 const feedColumn = {
-  width: 'min(640px, calc(100vw - 32px))',
+  width: 'min(470px, calc(100vw - 24px))',
   margin: '18px auto 0',
   display: 'grid',
   gap: 16,
@@ -358,9 +358,9 @@ const postCard = {
 };
 const btnGhost = { border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '8px 12px', textDecoration: 'none', fontWeight: 600 };
 const postDescription = { margin: '10px 0 12px', fontSize: 15, lineHeight: 1.45, color: '#111827', whiteSpace: 'pre-wrap' };
-const heroMediaFrame = { width: '100%', maxWidth: 560, margin: '0 auto', borderRadius: 20, overflow: 'hidden', background: '#0f172a', border: '1px solid #e5e7eb' };
+const heroMediaFrame = { width: '100%', maxWidth: 470, margin: '0 auto', borderRadius: 20, overflow: 'hidden', background: '#0f172a', border: '1px solid #e5e7eb' };
 const heroMediaAsset = { width: '100%', aspectRatio: '1 / 1', objectFit: 'cover', display: 'block' };
-const thumbStrip = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8, marginTop: 10, maxWidth: 560, marginLeft: 'auto', marginRight: 'auto' };
+const thumbStrip = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8, marginTop: 10, maxWidth: 470, marginLeft: 'auto', marginRight: 'auto' };
 const thumbCard = { border: '1px solid #e3e7ef', borderRadius: 14, overflow: 'hidden', background: '#f7f9fc' };
 const thumb = { width: '100%', height: 110, objectFit: 'cover', display: 'block' };
 const emptyState = { marginTop: 12, padding: 14, borderRadius: 14, border: '1px solid #304178', background: '#0e1738', display: 'grid', gap: 8 };
