@@ -120,6 +120,7 @@ export default function FeedPage() {
 
       const mMap = {};
       (media || []).forEach((m) => {
+        if (!m?.url) return;
         if (!mMap[m.listing_id]) mMap[m.listing_id] = [];
         mMap[m.listing_id].push(m);
       });
