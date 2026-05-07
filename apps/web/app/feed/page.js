@@ -208,7 +208,7 @@ export default function FeedPage() {
           </div>
         ) : null}
 
-        <div style={{ display: 'grid', gap: 12 }}>
+        <div style={feedColumn}>
           {filteredRows.map((r) => {
             const media = mediaByListing[r.id] || [];
             const heroMedia = media[0];
@@ -341,20 +341,21 @@ const statCard = { borderRadius: 18, padding: '14px 16px', background: 'rgba(12,
 const statLabel = { display: 'block', fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase', color: 'rgba(159,192,255,0.92)' };
 const statValue = { display: 'block', marginTop: 8, fontSize: 24, color: '#fff' };
 const inner = { width: 'min(980px, calc(100% - 32px))', margin: '0 auto', padding: '0 0 90px' };
+const feedColumn = { width: 'min(760px, 100%)', margin: '18px auto 0', display: 'grid', gap: 16 };
 const statusText = { margin: '16px 0 0', color: '#cdd9ff' };
 const postCard = {
   background: '#f8f8fb',
   border: '1px solid #e7e7ee',
   borderRadius: 24,
-  padding: 16,
+  padding: 14,
   boxShadow: '0 12px 30px rgba(15,23,42,0.07)',
   color: '#0f172a',
 };
 const btnGhost = { border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '8px 12px', textDecoration: 'none', fontWeight: 600 };
-const postDescription = { margin: '10px 0 12px', fontSize: 16, lineHeight: 1.45, color: '#111827', whiteSpace: 'pre-wrap' };
-const heroMediaFrame = { width: '100%', borderRadius: 20, overflow: 'hidden', background: '#0f172a', border: '1px solid #e5e7eb' };
-const heroMediaAsset = { width: '100%', aspectRatio: '1 / 1', objectFit: 'cover', display: 'block' };
-const thumbStrip = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8, marginTop: 10 };
+const postDescription = { margin: '10px 0 12px', fontSize: 15, lineHeight: 1.45, color: '#111827', whiteSpace: 'pre-wrap' };
+const heroMediaFrame = { width: '100%', maxWidth: 620, margin: '0 auto', borderRadius: 20, overflow: 'hidden', background: '#0f172a', border: '1px solid #e5e7eb' };
+const heroMediaAsset = { width: '100%', aspectRatio: '4 / 5', objectFit: 'cover', display: 'block' };
+const thumbStrip = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8, marginTop: 10, maxWidth: 620, marginLeft: 'auto', marginRight: 'auto' };
 const thumbCard = { border: '1px solid #e3e7ef', borderRadius: 14, overflow: 'hidden', background: '#f7f9fc' };
 const thumb = { width: '100%', height: 110, objectFit: 'cover', display: 'block' };
 const emptyState = { marginTop: 12, padding: 14, borderRadius: 14, border: '1px solid #304178', background: '#0e1738', display: 'grid', gap: 8 };
