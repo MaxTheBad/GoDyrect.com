@@ -152,34 +152,36 @@ export default function FeedPage() {
             <h1 style={heroTitle}>Find a business for sale</h1>
             <p style={heroSubtitle}>Search by business name, city, state, or ZIP. Keep your feed focused on what you actually want to buy.</p>
 
-            <div style={heroTabs}>
-              <button type='button' style={industry === 'all' ? activeTab : tabButton} onClick={() => setIndustry('all')}>Businesses</button>
-              <button type='button' style={industry === 'startup' ? activeTab : tabButton} onClick={() => setIndustry('startup')}>Franchises</button>
-            </div>
+            <div style={heroSearchWrap}>
+              <div style={heroTabs}>
+                <button type='button' style={industry === 'all' ? activeTab : tabButton} onClick={() => setIndustry('all')}>Businesses</button>
+                <button type='button' style={industry === 'startup' ? activeTab : tabButton} onClick={() => setIndustry('startup')}>Franchises</button>
+              </div>
 
-            <div style={searchBar}>
-              <div style={searchFieldWrap}>
-                <label style={srOnly} htmlFor='feed-search'>Search</label>
-                <input
-                  id='feed-search'
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder='California, Miami, 33101, coffee shop...'
-                  style={searchInput}
-                />
+              <div style={searchBar}>
+                <div style={searchFieldWrap}>
+                  <label style={srOnly} htmlFor='feed-search'>Search</label>
+                  <input
+                    id='feed-search'
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder='California, Miami, 33101, coffee shop...'
+                    style={searchInput}
+                  />
+                </div>
+                <div style={divider} />
+                <div style={searchFieldWrap}>
+                  <label style={srOnly} htmlFor='feed-industry'>Industry</label>
+                  <select id='feed-industry' value={industry} onChange={(e) => setIndustry(e.target.value)} style={searchSelect}>
+                    <option value='all'>All Industries</option>
+                    <option value='established'>Established Businesses</option>
+                    <option value='asset_sale'>Asset Sales</option>
+                    <option value='real_estate'>Real Estate</option>
+                    <option value='startup'>Start-Ups</option>
+                  </select>
+                </div>
+                <button type='button' style={searchBtn}>Search</button>
               </div>
-              <div style={divider} />
-              <div style={searchFieldWrap}>
-                <label style={srOnly} htmlFor='feed-industry'>Industry</label>
-                <select id='feed-industry' value={industry} onChange={(e) => setIndustry(e.target.value)} style={searchSelect}>
-                  <option value='all'>All Industries</option>
-                  <option value='established'>Established Businesses</option>
-                  <option value='asset_sale'>Asset Sales</option>
-                  <option value='real_estate'>Real Estate</option>
-                  <option value='startup'>Start-Ups</option>
-                </select>
-              </div>
-              <button type='button' style={searchBtn}>Search</button>
             </div>
 
             <div style={statsRow}>
@@ -356,30 +358,31 @@ const heroSubtitle = { margin: 0, maxWidth: 760, fontSize: 18, lineHeight: 1.5, 
 const heroTabs = { display: 'inline-flex', gap: 8, padding: 6, borderRadius: 999, background: 'rgba(12,18,39,0.72)', border: '1px solid rgba(94,128,202,0.34)' };
 const tabButton = { border: 0, borderRadius: 999, background: 'transparent', color: 'rgba(255,255,255,0.85)', padding: '10px 18px', fontSize: 14, fontWeight: 700, cursor: 'pointer' };
 const activeTab = { ...tabButton, background: '#ffffff', color: '#1457d6', boxShadow: '0 6px 16px rgba(0,0,0,0.18)' };
+const heroSearchWrap = { width: 'min(100%, 980px)', display: 'grid', gap: 14, justifyItems: 'center' };
 const searchBar = {
-  width: 'min(620px, 100%)',
+  width: 'min(100%, 980px)',
   display: 'grid',
-  gridTemplateColumns: '1fr',
+  gridTemplateColumns: 'minmax(0, 1.35fr) 1px minmax(220px, 0.95fr) auto',
   alignItems: 'stretch',
   borderRadius: 18,
   overflow: 'hidden',
   background: '#fff',
   boxShadow: '0 18px 40px rgba(4, 10, 28, 0.24)',
 };
-const searchFieldWrap = { display: 'grid', borderBottom: '1px solid #e1e7f2' };
-const divider = { display: 'none' };
-const searchInput = { width: '100%', border: 0, padding: '18px 18px', fontSize: 16, outline: 'none', color: '#0f172a' };
-const searchSelect = { width: '100%', border: 0, padding: '18px 18px', fontSize: 16, outline: 'none', color: '#334155', background: 'transparent' };
+const searchFieldWrap = { display: 'grid' };
+const divider = { width: 1, background: '#e1e7f2' };
+const searchInput = { width: '100%', border: 0, padding: '22px 20px', fontSize: 18, outline: 'none', color: '#0f172a' };
+const searchSelect = { width: '100%', border: 0, padding: '22px 18px', fontSize: 18, outline: 'none', color: '#334155', background: 'transparent' };
 const searchBtn = {
   border: '1px solid #3a4f8f',
-  background: '#0e1738',
+  background: 'linear-gradient(135deg, #ff8a00 0%, #ff6a00 100%)',
   color: '#fff',
-  padding: '16px 28px',
-  fontSize: 16,
+  padding: '0 34px',
+  fontSize: 18,
   fontWeight: 800,
   cursor: 'pointer',
 };
-const statsRow = { width: 'min(620px, 100%)', display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12, marginTop: 14 };
+const statsRow = { width: 'min(100%, 980px)', display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12, marginTop: 14 };
 const statCard = { borderRadius: 18, padding: '14px 16px', background: 'rgba(12,18,39,0.66)', border: '1px solid rgba(94,128,202,0.28)', textAlign: 'left' };
 const statLabel = { display: 'block', fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase', color: 'rgba(159,192,255,0.92)' };
 const statValue = { display: 'block', marginTop: 8, fontSize: 24, color: '#fff' };
