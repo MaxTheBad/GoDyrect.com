@@ -213,15 +213,20 @@ export default function FeedPage() {
             const media = mediaByListing[r.id] || [];
             return (
               <article key={r.id} style={card}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', alignItems: 'start' }}>
-                  <div>
-                    <strong>{r.title}</strong>
-                    <div style={{ opacity: 0.8, fontSize: 13 }}>
-                      {(businessNames[r.business_id] || 'Business')} · Posted by {profileNames[r.seller_id] || 'User'} · {r.lister_role || 'Authorized Representative'}
+                <div style={postTopRow}>
+                  <div style={avatar}>{(r.title || 'B').slice(0, 1).toUpperCase()}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={postTitle}>{r.title}</div>
+                    <div style={postMeta}>
+                      <span style={postBusiness}>{businessNames[r.business_id] || 'Business'}</span>
+                      <span>·</span>
+                      <span>Posted by {profileNames[r.seller_id] || 'User'}</span>
+                      <span>·</span>
+                      <span>{r.lister_role || 'Authorized Representative'}</span>
                     </div>
-                    <div style={{ opacity: 0.72, fontSize: 12 }}>{[r.city, r.state].filter(Boolean).join(', ') || businessLocations[r.business_id] || 'Location not set'}</div>
+                    <div style={postLocation}>{[r.city, r.state].filter(Boolean).join(', ') || businessLocations[r.business_id] || 'Location not set'}</div>
                   </div>
-                  <a href={`/listing?id=${r.id}`} style={btnGhost}>Open</a>
+                  <a href={`/listing?id=${r.id}`} style={openPill}>Open</a>
                 </div>
 
                 {r.description ? <p style={{ margin: '8px 0 0', whiteSpace: 'pre-wrap' }}>{r.description}</p> : null}
@@ -326,12 +331,44 @@ const statLabel = { display: 'block', fontSize: 12, letterSpacing: 0.6, textTran
 const statValue = { display: 'block', marginTop: 8, fontSize: 24, color: '#fff' };
 const inner = { width: 'min(980px, calc(100% - 32px))', margin: '0 auto', padding: '0 0 90px' };
 const statusText = { margin: '16px 0 0', color: '#cdd9ff' };
-const card = { background: '#121b3f', border: '1px solid #2a3c78', borderRadius: 12, padding: 16, boxShadow: '0 8px 24px rgba(17,24,39,0.06)', color: '#fff' };
+const card = { background: '#f8f8fb', border: '1px solid #e7e7ee', borderRadius: 24, padding: 18, boxShadow: '0 12px 30px rgba(15,23,42,0.07)', color: '#0f172a' };
 const btnGhost = { border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '8px 12px', textDecoration: 'none', fontWeight: 600 };
-const mediaWrap = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8, marginTop: 10 };
-const thumbCard = { border: '1px solid #eceff5', borderRadius: 10, overflow: 'hidden', background: '#f8fafc' };
+const mediaWrap = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 10, marginTop: 12 };
+const thumbCard = { border: '1px solid #e3e7ef', borderRadius: 16, overflow: 'hidden', background: '#f7f9fc' };
 const thumb = { width: '100%', height: 120, objectFit: 'cover', display: 'block' };
 const emptyState = { marginTop: 12, padding: 14, borderRadius: 14, border: '1px solid #304178', background: '#0e1738', display: 'grid', gap: 8 };
 const bottomExploreWrap = { marginTop: 16, display: 'flex', justifyContent: 'center' };
 const exploreBtn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '10px 14px', textDecoration: 'none', fontWeight: 600 };
 const srOnly = { position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 };
+const postTopRow = { display: 'grid', gridTemplateColumns: '42px minmax(0, 1fr) auto', gap: 14, alignItems: 'start' };
+const avatar = {
+  width: 42,
+  height: 42,
+  borderRadius: 999,
+  display: 'grid',
+  placeItems: 'center',
+  background: 'linear-gradient(135deg, #ffd6e8, #c7d6ff)',
+  color: '#0f172a',
+  fontWeight: 800,
+  fontSize: 18,
+};
+const postTitle = { fontSize: 18, lineHeight: 1.2, fontWeight: 800, color: '#0f172a', marginBottom: 2 };
+const postMeta = { display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: 13, color: '#475569', alignItems: 'center' };
+const postBusiness = { fontWeight: 700, color: '#1f2937' };
+const postLocation = { marginTop: 2, fontSize: 13, color: '#64748b' };
+const openPill = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minWidth: 88,
+  height: 54,
+  padding: '0 18px',
+  borderRadius: 999,
+  border: '1px solid #d7dbe5',
+  background: '#fff',
+  color: '#111827',
+  textDecoration: 'none',
+  fontWeight: 800,
+  fontSize: 18,
+  boxShadow: '0 1px 0 rgba(255,255,255,0.8) inset',
+};
