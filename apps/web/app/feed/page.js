@@ -459,11 +459,7 @@ const dot = {
 };
 const activeDot = { ...dot, background: '#fff', width: 8, height: 8 };
 const carouselCount = { marginLeft: 4, color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: 0.2 };
-const emptyState = { marginTop: 12, padding: 14, borderRadius: 14, border: '1px solid #304178', background: '#0e1738', display: 'grid', gap: 8 };
-const bottomExploreWrap = { marginTop: 16, display: 'flex', justifyContent: 'center' };
-const exploreBtn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '10px 14px', textDecoration: 'none', fontWeight: 600 };
-const srOnly = { position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 };
-const postTopRow = { display: 'grid', gridTemplateColumns: '42px minmax(0, 1fr) auto', gap: 14, alignItems: 'start' };
+const postTopRow = { display: 'grid', gridTemplateColumns: '42px minmax(0, 1fr) auto', gap: 14, alignItems: 'center', marginBottom: 10 };
 const avatar = {
   width: 42,
   height: 42,
@@ -475,16 +471,16 @@ const avatar = {
   fontWeight: 800,
   fontSize: 18,
 };
-const postTitle = { fontSize: 18, lineHeight: 1.2, fontWeight: 800, color: '#0f172a', marginBottom: 2 };
-const postMeta = { display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: 13, color: '#475569', alignItems: 'center' };
-const postBusiness = { fontWeight: 700, color: '#1f2937' };
-const postLocation = { marginTop: 2, fontSize: 13, color: '#64748b' };
+const postTitle = { fontSize: 18, lineHeight: 1.15, fontWeight: 800, color: '#fff', marginBottom: 2 };
+const postMeta = { display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.82)', alignItems: 'center' };
+const postBusiness = { fontWeight: 700, color: '#fff' };
+const postLocation = { marginTop: 2, fontSize: 13, color: 'rgba(255,255,255,0.72)' };
 const openPill = {
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
   minWidth: 88,
-  height: 54,
+  height: 48,
   padding: '0 18px',
   borderRadius: 999,
   border: '1px solid #d7dbe5',
@@ -493,5 +489,9 @@ const openPill = {
   textDecoration: 'none',
   fontWeight: 800,
   fontSize: 18,
-  boxShadow: '0 1px 0 rgba(255,255,255,0.8) inset',
+  alignSelf: 'center',
 };
+const emptyState = { marginTop: 12, padding: 14, borderRadius: 14, border: '1px solid #304178', background: '#0e1738', display: 'grid', gap: 8 };
+const bottomExploreWrap = { marginTop: 16, display: 'flex', justifyContent: 'center' };
+const exploreBtn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '10px 14px', textDecoration: 'none', fontWeight: 600 };
+const srOnly = { position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 };
