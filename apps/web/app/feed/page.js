@@ -12,6 +12,7 @@ export default function FeedPage() {
   const [businessLocations, setBusinessLocations] = useState({});
   const [mediaByListing, setMediaByListing] = useState({});
   const [activeMediaByListing, setActiveMediaByListing] = useState({});
+  const [favoriteIds, setFavoriteIds] = useState([]);
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -49,6 +50,12 @@ export default function FeedPage() {
         setLoading(false);
         return;
       }
+
+      const { data: favoriteRows } = await supabase
+        .from('favorites')
+        .select('listing_id')
+        .eq('user_id', uid);
+      setFavoriteIds((favoriteRows || []).map((r) => r.listing_id));
 
       const [{ data: followedUsers }, { data: followedBusinesses }] = await Promise.all([
         supabase.from('user_follows').select('followed_user_id').eq('follower_user_id', uid),
@@ -152,6 +159,28 @@ export default function FeedPage() {
     router.push(`/explore${params.toString() ? `?${params.toString()}` : ''}`);
   }
 
+  async function toggleFavorite(listingId) {
+    if (!supabase) return;
+    const { data: auth } = await supabase.auth.getUser();
+    const uid = auth?.user?.id;
+    if (!uid) {
+      setMsg('Please sign in to save favorites.');
+      return;
+    }
+
+    const isFavorite = favoriteIds.includes(listingId);
+    if (isFavorite) {
+      const { error } = await supabase.from('favorites').delete().eq('user_id', uid).eq('listing_id', listingId);
+      if (error) return setMsg(error.message);
+      setFavoriteIds((prev) => prev.filter((id) => id !== listingId));
+      return;
+    }
+
+    const { error } = await supabase.from('favorites').insert({ user_id: uid, listing_id: listingId });
+    if (error) return setMsg(error.message);
+    setFavoriteIds((prev) => [...prev, listingId]);
+  }
+
   return (
     <main style={wrap}>
       <FeedHero
@@ -187,6 +216,8 @@ export default function FeedPage() {
                 onNext={() => setActiveMediaByListing((prev) => ({ ...prev, [r.id]: (activeIndex + 1) % media.length }))}
                 onPick={(idx) => setActiveMediaByListing((prev) => ({ ...prev, [r.id]: idx }))}
                 onOpen={`/listing?id=${r.id}`}
+                isFavorite={favoriteIds.includes(r.id)}
+                onToggleFavorite={() => toggleFavorite(r.id)}
               />
             );
           })}

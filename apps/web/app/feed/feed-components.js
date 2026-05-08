@@ -13,6 +13,8 @@ export function FeedPost({
   onNext,
   onPick,
   onOpen,
+  isFavorite = false,
+  onToggleFavorite,
 }) {
   const activeMedia = media[activeIndex] || media[0];
   const mediaCount = media.length;
@@ -32,7 +34,12 @@ export function FeedPost({
           </div>
           <div style={postLocation}>{[listing.city, listing.state].filter(Boolean).join(', ') || businessLocation || 'Location not set'}</div>
         </div>
-        <a href={onOpen} style={openPill}>Open</a>
+        <div style={postActions}>
+          <button type='button' aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'} onClick={onToggleFavorite} style={bookmarkBtn(isFavorite)}>
+            <span style={bookmarkIcon(isFavorite)}>🔖</span>
+          </button>
+          <a href={onOpen} style={openPill}>Open</a>
+        </div>
       </div>
 
       {activeMedia ? (
@@ -205,12 +212,26 @@ export const srOnly = { position: 'absolute', width: 1, height: 1, padding: 0, m
 
 const postShell = { color: '#fff', padding: 0 };
 const postTopRow = { display: 'grid', gridTemplateColumns: '42px minmax(0, 1fr) auto', gap: 14, alignItems: 'center', marginBottom: 10 };
+const postActions = { display: 'flex', alignItems: 'center', gap: 10 };
 const avatar = { width: 42, height: 42, borderRadius: 999, display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg, #ffd6e8, #c7d6ff)', color: '#0f172a', fontWeight: 800, fontSize: 18 };
 const postTitle = { fontSize: 18, lineHeight: 1.15, fontWeight: 800, color: '#fff', marginBottom: 2 };
 const postMeta = { display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.82)', alignItems: 'center' };
 const postBusiness = { fontWeight: 700, color: '#fff' };
 const postLocation = { marginTop: 2, fontSize: 13, color: 'rgba(255,255,255,0.72)' };
 const openPill = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 88, height: 48, padding: '0 18px', borderRadius: 999, border: '1px solid #d7dbe5', background: '#fff', color: '#111827', textDecoration: 'none', fontWeight: 800, fontSize: 18, alignSelf: 'center' };
+const bookmarkBtn = (active) => ({
+  width: 48,
+  height: 48,
+  borderRadius: 999,
+  border: '1px solid rgba(215,219,229,0.9)',
+  background: active ? 'rgba(46,125,255,0.18)' : '#fff',
+  color: active ? '#2e7dff' : '#111827',
+  display: 'grid',
+  placeItems: 'center',
+  cursor: 'pointer',
+  boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
+});
+const bookmarkIcon = (active) => ({ display: 'block', fontSize: 20, transform: active ? 'scale(1.02)' : 'scale(1)' });
 const heroMediaFrame = { position: 'relative', width: '100%', maxWidth: 470, margin: '0 auto', borderRadius: 20, overflow: 'hidden', background: '#0f172a', border: '1px solid #e5e7eb' };
 const heroMediaAsset = { width: '100%', aspectRatio: '1 / 1', objectFit: 'cover', display: 'block' };
 const mediaCaption = { position: 'absolute', left: 0, right: 0, bottom: 0, padding: '16px 16px 14px', fontSize: 14, lineHeight: 1.4, color: '#fff', background: 'linear-gradient(180deg, rgba(15,23,42,0) 0%, rgba(15,23,42,0.78) 100%)', textShadow: '0 1px 2px rgba(0,0,0,0.35)', whiteSpace: 'pre-wrap', pointerEvents: 'none' };
