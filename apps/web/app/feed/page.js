@@ -197,7 +197,7 @@ export default function FeedPage() {
       <div style={inner}>
         {loading ? <p style={statusText}>Loading feed...</p> : null}
         {msg ? <p style={statusText}>{msg}</p> : null}
-        <FeedEmptyState loading={loading} msg={msg} hasFollows={Boolean(rows.length)} />
+        <FeedEmptyState loading={loading} msg={msg} hasFollows={Boolean(rows.length)} hasSearch={Boolean(searchTerm.trim()) || industry !== 'all'} />
 
         <div style={feedColumn}>
           {filteredRows.map((r) => {

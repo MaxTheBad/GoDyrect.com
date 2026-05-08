@@ -74,7 +74,7 @@ export function FeedPost({
   );
 }
 
-export function FeedEmptyState({ loading, msg, hasFollows, exploreHref = '/explore' }) {
+export function FeedEmptyState({ loading, msg, hasFollows, hasSearch = false, exploreHref = '/explore' }) {
   if (loading || msg) return null;
 
   if (!hasFollows) {
@@ -95,8 +95,12 @@ export function FeedEmptyState({ loading, msg, hasFollows, exploreHref = '/explo
   return (
     <div style={emptyState}>
       <div>
-        <h3 style={emptyTitle}>No posts match your filters</h3>
-        <p style={emptyCopy}>Try clearing the search or opening Explore for more listings and businesses.</p>
+        <h3 style={emptyTitle}>{hasSearch ? 'No posts match your search' : 'No posts to show yet'}</h3>
+        <p style={emptyCopy}>
+          {hasSearch
+            ? 'Try a different search term or open Explore for more listings and businesses.'
+            : 'You’re following people or businesses, but nothing has been posted yet. Check Explore for more listings and businesses.'}
+        </p>
       </div>
       <div style={emptyActions}>
         <a href={exploreHref} style={primaryAction}>Explore more</a>
