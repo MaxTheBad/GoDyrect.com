@@ -340,17 +340,17 @@ const heroOverlay = {
 };
 const heroContent = { position: 'relative', zIndex: 1, minHeight: '100vh', display: 'grid', placeItems: 'center', padding: '48px 16px 32px' };
 const heroPanel = {
-  width: 'min(760px, 100%)',
+  width: 'min(1080px, 100%)',
   display: 'grid',
   gap: 16,
   justifyItems: 'center',
   textAlign: 'center',
-  padding: '28px 18px 22px',
-  borderRadius: 24,
-  border: '1px solid rgba(64, 104, 184, 0.45)',
-  background: 'rgba(7, 12, 30, 0.40)',
-  boxShadow: '0 24px 80px rgba(0, 0, 0, 0.35)',
-  backdropFilter: 'blur(8px)',
+  padding: '20px 0 8px',
+  borderRadius: 0,
+  border: 0,
+  background: 'transparent',
+  boxShadow: 'none',
+  backdropFilter: 'none',
 };
 const heroTopline = { fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: '#9fc0ff' };
 const heroTitle = { margin: 0, fontSize: 'clamp(40px, 7vw, 78px)', lineHeight: 0.95, fontWeight: 800, color: '#fff', textShadow: '0 8px 24px rgba(0,0,0,0.35)' };
