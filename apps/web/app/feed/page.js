@@ -224,7 +224,7 @@ export default function FeedPage() {
           const activeIndex = activeMediaByListing[r.id] ?? 0;
           const activeMedia = media[activeIndex] || heroMedia;
           return (
-            <article key={r.id} style={postCard}>
+              <article key={r.id} style={postShell}>
                 <div style={postTopRow}>
                   <div style={avatar}>{(r.title || 'B').slice(0, 1).toUpperCase()}</div>
                   <div style={{ minWidth: 0 }}>
@@ -394,13 +394,9 @@ const feedColumn = {
   gap: 16,
 };
 const statusText = { margin: '16px 0 0', color: '#cdd9ff' };
-const postCard = {
-  background: '#f8f8fb',
-  border: '1px solid #e7e7ee',
-  borderRadius: 24,
-  padding: 14,
-  boxShadow: '0 12px 30px rgba(15,23,42,0.07)',
-  color: '#0f172a',
+const postShell = {
+  color: '#fff',
+  padding: 0,
 };
 const btnGhost = { border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '8px 12px', textDecoration: 'none', fontWeight: 600 };
 const heroMediaFrame = { position: 'relative', width: '100%', maxWidth: 470, margin: '0 auto', borderRadius: 20, overflow: 'hidden', background: '#0f172a', border: '1px solid #e5e7eb' };
