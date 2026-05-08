@@ -192,8 +192,17 @@ export default function ListingDetailPage() {
   return (
     <main style={wrap}>
       <div style={card}>
-        <h1 style={{ marginTop: 0 }}>{listing.title}</h1>
-        <p style={{ opacity: 0.85 }}>{listing.category} · {listing.business_age_years ?? 0} years · {[listing.city, listing.state, listing.country].filter(Boolean).join(', ')}</p>
+        <div style={heroTop}>
+          <div style={brandMark}>{(listing.title || 'L').slice(0, 1).toUpperCase()}</div>
+          <div style={{ minWidth: 0 }}>
+            <h1 style={{ margin: 0, color: '#fff', fontSize: 'clamp(28px, 5vw, 44px)' }}>{listing.title}</h1>
+            <p style={{ margin: '6px 0 0', opacity: 0.8, color: 'rgba(255,255,255,0.76)' }}>{listing.category} · {listing.business_age_years ?? 0} years · {[listing.city, listing.state, listing.country].filter(Boolean).join(', ')}</p>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <button onClick={toggleFavorite} style={ghostBtn}>{isFavorite ? '★ Saved' : '☆ Favorite'}</button>
+            <a href={isOwner ? `/listings/edit?id=${listing.id}` : `/messages?seller=${listing.seller_id}&listing=${listing.id}`} style={btn}>{isOwner ? 'Edit Listing' : 'Message Seller'}</a>
+          </div>
+        </div>
         {business?.id ? (
           <a href={`/business/view?id=${business.id}`} style={businessIdentityWrap}>
             <div style={businessLogoFallback}>{(business.name || 'B').slice(0, 1).toUpperCase()}</div>
@@ -224,19 +233,19 @@ export default function ListingDetailPage() {
               <button onClick={toggleFollowBusiness} style={ghostBtn}>{isFollowingBusiness ? 'Unfollow Business' : 'Follow Business'}</button>
             ) : null}
           </div>
-          <div style={{ opacity: 0.75, fontSize: 12, marginTop: 8 }}>
+          <div style={{ opacity: 0.75, fontSize: 12, marginTop: 8, color: 'rgba(255,255,255,0.72)' }}>
             {sellerFollowerCount} seller follower{sellerFollowerCount === 1 ? '' : 's'}{listing.business_id ? ` · ${businessFollowerCount} business follower${businessFollowerCount === 1 ? '' : 's'}` : ''}
           </div>
         </section>
 
         <section style={section}>
-          <h3 style={{ marginTop: 0 }}>Description</h3>
-          <p style={{ whiteSpace: 'pre-wrap' }}>{listing.description || 'No description added yet.'}</p>
+          <h3 style={{ marginTop: 0, color: '#fff' }}>Description</h3>
+          <p style={{ whiteSpace: 'pre-wrap', color: 'rgba(255,255,255,0.84)' }}>{listing.description || 'No description added yet.'}</p>
         </section>
 
         <section style={section}>
-          <h3 style={{ marginTop: 0 }}>Photos & Videos</h3>
-          {media.length === 0 ? <p>No media uploaded yet.</p> : null}
+          <h3 style={{ marginTop: 0, color: '#fff' }}>Photos & Videos</h3>
+          {media.length === 0 ? <p style={{ color: 'rgba(255,255,255,0.72)' }}>No media uploaded yet.</p> : null}
           {media.length > 0 ? (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
               {media.slice(0, 1).map((m) => (
@@ -253,12 +262,6 @@ export default function ListingDetailPage() {
         </section>
 
         <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
-          <button onClick={toggleFavorite} style={ghostBtn}>{isFavorite ? '★ Saved' : '☆ Favorite'}</button>
-          {isOwner ? (
-            <a href={`/listings/edit?id=${listing.id}`} style={btn}>Edit Listing</a>
-          ) : (
-            <a href={`/messages?seller=${listing.seller_id}&listing=${listing.id}`} style={btn}>Message Seller</a>
-          )}
           <a href='/' style={ghostBtn}>Back home</a>
         </div>
         {msg ? <p style={{ opacity: 0.85 }}>{msg}</p> : null}
@@ -272,15 +275,17 @@ function initial(name) {
   return name.trim().charAt(0).toUpperCase();
 }
 
-const wrap = { minHeight: '100vh', padding: 24, background: 'radial-gradient(circle at top right, #ffe7f1 0%, #f8fafc 40%, #f8fafc 100%)', color: '#111827' };
-const card = { maxWidth: 1000, margin: '0 auto', background: '#fff', border: '1px solid #eceff5', borderRadius: 12, padding: 16, boxShadow: '0 8px 24px rgba(17,24,39,0.06)' };
-const section = { marginTop: 14, background: '#fff', border: '1px solid #eceff5', borderRadius: 10, padding: 12 };
-const sellerWrap = { display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: '#111827' };
+const wrap = { minHeight: '100vh', padding: 24, background: '#0b1020', color: '#fff' };
+const card = { maxWidth: 1000, margin: '0 auto', background: '#121b3f', border: '1px solid #2a3c78', borderRadius: 24, padding: 18, boxShadow: '0 24px 60px rgba(0,0,0,0.28)' };
+const heroTop = { display: 'grid', gridTemplateColumns: '56px minmax(0, 1fr) auto', gap: 14, alignItems: 'center' };
+const brandMark = { width: 56, height: 56, borderRadius: 18, display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg, #ffd6e8, #c7d6ff)', color: '#0f172a', fontWeight: 800, fontSize: 22 };
+const section = { marginTop: 14, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(42,60,120,0.8)', borderRadius: 16, padding: 14 };
+const sellerWrap = { display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: '#fff' };
 const avatar = { width: 40, height: 40, borderRadius: 999, objectFit: 'cover', border: '1px solid #e5e7eb' };
 const avatarFallback = { width: 40, height: 40, borderRadius: 999, display: 'grid', placeItems: 'center', background: '#f3f4f6', border: '1px solid #e5e7eb' };
-const businessIdentityWrap = { marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: '#111827' };
+const businessIdentityWrap = { marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: '#fff' };
 const businessLogoFallback = { width: 34, height: 34, borderRadius: 10, display: 'grid', placeItems: 'center', background: '#eef2ff', border: '1px solid #e5e7eb', color: '#334155', fontWeight: 700 };
-const mediaCard = { border: '1px solid #eceff5', borderRadius: 10, overflow: 'hidden', background: '#fff' };
+const mediaCard = { border: '1px solid rgba(42,60,120,0.8)', borderRadius: 16, overflow: 'hidden', background: '#0e1738' };
 const mediaEl = { width: '100%', height: 170, objectFit: 'cover', display: 'block' };
-const btn = { border: 0, borderRadius: 8, background: '#2e7dff', color: '#fff', padding: '10px 12px', textDecoration: 'none' };
-const ghostBtn = { border: '1px solid #e5e7eb', borderRadius: 8, background: '#fff', color: '#111827', padding: '10px 12px', textDecoration: 'none' };
+const btn = { border: '1px solid #2a3c78', borderRadius: 8, background: '#2e7dff', color: '#fff', padding: '10px 12px', textDecoration: 'none' };
+const ghostBtn = { border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '10px 12px', textDecoration: 'none' };

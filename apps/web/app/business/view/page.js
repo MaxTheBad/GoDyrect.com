@@ -65,14 +65,19 @@ export default function BusinessProfilePage() {
   return (
     <main style={wrap}>
       <div style={card}>
-        <h1 style={{ marginTop: 0 }}>{business.name}</h1>
-        <div style={{ opacity: 0.85 }}>{business.category || 'Business'} · {[business.city, business.state, business.country].filter(Boolean).join(', ') || 'Location not set'}</div>
-        <div style={{ opacity: 0.75, fontSize: 13 }}>{followerCount} follower{followerCount === 1 ? '' : 's'}</div>
-        {viewerId ? <button style={btn} onClick={toggleFollow}>{isFollowing ? 'Unfollow Business' : 'Follow Business'}</button> : null}
-        {business.description ? <p style={{ whiteSpace: 'pre-wrap' }}>{business.description}</p> : null}
+        <div style={heroTop}>
+          <div style={brandMark}>{(business.name || 'B').slice(0, 1).toUpperCase()}</div>
+          <div style={{ minWidth: 0 }}>
+            <h1 style={{ margin: 0, color: '#fff', fontSize: 'clamp(28px, 5vw, 44px)' }}>{business.name}</h1>
+            <div style={muted}>{business.category || 'Business'} · {[business.city, business.state, business.country].filter(Boolean).join(', ') || 'Location not set'}</div>
+            <div style={muted}>{followerCount} follower{followerCount === 1 ? '' : 's'}</div>
+          </div>
+          {viewerId ? <button style={btn} onClick={toggleFollow}>{isFollowing ? 'Unfollow Business' : 'Follow Business'}</button> : null}
+        </div>
+        {business.description ? <p style={{ whiteSpace: 'pre-wrap', color: 'rgba(255,255,255,0.86)', marginTop: 6, lineHeight: 1.6 }}>{business.description}</p> : null}
 
         <section style={section}>
-          <strong>Active posts</strong>
+          <strong style={{ color: '#fff' }}>Active posts</strong>
           <div style={{ display: 'grid', gap: 8, marginTop: 8 }}>
             {rows.map((r) => (
               <a key={r.id} href={`/listing?id=${r.id}`} style={rowLink}>
@@ -80,7 +85,7 @@ export default function BusinessProfilePage() {
                 <strong>${Number(r.asking_price || 0).toLocaleString()}</strong>
               </a>
             ))}
-            {rows.length === 0 ? <small style={{ opacity: 0.75 }}>No active posts yet.</small> : null}
+            {rows.length === 0 ? <small style={{ opacity: 0.75, color: 'rgba(255,255,255,0.75)' }}>No active posts yet.</small> : null}
           </div>
         </section>
       </div>
@@ -88,8 +93,11 @@ export default function BusinessProfilePage() {
   );
 }
 
-const wrap = { minHeight: '100vh', padding: 24, background: 'radial-gradient(circle at top right, #ffe7f1 0%, #f8fafc 40%, #f8fafc 100%)', color: '#111827' };
-const card = { maxWidth: 860, margin: '0 auto', display: 'grid', gap: 10, background: '#fff', border: '1px solid #eceff5', borderRadius: 12, padding: 16, boxShadow: '0 8px 24px rgba(17,24,39,0.06)' };
-const section = { marginTop: 10, background: '#fff', border: '1px solid #eceff5', borderRadius: 10, padding: 10 };
-const rowLink = { display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', padding: '8px 10px', border: '1px solid #eceff5', borderRadius: 8, color: '#111827', textDecoration: 'none' };
-const btn = { border: 0, borderRadius: 999, background: '#2e7dff', color: '#fff', padding: '8px 12px', width: 'fit-content', cursor: 'pointer' };
+const wrap = { minHeight: '100vh', padding: 24, background: '#0b1020', color: '#fff' };
+const card = { maxWidth: 920, margin: '0 auto', display: 'grid', gap: 14, background: '#121b3f', border: '1px solid #2a3c78', borderRadius: 24, padding: 18, boxShadow: '0 24px 60px rgba(0,0,0,0.28)' };
+const heroTop = { display: 'grid', gridTemplateColumns: '56px minmax(0, 1fr) auto', gap: 14, alignItems: 'center' };
+const brandMark = { width: 56, height: 56, borderRadius: 18, display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg, #ffd6e8, #c7d6ff)', color: '#0f172a', fontWeight: 800, fontSize: 22 };
+const muted = { marginTop: 4, color: 'rgba(255,255,255,0.72)', fontSize: 14 };
+const section = { marginTop: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(42,60,120,0.8)', borderRadius: 16, padding: 14 };
+const rowLink = { display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center', padding: '10px 12px', border: '1px solid rgba(42,60,120,0.8)', borderRadius: 12, color: '#fff', textDecoration: 'none', background: 'rgba(255,255,255,0.03)' };
+const btn = { border: '1px solid #2a3c78', borderRadius: 999, background: '#2e7dff', color: '#fff', padding: '10px 14px', width: 'fit-content', cursor: 'pointer' };
