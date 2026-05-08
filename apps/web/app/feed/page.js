@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
+import { FeedEmptyState, FeedHero, FeedPost } from './feed-components';
 
 export default function FeedPage() {
   const [rows, setRows] = useState([]);
@@ -14,6 +16,7 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [industry, setIndustry] = useState('all');
+  const router = useRouter();
 
   const filteredRows = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
@@ -142,157 +145,49 @@ export default function FeedPage() {
     loadFeed();
   }, []);
 
+  function handleSearch() {
+    const params = new URLSearchParams();
+    if (searchTerm.trim()) params.set('q', searchTerm.trim());
+    if (industry !== 'all') params.set('industry', industry);
+    router.push(`/explore${params.toString() ? `?${params.toString()}` : ''}`);
+  }
+
   return (
     <main style={wrap}>
-      <section style={heroShell}>
-        <div style={heroOverlay} />
-        <div style={heroContent}>
-          <div style={heroPanel}>
-            <div style={heroTopline}>Discover deals, businesses, and brokers</div>
-            <h1 style={heroTitle}>Find a business for sale</h1>
-            <p style={heroSubtitle}>Search by business name, city, state, or ZIP. Keep your feed focused on what you actually want to buy.</p>
-
-            <div style={heroSearchWrap}>
-              <div style={heroTabs}>
-                <button type='button' style={industry === 'all' ? activeTab : tabButton} onClick={() => setIndustry('all')}>Businesses</button>
-                <button type='button' style={industry === 'startup' ? activeTab : tabButton} onClick={() => setIndustry('startup')}>Franchises</button>
-              </div>
-
-              <div style={searchBar}>
-                <div style={searchFieldWrap}>
-                  <label style={srOnly} htmlFor='feed-search'>Search</label>
-                  <input
-                    id='feed-search'
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder='California, Miami, 33101, coffee shop...'
-                    style={searchInput}
-                  />
-                </div>
-                <div style={divider} />
-                <div style={searchFieldWrap}>
-                  <label style={srOnly} htmlFor='feed-industry'>Industry</label>
-                  <select id='feed-industry' value={industry} onChange={(e) => setIndustry(e.target.value)} style={searchSelect}>
-                    <option value='all'>All Industries</option>
-                    <option value='established'>Established Businesses</option>
-                    <option value='asset_sale'>Asset Sales</option>
-                    <option value='real_estate'>Real Estate</option>
-                    <option value='startup'>Start-Ups</option>
-                  </select>
-                </div>
-                <button type='button' style={searchBtn}>Search</button>
-              </div>
-            </div>
-
-            <div style={statsRow}>
-              <div style={statCard}>
-                <span style={statLabel}>Posts</span>
-                <strong style={statValue}>{rows.length.toLocaleString()}</strong>
-              </div>
-              <div style={statCard}>
-                <span style={statLabel}>Businesses</span>
-                <strong style={statValue}>{Object.keys(businessNames).length.toLocaleString()}</strong>
-              </div>
-              <div style={statCard}>
-                <span style={statLabel}>People</span>
-                <strong style={statValue}>{Object.keys(profileNames).length.toLocaleString()}</strong>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <FeedHero
+        searchDraft={searchTerm}
+        setSearchDraft={setSearchTerm}
+        industry={industry}
+        setIndustry={setIndustry}
+        onSearch={handleSearch}
+        rowsCount={rows.length}
+        businessCount={Object.keys(businessNames).length}
+        peopleCount={Object.keys(profileNames).length}
+      />
 
       <div style={inner}>
         {loading ? <p style={statusText}>Loading feed...</p> : null}
         {msg ? <p style={statusText}>{msg}</p> : null}
-        {!loading && !msg && filteredRows.length === 0 ? (
-          <div style={emptyState}>
-            <p style={{ marginTop: 0, marginBottom: 8 }}>
-              No posts yet. Follow people or businesses to populate your feed.
-            </p>
-            <p style={{ marginTop: 0, marginBottom: 8 }}>
-              You can also visit Explore to discover new listings and businesses.
-            </p>
-            <a href="/explore" style={exploreBtn}>Go to Explore</a>
-          </div>
-        ) : null}
+        <FeedEmptyState loading={loading} msg={msg} hasFollows={Boolean(rows.length)} />
 
         <div style={feedColumn}>
-        {filteredRows.map((r) => {
-          const media = mediaByListing[r.id] || [];
-          const heroMedia = media[0];
-          const activeIndex = activeMediaByListing[r.id] ?? 0;
-          const activeMedia = media[activeIndex] || heroMedia;
-          return (
-              <article key={r.id} style={postShell}>
-                <div style={postTopRow}>
-                  <div style={avatar}>{(r.title || 'B').slice(0, 1).toUpperCase()}</div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={postTitle}>{r.title}</div>
-                    <div style={postMeta}>
-                      <span style={postBusiness}>{businessNames[r.business_id] || 'Business'}</span>
-                      <span>·</span>
-                      <span>Posted by {profileNames[r.seller_id] || 'User'}</span>
-                      <span>·</span>
-                      <span>{r.lister_role || 'Authorized Representative'}</span>
-                    </div>
-                    <div style={postLocation}>{[r.city, r.state].filter(Boolean).join(', ') || businessLocations[r.business_id] || 'Location not set'}</div>
-                  </div>
-                  <a href={`/listing?id=${r.id}`} style={openPill}>Open</a>
-                </div>
-
-                {activeMedia ? (
-                  <div style={heroMediaFrame}>
-                    {activeMedia.media_type === 'video' ? (
-                      <video src={activeMedia.url} controls playsInline controlsList='nofullscreen noremoteplayback' disablePictureInPicture style={heroMediaAsset} />
-                    ) : (
-                      <img src={activeMedia.thumbnail_url || activeMedia.url} alt='listing media' style={heroMediaAsset} />
-                    )}
-                    {r.description ? (
-                      <div style={mediaCaption}>{r.description}</div>
-                    ) : null}
-                    {media.length > 1 ? (
-                      <>
-                        <button
-                          type='button'
-                          aria-label='Previous media'
-                          style={carouselArrowLeft}
-                          onClick={() => setActiveMediaByListing((prev) => ({
-                            ...prev,
-                            [r.id]: (activeIndex - 1 + media.length) % media.length,
-                          }))}
-                        >
-                          ‹
-                        </button>
-                        <button
-                          type='button'
-                          aria-label='Next media'
-                          style={carouselArrowRight}
-                          onClick={() => setActiveMediaByListing((prev) => ({
-                            ...prev,
-                            [r.id]: (activeIndex + 1) % media.length,
-                          }))}
-                        >
-                          ›
-                        </button>
-                        <div style={carouselDots}>
-                          {media.map((m, idx) => (
-                            <button
-                              key={m.url + idx}
-                              type='button'
-                              aria-label={`Show media ${idx + 1} of ${media.length}`}
-                              style={idx === activeIndex ? activeDot : dot}
-                              onClick={() => setActiveMediaByListing((prev) => ({ ...prev, [r.id]: idx }))}
-                            />
-                          ))}
-                          <span style={carouselCount}>{activeIndex + 1}/{media.length}</span>
-                        </div>
-                      </>
-                    ) : null}
-                  </div>
-                ) : null}
-
-              </article>
+          {filteredRows.map((r) => {
+            const media = mediaByListing[r.id] || [];
+            const activeIndex = activeMediaByListing[r.id] ?? 0;
+            return (
+              <FeedPost
+                key={r.id}
+                listing={r}
+                businessName={businessNames[r.business_id]}
+                businessLocation={businessLocations[r.business_id]}
+                sellerName={profileNames[r.seller_id]}
+                media={media}
+                activeIndex={activeIndex}
+                onPrev={() => setActiveMediaByListing((prev) => ({ ...prev, [r.id]: (activeIndex - 1 + media.length) % media.length }))}
+                onNext={() => setActiveMediaByListing((prev) => ({ ...prev, [r.id]: (activeIndex + 1) % media.length }))}
+                onPick={(idx) => setActiveMediaByListing((prev) => ({ ...prev, [r.id]: idx }))}
+                onOpen={`/listing?id=${r.id}`}
+              />
             );
           })}
         </div>
@@ -395,6 +290,8 @@ const feedColumn = {
   gap: 16,
 };
 const statusText = { margin: '16px 0 0', color: '#cdd9ff' };
+const bottomExploreWrap = { marginTop: 16, display: 'flex', justifyContent: 'center' };
+const exploreBtn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '10px 14px', textDecoration: 'none', fontWeight: 600 };
 const postShell = {
   color: '#fff',
   padding: 0,
@@ -459,39 +356,3 @@ const dot = {
 };
 const activeDot = { ...dot, background: '#fff', width: 8, height: 8 };
 const carouselCount = { marginLeft: 4, color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: 0.2 };
-const postTopRow = { display: 'grid', gridTemplateColumns: '42px minmax(0, 1fr) auto', gap: 14, alignItems: 'center', marginBottom: 10 };
-const avatar = {
-  width: 42,
-  height: 42,
-  borderRadius: 999,
-  display: 'grid',
-  placeItems: 'center',
-  background: 'linear-gradient(135deg, #ffd6e8, #c7d6ff)',
-  color: '#0f172a',
-  fontWeight: 800,
-  fontSize: 18,
-};
-const postTitle = { fontSize: 18, lineHeight: 1.15, fontWeight: 800, color: '#fff', marginBottom: 2 };
-const postMeta = { display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.82)', alignItems: 'center' };
-const postBusiness = { fontWeight: 700, color: '#fff' };
-const postLocation = { marginTop: 2, fontSize: 13, color: 'rgba(255,255,255,0.72)' };
-const openPill = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  minWidth: 88,
-  height: 48,
-  padding: '0 18px',
-  borderRadius: 999,
-  border: '1px solid #d7dbe5',
-  background: '#fff',
-  color: '#111827',
-  textDecoration: 'none',
-  fontWeight: 800,
-  fontSize: 18,
-  alignSelf: 'center',
-};
-const emptyState = { marginTop: 12, padding: 14, borderRadius: 14, border: '1px solid #304178', background: '#0e1738', display: 'grid', gap: 8 };
-const bottomExploreWrap = { marginTop: 16, display: 'flex', justifyContent: 'center' };
-const exploreBtn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '10px 14px', textDecoration: 'none', fontWeight: 600 };
-const srOnly = { position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 };

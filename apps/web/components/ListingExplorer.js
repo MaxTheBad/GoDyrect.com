@@ -9,7 +9,7 @@ const businessTypes = ['established', 'asset_sale', 'real_estate', 'startup'];
 const ageOptions = ['0-1 years', '2-5 years', '6-10 years', '10+ years'];
 const milesOptions = ['5', '10', '25', '50', '100', '250'];
 
-export default function ListingExplorer() {
+export default function ListingExplorer({ initialSearch = '', initialIndustry = 'all' }) {
   const [toast, setToast] = useState('');
   const [openFilter, setOpenFilter] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -33,8 +33,8 @@ export default function ListingExplorer() {
   const [sortBy, setSortBy] = useState('Newest');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [mediaModal, setMediaModal] = useState({ open: false, listingId: '', index: 0 });
-  const [searchDraft, setSearchDraft] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchDraft, setSearchDraft] = useState(initialSearch);
+  const [searchQuery, setSearchQuery] = useState(initialSearch.trim().toLowerCase());
   const [favoriteIds, setFavoriteIds] = useState([]);
   const [businessNames, setBusinessNames] = useState({});
   const [sellerFollowIds, setSellerFollowIds] = useState([]);
@@ -145,6 +145,17 @@ export default function ListingExplorer() {
     }
     loadListings();
   }, []);
+
+  useEffect(() => {
+    setSearchDraft(initialSearch);
+    setSearchQuery(initialSearch.trim().toLowerCase());
+  }, [initialSearch]);
+
+  useEffect(() => {
+    if (initialIndustry && initialIndustry !== 'all') {
+      setSelectedTypes([initialIndustry].filter(Boolean));
+    }
+  }, [initialIndustry]);
 
   useEffect(() => {
     async function loadCountyCityOptions() {
