@@ -24,8 +24,19 @@ export default function DashboardPage() {
 
   return (
     <main style={wrap}>
-      <h1 style={{ marginTop: 0 }}>Dashboard</h1>
-      <p style={{ color: 'rgba(255,255,255,0.78)' }}>Welcome back{profile?.full_name ? `, ${profile.full_name}` : ''}.</p>
+      <div style={hero}>
+        <p style={eyebrow}>Onboarding</p>
+        <h1 style={{ margin: '0 0 8px', color: '#fff', fontSize: 'clamp(2rem, 4vw, 3.5rem)', lineHeight: 1.05 }}>Choose your path</h1>
+        <p style={{ margin: 0, color: 'rgba(255,255,255,0.78)', lineHeight: 1.5 }}>
+          Welcome back{profile?.full_name ? `, ${profile.full_name}` : ''}. Pick buyer, seller, or broker to tailor what you see. You can change it anytime in Settings.
+        </p>
+        <div style={choiceGrid}>
+          <a href='/settings' style={choiceCard(profile?.role === 'buyer')}>Buyer</a>
+          <a href='/settings' style={choiceCard(profile?.role === 'seller')}>Seller</a>
+          <a href='/settings' style={choiceCard(profile?.role === 'broker')}>Broker</a>
+          <a href='/settings' style={resetCard}>Reset onboarding</a>
+        </div>
+      </div>
 
       <section style={card}>
         <h3 style={{ marginTop: 0, color: '#fff' }}>Your account</h3>
@@ -73,3 +84,14 @@ const wrap = { minHeight: '100vh', padding: 24, background: '#0b1020', color: '#
 const card = { maxWidth: 760, background: '#121b3f', border: '1px solid #2a3c78', borderRadius: 24, padding: 18, marginTop: 14 };
 const btn = { border: '1px solid #304178', borderRadius: 10, background: '#0e1738', color: '#fff', padding: '10px 12px', textDecoration: 'none' };
 const btnPrimary = { border: 0, borderRadius: 10, background: '#2e7dff', color: '#fff', padding: '10px 12px', textDecoration: 'none' };
+const hero = { maxWidth: 920, padding: '4px 0 10px' };
+const eyebrow = { margin: '0 0 10px', color: '#8fb7ff', letterSpacing: '0.18em', textTransform: 'uppercase', fontSize: 12, fontWeight: 700 };
+const choiceGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginTop: 18 };
+const baseChoice = { borderRadius: 18, padding: '16px 18px', textDecoration: 'none', fontWeight: 700, fontSize: 16, textAlign: 'center', transition: 'transform 120ms ease, border-color 120ms ease', border: '1px solid rgba(255,255,255,0.08)' };
+const choiceCard = (active) => ({
+  ...baseChoice,
+  background: active ? 'linear-gradient(180deg, rgba(46,125,255,0.92), rgba(18,27,63,0.9))' : 'rgba(255,255,255,0.04)',
+  color: '#fff',
+  borderColor: active ? 'rgba(143,183,255,0.8)' : 'rgba(255,255,255,0.08)',
+});
+const resetCard = { ...baseChoice, background: 'rgba(255,92,92,0.14)', color: '#fff', borderColor: 'rgba(255,92,92,0.5)' };
