@@ -374,14 +374,14 @@ const divider = { width: 1, background: '#e1e7f2' };
 const searchInput = { width: '100%', border: 0, padding: '22px 20px', fontSize: 18, outline: 'none', color: '#0f172a' };
 const searchSelect = { width: '100%', border: 0, padding: '22px 18px', fontSize: 18, outline: 'none', color: '#334155', background: 'transparent' };
 const searchBtn = {
-  border: '1px solid #c7ced9',
-  background: 'linear-gradient(180deg, #f7f9fc 0%, #dbe3ed 100%)',
-  color: '#1f2937',
+  border: '1px solid #2a3c78',
+  background: '#2e7dff',
+  color: '#fff',
   padding: '0 34px',
   fontSize: 18,
   fontWeight: 800,
   cursor: 'pointer',
-  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9)',
+  boxShadow: '0 8px 20px rgba(46,125,255,0.28)',
 };
 const statsRow = { width: 'min(100%, 980px)', display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12, marginTop: 14 };
 const statCard = { borderRadius: 18, padding: '14px 16px', background: 'rgba(12,18,39,0.66)', border: '1px solid rgba(94,128,202,0.28)', textAlign: 'left' };
