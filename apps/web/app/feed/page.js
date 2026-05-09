@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
-import { FeedEmptyState, FeedHero, FeedPost } from './feed-components';
+import { FeedEmptyState, FeedPost } from './feed-components';
 
 export default function FeedPage() {
   const [rows, setRows] = useState([]);
@@ -16,29 +15,6 @@ export default function FeedPage() {
   const [hasFollows, setHasFollows] = useState(false);
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [industry, setIndustry] = useState('all');
-  const router = useRouter();
-
-  const filteredRows = useMemo(() => {
-    const q = searchTerm.trim().toLowerCase();
-    return rows.filter((r) => {
-      const haystack = [
-        r.title,
-        r.description,
-        businessNames[r.business_id],
-        businessLocations[r.business_id],
-        profileNames[r.seller_id],
-        r.category,
-        r.city,
-        r.state,
-        r.country,
-      ].filter(Boolean).join(' ').toLowerCase();
-      const matchesSearch = !q || haystack.includes(q);
-      const matchesIndustry = industry === 'all' || r.category === industry;
-      return matchesSearch && matchesIndustry;
-    });
-  }, [rows, searchTerm, industry, businessNames, businessLocations, profileNames]);
 
   useEffect(() => {
     async function loadFeed() {
@@ -155,13 +131,6 @@ export default function FeedPage() {
     loadFeed();
   }, []);
 
-  function handleSearch() {
-    const params = new URLSearchParams();
-    if (searchTerm.trim()) params.set('q', searchTerm.trim());
-    if (industry !== 'all') params.set('industry', industry);
-    router.push(`/explore${params.toString() ? `?${params.toString()}` : ''}`);
-  }
-
   async function toggleFavorite(listingId) {
     if (!supabase) return;
     const { data: auth } = await supabase.auth.getUser();
@@ -186,30 +155,35 @@ export default function FeedPage() {
 
   return (
     <main style={wrap}>
-      <FeedHero
-        searchDraft={searchTerm}
-        setSearchDraft={setSearchTerm}
-        industry={industry}
-        setIndustry={setIndustry}
-        onSearch={handleSearch}
-        rowsCount={rows.length}
-        businessCount={Object.keys(businessNames).length}
-        peopleCount={Object.keys(profileNames).length}
-        compact={!hasFollows}
-      />
-
       <div style={inner}>
+        <div style={feedHeader}>
+          <div style={feedHeaderCopy}>
+            <p style={feedEyebrow}>Feed</p>
+            <h1 style={feedTitle}>Posts from people and businesses you follow</h1>
+            <p style={feedSubtitle}>This is your timeline. Search and filters live on Explore.</p>
+          </div>
+          <div style={statsRow}>
+            <div style={statCard}>
+              <span style={statLabel}>Posts</span>
+              <strong style={statValue}>{rows.length.toLocaleString()}</strong>
+            </div>
+            <div style={statCard}>
+              <span style={statLabel}>Businesses</span>
+              <strong style={statValue}>{Object.keys(businessNames).length.toLocaleString()}</strong>
+            </div>
+            <div style={statCard}>
+              <span style={statLabel}>People</span>
+              <strong style={statValue}>{Object.keys(profileNames).length.toLocaleString()}</strong>
+            </div>
+          </div>
+        </div>
+
         {loading ? <p style={statusText}>Loading feed...</p> : null}
         {msg ? <p style={statusText}>{msg}</p> : null}
-        <FeedEmptyState
-          loading={loading}
-          msg={msg}
-          hasFollows={hasFollows}
-          hasSearch={Boolean(searchTerm.trim()) || industry !== 'all'}
-        />
+        <FeedEmptyState loading={loading} msg={msg} hasFollows={hasFollows} />
 
         <div style={hasFollows ? feedColumn : feedColumnTight}>
-          {filteredRows.map((r) => {
+          {rows.map((r) => {
             const media = mediaByListing[r.id] || [];
             const activeIndex = activeMediaByListing[r.id] ?? 0;
             return (
@@ -323,15 +297,20 @@ const statCard = { borderRadius: 18, padding: '14px 16px', background: 'rgba(12,
 const statLabel = { display: 'block', fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase', color: 'rgba(159,192,255,0.92)' };
 const statValue = { display: 'block', marginTop: 8, fontSize: 24, color: '#fff' };
 const inner = { width: 'min(980px, calc(100% - 32px))', margin: '0 auto', padding: '0 0 90px' };
+const feedHeader = { paddingTop: 18, display: 'grid', gap: 16 };
+const feedHeaderCopy = { display: 'grid', gap: 6 };
+const feedEyebrow = { margin: 0, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: '#9fc0ff' };
+const feedTitle = { margin: 0, fontSize: 'clamp(24px, 4vw, 34px)', lineHeight: 1.1, color: '#fff' };
+const feedSubtitle = { margin: 0, color: 'rgba(235,241,255,0.78)', lineHeight: 1.5, maxWidth: 760 };
 const feedColumn = {
   width: 'min(470px, calc(100vw - 24px))',
-  margin: '18px auto 0',
+  margin: '6px auto 0',
   display: 'grid',
   gap: 16,
 };
 const feedColumnTight = {
   ...feedColumn,
-  marginTop: 10,
+  marginTop: 8,
 };
 const statusText = { margin: '16px 0 0', color: '#cdd9ff' };
 const bottomExploreWrap = { marginTop: 16, display: 'flex', justifyContent: 'center' };
