@@ -62,9 +62,9 @@ export default function ExploreClient() {
 
 const shell = { display: 'grid', gap: 18 };
 const hero = { display: 'grid', gap: 12, textAlign: 'center', justifyItems: 'center', padding: '16px 0 4px' };
-const eyebrow = { fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: '#7b96cf' };
-const title = { margin: 0, color: '#0f172a', fontSize: 'clamp(30px, 5vw, 56px)', lineHeight: 1.02 };
-const subtitle = { margin: 0, maxWidth: 820, color: '#475569', fontSize: 18, lineHeight: 1.5 };
+const eyebrow = { fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: '#9fc0ff' };
+const title = { margin: 0, color: '#fff', fontSize: 'clamp(30px, 5vw, 56px)', lineHeight: 1.02 };
+const subtitle = { margin: 0, maxWidth: 820, color: 'rgba(235,241,255,0.78)', fontSize: 18, lineHeight: 1.5 };
 const searchBar = { width: 'min(100%, 980px)', display: 'grid', gridTemplateColumns: 'minmax(0, 1.35fr) 1px minmax(220px, 0.95fr) auto', alignItems: 'stretch', borderRadius: 18, overflow: 'hidden', background: '#fff', boxShadow: '0 18px 40px rgba(4, 10, 28, 0.12)' };
 const searchFieldWrap = { display: 'grid' };
 const divider = { width: 1, background: '#e1e7f2' };

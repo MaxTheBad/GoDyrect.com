@@ -423,8 +423,8 @@ export default function ListingExplorer({ initialSearch = '', initialIndustry = 
   return (
     <>
       <section style={heroSection}>
-        <h1 style={{ margin: '0 0 8px', fontSize: 30, color: '#111827', letterSpacing: '-0.02em' }}>Buy & sell businesses</h1>
-        <p style={{ margin: 0, opacity: 0.75, color: '#374151' }}>Search by business name, category, or keywords.</p>
+        <h1 style={{ margin: '0 0 8px', fontSize: 30, color: '#fff', letterSpacing: '-0.02em' }}>Buy & sell businesses</h1>
+        <p style={{ margin: 0, opacity: 0.82, color: 'rgba(235,241,255,0.78)' }}>Search by business name, category, or keywords.</p>
 
         <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr auto auto', gap: 8 }}>
           <input
@@ -524,9 +524,9 @@ export default function ListingExplorer({ initialSearch = '', initialIndustry = 
       </section>
 
       <section style={listingSection}>
-        <h3 style={{ marginTop: 4, color: '#111827' }}>Business Listings</h3>
-        {loadingListings ? <p style={{ opacity: 0.8 }}>Loading listings...</p> : null}
-        {!loadingListings && filteredListings.length === 0 ? <p style={{ opacity: 0.8 }}>No active listings found.</p> : null}
+        <h3 style={{ marginTop: 4, color: '#fff' }}>Business Listings</h3>
+        {loadingListings ? <p style={{ opacity: 0.8, color: 'rgba(235,241,255,0.78)' }}>Loading listings...</p> : null}
+        {!loadingListings && filteredListings.length === 0 ? <p style={{ opacity: 0.8, color: 'rgba(235,241,255,0.78)' }}>No active listings found.</p> : null}
         <div style={{ display: 'grid', gap: 10 }}>
           {filteredListings.map((l) => {
             const media = mediaPreview[l.id] || [];
@@ -680,39 +680,39 @@ function milesBetween(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-const heroSection = { marginTop: 24, background: '#fff', border: '1px solid #eceff5', borderRadius: 20, padding: 18, boxShadow: '0 8px 24px rgba(17,24,39,0.06)' };
-const filterSection = { marginTop: 16, background: '#fff', border: '1px solid #eceff5', borderRadius: 20, padding: 12, boxShadow: '0 8px 24px rgba(17,24,39,0.06)' };
-const mobileFilterToggle = { width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #e5e7eb', borderRadius: 12, background: '#fff', color: '#111827', padding: '10px 12px', cursor: 'pointer', fontWeight: 600 };
-const listingSection = { marginTop: 16, background: '#fff', border: '1px solid #eceff5', borderRadius: 20, padding: 12, boxShadow: '0 8px 24px rgba(17,24,39,0.06)' };
-const primaryBtn = { border: 0, borderRadius: 999, background: 'linear-gradient(135deg, #f58529 0%, #dd2a7b 45%, #8134af 75%, #515bd4 100%)', color: '#fff', padding: '10px 14px', cursor: 'pointer', fontWeight: 600 };
-const ghostBtn = { border: '1px solid #e5e7eb', borderRadius: 999, background: '#fff', color: '#111827', padding: '10px 12px', cursor: 'pointer', fontWeight: 600 };
-const input = { borderRadius: 12, border: '1px solid #e5e7eb', background: '#fff', color: '#111827', padding: '10px 12px', width: '100%' };
+const heroSection = { marginTop: 24, background: '#0f1732', border: '1px solid rgba(94,128,202,0.28)', borderRadius: 20, padding: 18, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' };
+const filterSection = { marginTop: 16, background: '#0f1732', border: '1px solid rgba(94,128,202,0.28)', borderRadius: 20, padding: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' };
+const mobileFilterToggle = { width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid rgba(94,128,202,0.28)', borderRadius: 12, background: '#121b3f', color: '#fff', padding: '10px 12px', cursor: 'pointer', fontWeight: 600 };
+const listingSection = { marginTop: 16, background: '#0f1732', border: '1px solid rgba(94,128,202,0.28)', borderRadius: 20, padding: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' };
+const primaryBtn = { border: 0, borderRadius: 999, background: '#2e7dff', color: '#fff', padding: '10px 14px', cursor: 'pointer', fontWeight: 600 };
+const ghostBtn = { border: '1px solid rgba(94,128,202,0.28)', borderRadius: 999, background: '#121b3f', color: '#fff', padding: '10px 12px', cursor: 'pointer', fontWeight: 600 };
+const input = { borderRadius: 12, border: '1px solid rgba(94,128,202,0.28)', background: '#0b1431', color: '#fff', padding: '10px 12px', width: '100%' };
 const sortWrap = { display: 'grid', gap: 4 };
-const dropWrap = { background: '#f9fafb', border: '1px solid #eceff5', borderRadius: 14, padding: 10 };
-const dropBtn = { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #e5e7eb', borderRadius: 12, background: '#fff', color: '#111827', padding: '10px 12px', cursor: 'pointer', fontWeight: 600 };
-const rowLabel = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: '#374151' };
+const dropWrap = { background: '#0b1431', border: '1px solid rgba(94,128,202,0.28)', borderRadius: 14, padding: 10 };
+const dropBtn = { width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid rgba(94,128,202,0.28)', borderRadius: 12, background: '#121b3f', color: '#fff', padding: '10px 12px', cursor: 'pointer', fontWeight: 600 };
+const rowLabel = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: 'rgba(235,241,255,0.78)' };
 const toastStyle = { position: 'fixed', bottom: 92, right: 20, background: '#111827', color: '#fff', padding: '10px 14px', borderRadius: 12, boxShadow: '0 10px 24px rgba(17,24,39,0.25)' };
-const listingCard = { border: '1px solid #eceff5', borderRadius: 16, background: '#fff', padding: 12, display: 'grid', gap: 10 };
+const listingCard = { border: '1px solid rgba(94,128,202,0.28)', borderRadius: 16, background: '#121b3f', padding: 12, display: 'grid', gap: 10, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' };
 const cardTop = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 };
-const identityLink = { display: 'inline-flex', alignItems: 'center', gap: 8, color: '#111827', textDecoration: 'none', fontWeight: 600 };
-const sellerAvatar = { width: 30, height: 30, borderRadius: 999, objectFit: 'cover', border: '1px solid #eceff5' };
-const sellerAvatarFallback = { width: 30, height: 30, borderRadius: 999, display: 'grid', placeItems: 'center', background: '#f3f4f6', color: '#374151', fontSize: 12, fontWeight: 700, border: '1px solid #eceff5' };
-const bizIdentityLink = { display: 'inline-flex', alignItems: 'center', gap: 8, color: '#4b5563', textDecoration: 'none', fontSize: 13, fontWeight: 600 };
-const bizLogoPlaceholder = { width: 26, height: 26, borderRadius: 8, display: 'grid', placeItems: 'center', background: '#eef2ff', color: '#334155', fontSize: 12, fontWeight: 700, border: '1px solid #e5e7eb' };
-const titleLink = { color: '#111827', textDecoration: 'none', fontWeight: 700, fontSize: 17 };
-const mediaStageWrap = { position: 'relative', borderRadius: 14, overflow: 'hidden', border: '1px solid #eceff5', background: '#f3f4f6' };
+const identityLink = { display: 'inline-flex', alignItems: 'center', gap: 8, color: '#fff', textDecoration: 'none', fontWeight: 600 };
+const sellerAvatar = { width: 30, height: 30, borderRadius: 999, objectFit: 'cover', border: '1px solid rgba(94,128,202,0.28)' };
+const sellerAvatarFallback = { width: 30, height: 30, borderRadius: 999, display: 'grid', placeItems: 'center', background: '#0b1431', color: '#fff', fontSize: 12, fontWeight: 700, border: '1px solid rgba(94,128,202,0.28)' };
+const bizIdentityLink = { display: 'inline-flex', alignItems: 'center', gap: 8, color: 'rgba(235,241,255,0.78)', textDecoration: 'none', fontSize: 13, fontWeight: 600 };
+const bizLogoPlaceholder = { width: 26, height: 26, borderRadius: 8, display: 'grid', placeItems: 'center', background: '#0b1431', color: '#fff', fontSize: 12, fontWeight: 700, border: '1px solid rgba(94,128,202,0.28)' };
+const titleLink = { color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 17 };
+const mediaStageWrap = { position: 'relative', borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(94,128,202,0.28)', background: '#050a1a' };
 const mediaMainBtn = { border: 0, padding: 0, background: 'transparent', width: '100%', cursor: 'pointer' };
 const mediaMain = { width: '100%', height: 420, objectFit: 'cover', display: 'block' };
-const mediaNavLeft = { position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', border: 0, borderRadius: 999, width: 30, height: 30, background: 'rgba(17,24,39,0.6)', color: '#fff', cursor: 'pointer' };
-const mediaNavRight = { position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', border: 0, borderRadius: 999, width: 30, height: 30, background: 'rgba(17,24,39,0.6)', color: '#fff', cursor: 'pointer' };
+const mediaNavLeft = { position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', border: 0, borderRadius: 999, width: 30, height: 30, background: 'rgba(255,255,255,0.9)', color: '#111827', cursor: 'pointer' };
+const mediaNavRight = { position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', border: 0, borderRadius: 999, width: 30, height: 30, background: 'rgba(255,255,255,0.9)', color: '#111827', cursor: 'pointer' };
 const dotWrap = { position: 'absolute', left: 0, right: 0, bottom: 10, display: 'flex', justifyContent: 'center', gap: 6 };
 const dot = { width: 6, height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.55)' };
 const dotActive = { width: 8, height: 8, borderRadius: 999, background: '#fff' };
 const cardBottom = { display: 'flex', justifyContent: 'space-between', alignItems: 'center' };
-const menuBtn = { border: '1px solid #eceff5', borderRadius: 999, background: '#fff', color: '#111827', width: 34, height: 34, fontSize: 18, lineHeight: 1, cursor: 'pointer' };
-const menuPanel = { position: 'absolute', right: 0, top: 40, background: '#fff', border: '1px solid #eceff5', borderRadius: 10, minWidth: 180, display: 'grid', zIndex: 5, boxShadow: '0 10px 24px rgba(17,24,39,0.1)' };
-const menuItem = { border: 0, borderBottom: '1px solid #f1f5f9', background: '#fff', textAlign: 'left', padding: '10px 12px', cursor: 'pointer', color: '#111827' };
-const menuLink = { padding: '10px 12px', textDecoration: 'none', color: '#111827', borderBottom: '1px solid #f1f5f9' };
+const menuBtn = { border: '1px solid rgba(94,128,202,0.28)', borderRadius: 999, background: '#0b1431', color: '#fff', width: 34, height: 34, fontSize: 18, lineHeight: 1, cursor: 'pointer' };
+const menuPanel = { position: 'absolute', right: 0, top: 40, background: '#0f1732', border: '1px solid rgba(94,128,202,0.28)', borderRadius: 10, minWidth: 180, display: 'grid', zIndex: 5, boxShadow: '0 10px 24px rgba(0,0,0,0.2)' };
+const menuItem = { border: 0, borderBottom: '1px solid rgba(94,128,202,0.18)', background: '#0f1732', textAlign: 'left', padding: '10px 12px', cursor: 'pointer', color: '#fff' };
+const menuLink = { padding: '10px 12px', textDecoration: 'none', color: '#fff', borderBottom: '1px solid rgba(94,128,202,0.18)' };
 
 const modalBackdrop = { position: 'fixed', inset: 0, background: 'rgba(17,24,39,0.72)', display: 'grid', placeItems: 'center', zIndex: 1200, padding: 16 };
 const modalCard = { width: 'min(780px, 96vw)', background: '#0b1228', border: '1px solid #2e3f73', borderRadius: 14, padding: 10 };
