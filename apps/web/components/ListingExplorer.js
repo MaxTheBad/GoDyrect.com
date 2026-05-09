@@ -422,38 +422,17 @@ export default function ListingExplorer({ initialSearch = '', initialIndustry = 
 
   return (
     <>
-      <section style={heroSection}>
-        <h1 style={{ margin: '0 0 8px', fontSize: 30, color: '#fff', letterSpacing: '-0.02em' }}>Buy & sell businesses</h1>
-        <p style={{ margin: 0, opacity: 0.82, color: 'rgba(235,241,255,0.78)' }}>Search by business name, category, or keywords.</p>
-
-        <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr auto auto', gap: 8 }}>
-          <input
-            style={{ ...input, width: '100%' }}
-            placeholder='Search business name, categories, keywords'
-            value={searchDraft}
-            onChange={(e) => setSearchDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                applySearch();
-              }
-            }}
-          />
-          <button style={primaryBtn} onClick={applySearch}>Search</button>
-          <button style={ghostBtn} onClick={() => { setToast('Map view is coming soon'); setTimeout(() => setToast(''), 1800); }}>Map View (Coming Soon)</button>
-        </div>
-
-        <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      <section style={filterSection}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
           <label style={sortWrap}>
-            <span style={{ fontSize: 13, opacity: 0.8 }}>Sort by</span>
+            <span style={{ fontSize: 13, opacity: 0.8, color: 'rgba(235,241,255,0.78)' }}>Sort by</span>
             <select style={input} value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
               {sortOptions.map((option) => <option key={option}>{option}</option>)}
             </select>
           </label>
+          <button style={ghostBtn} onClick={() => { setToast('Map view is coming soon'); setTimeout(() => setToast(''), 1800); }}>Map View (Coming Soon)</button>
         </div>
-      </section>
 
-      <section style={filterSection}>
         {isMobile ? (
           <button style={mobileFilterToggle} onClick={() => setMobileFiltersOpen((v) => !v)}>
             <span>{mobileFiltersOpen ? 'Hide filters' : 'Show filters'}</span>
@@ -680,7 +659,6 @@ function milesBetween(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-const heroSection = { marginTop: 24, background: '#0f1732', border: '1px solid rgba(94,128,202,0.28)', borderRadius: 20, padding: 18, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' };
 const filterSection = { marginTop: 16, background: '#0f1732', border: '1px solid rgba(94,128,202,0.28)', borderRadius: 20, padding: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' };
 const mobileFilterToggle = { width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid rgba(94,128,202,0.28)', borderRadius: 12, background: '#121b3f', color: '#fff', padding: '10px 12px', cursor: 'pointer', fontWeight: 600 };
 const listingSection = { marginTop: 16, background: '#0f1732', border: '1px solid rgba(94,128,202,0.28)', borderRadius: 20, padding: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' };
