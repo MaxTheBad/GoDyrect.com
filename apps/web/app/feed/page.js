@@ -13,6 +13,7 @@ export default function FeedPage() {
   const [mediaByListing, setMediaByListing] = useState({});
   const [activeMediaByListing, setActiveMediaByListing] = useState({});
   const [favoriteIds, setFavoriteIds] = useState([]);
+  const [hasFollows, setHasFollows] = useState(false);
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -64,8 +65,10 @@ export default function FeedPage() {
 
       const userIds = (followedUsers || []).map((r) => r.followed_user_id);
       const businessIds = (followedBusinesses || []).map((r) => r.business_id);
+      const followsExist = Boolean(userIds.length || businessIds.length);
+      setHasFollows(followsExist);
 
-      if (!userIds.length && !businessIds.length) {
+      if (!followsExist) {
         setRows([]);
         setLoading(false);
         return;
@@ -197,7 +200,12 @@ export default function FeedPage() {
       <div style={inner}>
         {loading ? <p style={statusText}>Loading feed...</p> : null}
         {msg ? <p style={statusText}>{msg}</p> : null}
-        <FeedEmptyState loading={loading} msg={msg} hasFollows={Boolean(rows.length)} hasSearch={Boolean(searchTerm.trim()) || industry !== 'all'} />
+        <FeedEmptyState
+          loading={loading}
+          msg={msg}
+          hasFollows={hasFollows}
+          hasSearch={Boolean(searchTerm.trim()) || industry !== 'all'}
+        />
 
         <div style={feedColumn}>
           {filteredRows.map((r) => {
