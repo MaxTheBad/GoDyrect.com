@@ -195,6 +195,7 @@ export default function FeedPage() {
         rowsCount={rows.length}
         businessCount={Object.keys(businessNames).length}
         peopleCount={Object.keys(profileNames).length}
+        compact={!hasFollows}
       />
 
       <div style={inner}>
@@ -207,7 +208,7 @@ export default function FeedPage() {
           hasSearch={Boolean(searchTerm.trim()) || industry !== 'all'}
         />
 
-        <div style={feedColumn}>
+        <div style={hasFollows ? feedColumn : feedColumnTight}>
           {filteredRows.map((r) => {
             const media = mediaByListing[r.id] || [];
             const activeIndex = activeMediaByListing[r.id] ?? 0;
@@ -327,6 +328,10 @@ const feedColumn = {
   margin: '18px auto 0',
   display: 'grid',
   gap: 16,
+};
+const feedColumnTight = {
+  ...feedColumn,
+  marginTop: 10,
 };
 const statusText = { margin: '16px 0 0', color: '#cdd9ff' };
 const bottomExploreWrap = { marginTop: 16, display: 'flex', justifyContent: 'center' };

@@ -118,11 +118,12 @@ export function FeedHero({
   rowsCount,
   businessCount,
   peopleCount,
+  compact = false,
 }) {
   return (
-    <section style={heroShell}>
+    <section style={compact ? compactHeroShell : heroShell}>
       <div style={heroOverlay} />
-      <div style={heroContent}>
+      <div style={compact ? compactHeroContent : heroContent}>
         <div style={heroPanel}>
           <div style={heroTopline}>Discover deals, businesses, and brokers</div>
           <h1 style={heroTitle}>Find a business for sale</h1>
@@ -188,12 +189,18 @@ export const heroShell = {
   backgroundPosition: 'center',
   overflow: 'hidden',
 };
+export const compactHeroShell = {
+  ...heroShell,
+  minHeight: 'auto',
+  paddingBottom: 12,
+};
 export const heroOverlay = {
   position: 'absolute',
   inset: 0,
   background: 'linear-gradient(180deg, rgba(6,10,24,0.35) 0%, rgba(11,16,32,0.8) 52%, rgba(11,16,32,0.98) 100%)',
 };
 export const heroContent = { position: 'relative', zIndex: 1, minHeight: '100vh', display: 'grid', placeItems: 'center', padding: '48px 16px 32px' };
+export const compactHeroContent = { ...heroContent, minHeight: 'auto', padding: '28px 16px 10px' };
 export const heroPanel = { width: 'min(1080px, 100%)', display: 'grid', gap: 16, justifyItems: 'center', textAlign: 'center', padding: '20px 0 8px', border: 0, background: 'transparent', boxShadow: 'none' };
 export const heroTopline = { fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: '#9fc0ff' };
 export const heroTitle = { margin: 0, fontSize: 'clamp(40px, 7vw, 78px)', lineHeight: 0.95, fontWeight: 800, color: '#fff', textShadow: '0 8px 24px rgba(0,0,0,0.35)' };
