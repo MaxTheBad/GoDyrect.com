@@ -160,21 +160,6 @@ export default function FeedPage() {
           <div style={feedHeaderCopy}>
             <p style={feedEyebrow}>Feed</p>
             <h1 style={feedTitle}>Posts from people and businesses you follow</h1>
-            <p style={feedSubtitle}>This is your timeline. Search and filters live on Explore.</p>
-          </div>
-          <div style={statsRow}>
-            <div style={statCard}>
-              <span style={statLabel}>Posts</span>
-              <strong style={statValue}>{rows.length.toLocaleString()}</strong>
-            </div>
-            <div style={statCard}>
-              <span style={statLabel}>Businesses</span>
-              <strong style={statValue}>{Object.keys(businessNames).length.toLocaleString()}</strong>
-            </div>
-            <div style={statCard}>
-              <span style={statLabel}>People</span>
-              <strong style={statValue}>{Object.keys(profileNames).length.toLocaleString()}</strong>
-            </div>
           </div>
         </div>
 
@@ -292,16 +277,11 @@ const searchBtn = {
   cursor: 'pointer',
   boxShadow: '0 8px 20px rgba(46,125,255,0.28)',
 };
-const statsRow = { width: 'min(100%, 980px)', display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12, marginTop: 14 };
-const statCard = { borderRadius: 18, padding: '14px 16px', background: 'rgba(12,18,39,0.66)', border: '1px solid rgba(94,128,202,0.28)', textAlign: 'left' };
-const statLabel = { display: 'block', fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase', color: 'rgba(159,192,255,0.92)' };
-const statValue = { display: 'block', marginTop: 8, fontSize: 24, color: '#fff' };
 const inner = { width: 'min(980px, calc(100% - 32px))', margin: '0 auto', padding: '0 0 90px' };
 const feedHeader = { paddingTop: 18, display: 'grid', gap: 16 };
 const feedHeaderCopy = { display: 'grid', gap: 6 };
 const feedEyebrow = { margin: 0, fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: '#9fc0ff' };
 const feedTitle = { margin: 0, fontSize: 'clamp(24px, 4vw, 34px)', lineHeight: 1.1, color: '#fff' };
-const feedSubtitle = { margin: 0, color: 'rgba(235,241,255,0.78)', lineHeight: 1.5, maxWidth: 760 };
 const feedColumn = {
   width: 'min(470px, calc(100vw - 24px))',
   margin: '6px auto 0',
