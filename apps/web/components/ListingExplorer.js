@@ -518,23 +518,34 @@ export default function ListingExplorer({ initialSearch = '', initialIndustry = 
             const seller = sellerProfiles[l.seller_id];
             return (
               <article key={l.id} style={listingCard}>
-                <div style={cardTopRow}>
-                  <a href={`/profile/view?id=${l.seller_id}`} style={identityLink}>
-                    {seller?.avatar_url ? <img src={seller.avatar_url} alt='seller' style={sellerAvatar} /> : <div style={sellerAvatarFallback}>{(seller?.full_name || seller?.handle || '?').slice(0,1).toUpperCase()}</div>}
-                    <span>{seller?.full_name || seller?.handle || 'Seller'}</span>
-                  </a>
-                  {l.business_id ? (
-                    <a href={`/business/view?id=${l.business_id}`} style={bizIdentityLink}>
-                      <div style={bizLogoPlaceholder}>{(businessNames[l.business_id] || 'B').slice(0, 1).toUpperCase()}</div>
-                      <span>{businessNames[l.business_id] || 'Business'}</span>
-                    </a>
-                  ) : null}
+                <div style={listingTopRow}>
+                  <div style={listingAvatar}>{(seller?.full_name || seller?.handle || l.title || 'B').slice(0, 1).toUpperCase()}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <a href={`/listing?id=${l.id}`} style={listingTitle}>{l.title}</a>
+                    <div style={listingMeta}>
+                      <span style={listingBusiness}>{businessNames[l.business_id] || prettyCategory(l.category)}</span>
+                      <span>·</span>
+                      <span>Posted by {seller?.full_name || seller?.handle || 'Seller'}</span>
+                      <span>·</span>
+                      <span>{l.lister_role || 'Owner'}</span>
+                    </div>
+                    <div style={listingLocation}>{[l.city, l.state, l.country].filter(Boolean).join(', ') || 'Location not set'}</div>
+                  </div>
+                  <div style={listingActions}>
+                    <a href={`/listing?id=${l.id}`} style={listingOpenPill}>Open</a>
+                    <button type='button' style={menuBtn} aria-label='Open actions' onClick={() => setActionMenuFor((v) => (v === l.id ? '' : l.id))}>⋯</button>
+                    {actionMenuFor === l.id ? (
+                      <div style={menuPanel}>
+                        <button type='button' onClick={() => { toggleFavorite(l.id); setActionMenuFor(''); }} style={menuItem}>{isFavorite ? '★ Saved' : '☆ Favorite'}</button>
+                        {!isOwner ? <button type='button' onClick={() => { toggleFollowSeller(l.seller_id); setActionMenuFor(''); }} style={menuItem}>{followsSeller ? 'Unfollow Seller' : 'Follow Seller'}</button> : null}
+                        {l.business_id ? <button type='button' onClick={() => { toggleFollowBusiness(l.business_id); setActionMenuFor(''); }} style={menuItem}>{followsBusiness ? 'Unfollow Business' : 'Follow Business'}</button> : null}
+                        <a href={`/listing?id=${l.id}`} style={menuLink}>View</a>
+                        {isOwner ? <a href={`/listings/edit?id=${l.id}`} style={menuLink}>Edit</a> : <a href={`/messages?seller=${l.seller_id}&listing=${l.id}`} style={menuLink}>Message</a>}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
 
-                <a href={`/listing?id=${l.id}`} style={titleLink}>{l.title}</a>
-                <div style={{ opacity: 0.85, color: 'rgba(235,241,255,0.78)', fontSize: 13 }}>
-                  {prettyCategory(l.category)} · {l.business_age_years ?? 0} years · {[l.city, l.state, l.country].filter(Boolean).join(', ') || 'Location not set'}
-                </div>
                 {currentMedia ? (
                   <div style={mediaStageWrap}>
                     <button
@@ -570,18 +581,7 @@ export default function ListingExplorer({ initialSearch = '', initialIndustry = 
 
                 <div style={cardBottom}>
                   <strong style={{ color: '#fff' }}>${Number(l.asking_price || 0).toLocaleString()}</strong>
-                  <div style={{ position: 'relative' }}>
-                    <button type='button' style={menuBtn} onClick={() => setActionMenuFor((v) => (v === l.id ? '' : l.id))}>⋯</button>
-                    {actionMenuFor === l.id ? (
-                      <div style={menuPanel}>
-                        <button type='button' onClick={() => { toggleFavorite(l.id); setActionMenuFor(''); }} style={menuItem}>{isFavorite ? '★ Saved' : '☆ Favorite'}</button>
-                        {!isOwner ? <button type='button' onClick={() => { toggleFollowSeller(l.seller_id); setActionMenuFor(''); }} style={menuItem}>{followsSeller ? 'Unfollow Seller' : 'Follow Seller'}</button> : null}
-                        {l.business_id ? <button type='button' onClick={() => { toggleFollowBusiness(l.business_id); setActionMenuFor(''); }} style={menuItem}>{followsBusiness ? 'Unfollow Business' : 'Follow Business'}</button> : null}
-                        <a href={`/listing?id=${l.id}`} style={menuLink}>View</a>
-                        {isOwner ? <a href={`/listings/edit?id=${l.id}`} style={menuLink}>Edit</a> : <a href={`/messages?seller=${l.seller_id}&listing=${l.id}`} style={menuLink}>Message</a>}
-                      </div>
-                    ) : null}
-                  </div>
+                  <span style={listingFooterNote}>{prettyCategory(l.category)} · {l.business_age_years ?? 0} years</span>
                 </div>
               </article>
             );
@@ -670,17 +670,15 @@ const dropBtn = { width: '100%', display: 'flex', alignItems: 'center', justifyC
 const rowLabel = { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: 'rgba(235,241,255,0.78)' };
 const toastStyle = { position: 'fixed', bottom: 92, right: 20, background: '#111827', color: '#fff', padding: '10px 14px', borderRadius: 12, boxShadow: '0 10px 24px rgba(17,24,39,0.25)' };
 const listingCard = { border: '1px solid rgba(94,128,202,0.28)', borderRadius: 18, background: '#121b3f', padding: 14, display: 'grid', gap: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.18)' };
-const cardTopRow = { display: 'grid', gridTemplateColumns: '42px minmax(0, 1fr) auto', gap: 12, alignItems: 'center' };
-const avatarWrap = { width: 42, height: 42, borderRadius: 999, overflow: 'hidden', flexShrink: 0 };
-const identityLink = { display: 'inline-flex', alignItems: 'center', gap: 8, color: '#fff', textDecoration: 'none', fontWeight: 600 };
-const sellerAvatar = { width: 30, height: 30, borderRadius: 999, objectFit: 'cover', border: '1px solid rgba(94,128,202,0.28)' };
-const sellerAvatarFallback = { width: 42, height: 42, borderRadius: 999, display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg, #ffd6e8, #c7d6ff)', color: '#0f172a', fontSize: 18, fontWeight: 800, border: '1px solid rgba(94,128,202,0.28)' };
-const bizIdentityLink = { display: 'inline-flex', alignItems: 'center', gap: 8, color: 'rgba(235,241,255,0.78)', textDecoration: 'none', fontSize: 13, fontWeight: 600 };
-const bizLogoPlaceholder = { width: 26, height: 26, borderRadius: 8, display: 'grid', placeItems: 'center', background: '#0b1431', color: '#fff', fontSize: 12, fontWeight: 700, border: '1px solid rgba(94,128,202,0.28)' };
-const titleLink = { color: '#fff', textDecoration: 'none', fontWeight: 700, fontSize: 17 };
-const postMeta = { display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.82)', alignItems: 'center' };
-const postBusiness = { fontWeight: 700, color: '#fff' };
-const postLocation = { marginTop: 2, fontSize: 13, color: 'rgba(255,255,255,0.72)' };
+const listingTopRow = { display: 'grid', gridTemplateColumns: '42px minmax(0, 1fr) auto', gap: 12, alignItems: 'start' };
+const listingAvatar = { width: 42, height: 42, borderRadius: 999, display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg, #ffd6e8, #c7d6ff)', color: '#0f172a', fontSize: 18, fontWeight: 800, border: '1px solid rgba(94,128,202,0.28)' };
+const listingTitle = { color: '#fff', textDecoration: 'none', fontWeight: 800, fontSize: 18, lineHeight: 1.1 };
+const listingMeta = { display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.82)', alignItems: 'center', marginTop: 2 };
+const listingBusiness = { fontWeight: 700, color: '#fff' };
+const listingLocation = { marginTop: 2, fontSize: 13, color: 'rgba(255,255,255,0.72)' };
+const listingActions = { display: 'flex', alignItems: 'center', gap: 10, justifySelf: 'end', position: 'relative' };
+const listingOpenPill = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 88, height: 48, padding: '0 18px', borderRadius: 999, border: '1px solid #d7dbe5', background: '#fff', color: '#111827', textDecoration: 'none', fontWeight: 800, fontSize: 18 };
+const listingFooterNote = { color: 'rgba(235,241,255,0.72)', fontSize: 13 };
 const mediaStageWrap = { position: 'relative', borderRadius: 20, overflow: 'hidden', border: '1px solid rgba(94,128,202,0.28)', background: '#050a1a' };
 const mediaMainBtn = { border: 0, padding: 0, background: 'transparent', width: '100%', cursor: 'pointer' };
 const mediaMain = { width: '100%', height: 420, objectFit: 'cover', display: 'block' };
