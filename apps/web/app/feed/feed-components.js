@@ -297,6 +297,10 @@ const bookmarkBtn = (active) => ({
   boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
 });
 const bookmarkIcon = (active) => ({ display: 'block', fontSize: 20, transform: active ? 'scale(1.02)' : 'scale(1)' });
+const menuBtn = { border: '1px solid rgba(215,219,229,0.9)', borderRadius: 999, background: '#fff', color: '#111827', width: 48, height: 48, fontSize: 24, lineHeight: 1, cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,0,0,0.08)' };
+const menuPanel = { position: 'absolute', right: 0, top: 52, background: '#0f1732', border: '1px solid rgba(94,128,202,0.28)', borderRadius: 10, minWidth: 180, display: 'grid', zIndex: 5, boxShadow: '0 10px 24px rgba(0,0,0,0.2)' };
+const menuItem = { border: 0, borderBottom: '1px solid rgba(94,128,202,0.18)', background: '#0f1732', textAlign: 'left', padding: '10px 12px', cursor: 'pointer', color: '#fff' };
+const menuLink = { padding: '10px 12px', textDecoration: 'none', color: '#fff', borderBottom: '1px solid rgba(94,128,202,0.18)' };
 const heroMediaFrame = {
   position: 'relative',
   width: 'min(100%, 470px)',
