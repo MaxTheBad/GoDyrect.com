@@ -243,8 +243,18 @@ const bookmarkBtn = (active) => ({
   boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
 });
 const bookmarkIcon = (active) => ({ display: 'block', fontSize: 20, transform: active ? 'scale(1.02)' : 'scale(1)' });
-const heroMediaFrame = { position: 'relative', width: '100%', maxWidth: 470, margin: '0 auto', borderRadius: 20, overflow: 'hidden', background: '#0f172a', border: '1px solid #e5e7eb' };
-const heroMediaAsset = { width: '100%', aspectRatio: '1 / 1', objectFit: 'cover', display: 'block' };
+const heroMediaFrame = {
+  position: 'relative',
+  width: '100%',
+  maxWidth: 470,
+  height: 'auto',
+  margin: '0 auto',
+  borderRadius: 20,
+  overflow: 'hidden',
+  background: '#050a1a',
+  border: '1px solid #e5e7eb',
+};
+const heroMediaAsset = { width: '100%', height: 'auto', display: 'block', background: '#050a1a' };
 const mediaCaption = { position: 'absolute', left: 0, right: 0, bottom: 0, padding: '16px 16px 14px', fontSize: 14, lineHeight: 1.4, color: '#fff', background: 'linear-gradient(180deg, rgba(15,23,42,0) 0%, rgba(15,23,42,0.78) 100%)', textShadow: '0 1px 2px rgba(0,0,0,0.35)', whiteSpace: 'pre-wrap', pointerEvents: 'none' };
 const carouselArrowBase = { position: 'absolute', top: '50%', transform: 'translateY(-50%)', width: 30, height: 30, borderRadius: 999, border: 0, background: 'rgba(255,255,255,0.88)', color: '#111827', fontSize: 24, lineHeight: '30px', display: 'grid', placeItems: 'center', cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,0,0,0.18)' };
 const carouselArrowLeft = { ...carouselArrowBase, left: 10 };
