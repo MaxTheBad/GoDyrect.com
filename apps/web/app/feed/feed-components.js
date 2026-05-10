@@ -32,7 +32,7 @@ export function FeedPost({
         <div style={{ minWidth: 0 }}>
           <div style={postTitle}>{listing.title}</div>
           <div style={postMeta}>
-            <span style={postBusiness}>{businessName || 'Business'}</span>
+            <span style={postBusiness}>{businessName || listing.category || 'Listing'}</span>
             <span>·</span>
             <span>Posted by {sellerName || 'User'}</span>
             <span>·</span>
@@ -42,7 +42,11 @@ export function FeedPost({
         </div>
         <div style={postActions}>
           <button type='button' aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'} onClick={onToggleFavorite} style={bookmarkBtn(isFavorite)}>
-            <span style={bookmarkIcon(isFavorite)}>🔖</span>
+            <span style={bookmarkIcon(isFavorite)}>
+              <svg viewBox='0 0 24 24' aria-hidden='true' focusable='false' style={{ width: 20, height: 20, display: 'block', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
+                <path d='M6 3.75h12a1 1 0 0 1 1 1V21l-7-4-7 4V4.75a1 1 0 0 1 1-1Z' />
+              </svg>
+            </span>
           </button>
           <div style={{ position: 'relative' }}>
             <button type='button' style={menuBtn} aria-label='Open actions' onClick={() => setShowActions((v) => !v)}>⋯</button>
@@ -56,12 +60,14 @@ export function FeedPost({
               </div>
             ) : null}
           </div>
-          <a href={onOpen} style={openPill}>Open</a>
         </div>
       </div>
 
       {activeMedia ? (
         <div style={heroMediaFrame}>
+          <div style={mediaTitleOverlay}>
+            <div style={mediaTitle}>{listing.title}</div>
+          </div>
           {activeMedia.media_type === 'video' ? (
             <video
               ref={videoRef}
@@ -283,7 +289,6 @@ const postTitle = { fontSize: 18, lineHeight: 1.15, fontWeight: 800, color: '#ff
 const postMeta = { display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.82)', alignItems: 'center' };
 const postBusiness = { fontWeight: 700, color: '#fff' };
 const postLocation = { marginTop: 4, fontSize: 13, color: 'rgba(255,255,255,0.72)' };
-const openPill = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: 88, height: 48, padding: '0 18px', borderRadius: 999, border: '1px solid #d7dbe5', background: '#fff', color: '#111827', textDecoration: 'none', fontWeight: 800, fontSize: 18, alignSelf: 'center' };
 const bookmarkBtn = (active) => ({
   width: 48,
   height: 48,
@@ -296,7 +301,7 @@ const bookmarkBtn = (active) => ({
   cursor: 'pointer',
   boxShadow: '0 4px 14px rgba(0,0,0,0.08)',
 });
-const bookmarkIcon = (active) => ({ display: 'block', fontSize: 20, transform: active ? 'scale(1.02)' : 'scale(1)' });
+const bookmarkIcon = (active) => ({ display: 'grid', placeItems: 'center', color: active ? '#2e7dff' : '#111827' });
 const menuBtn = { border: '1px solid rgba(215,219,229,0.9)', borderRadius: 999, background: '#fff', color: '#111827', width: 48, height: 48, fontSize: 24, lineHeight: 1, cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,0,0,0.08)' };
 const menuPanel = { position: 'absolute', right: 0, top: 52, background: '#0f1732', border: '1px solid rgba(94,128,202,0.28)', borderRadius: 10, minWidth: 180, display: 'grid', zIndex: 5, boxShadow: '0 10px 24px rgba(0,0,0,0.2)' };
 const menuItem = { border: 0, borderBottom: '1px solid rgba(94,128,202,0.18)', background: '#0f1732', textAlign: 'left', padding: '10px 12px', cursor: 'pointer', color: '#fff' };
@@ -313,14 +318,16 @@ const heroMediaFrame = {
   border: '1px solid #e5e7eb',
 };
 const heroMediaAsset = { width: '100%', height: '100%', objectFit: 'contain', display: 'block', background: '#050a1a' };
-const mediaCaption = { position: 'absolute', left: 0, right: 0, bottom: 22, padding: '16px 16px 14px', fontSize: 14, lineHeight: 1.4, color: '#fff', background: 'linear-gradient(180deg, rgba(15,23,42,0) 0%, rgba(15,23,42,0.72) 100%)', textShadow: '0 1px 2px rgba(0,0,0,0.35)', whiteSpace: 'pre-wrap', pointerEvents: 'none' };
+const mediaTitleOverlay = { position: 'absolute', left: 0, right: 0, top: 0, padding: '10px 14px 0', zIndex: 2, pointerEvents: 'none', background: 'linear-gradient(180deg, rgba(5,10,26,0.86) 0%, rgba(5,10,26,0) 100%)' };
+const mediaTitle = { color: '#fff', fontWeight: 800, fontSize: 16, lineHeight: 1.15, textShadow: '0 1px 2px rgba(0,0,0,0.5)' };
+const mediaCaption = { position: 'absolute', left: 0, right: 0, bottom: 44, padding: '16px 16px 14px', fontSize: 14, lineHeight: 1.4, color: '#fff', background: 'linear-gradient(180deg, rgba(15,23,42,0) 0%, rgba(15,23,42,0.72) 100%)', textShadow: '0 1px 2px rgba(0,0,0,0.35)', whiteSpace: 'pre-wrap', pointerEvents: 'none', zIndex: 2 };
 const carouselArrowBase = { position: 'absolute', top: '50%', transform: 'translateY(-50%)', width: 30, height: 30, borderRadius: 999, border: 0, background: 'rgba(255,255,255,0.88)', color: '#111827', fontSize: 24, lineHeight: '30px', display: 'grid', placeItems: 'center', cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,0,0,0.18)' };
 const carouselArrowLeft = { ...carouselArrowBase, left: 10 };
 const carouselArrowRight = { ...carouselArrowBase, right: 10 };
 const carouselDots = { position: 'absolute', left: '50%', bottom: 10, transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px', borderRadius: 999, background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(6px)' };
 const dot = { width: 7, height: 7, borderRadius: 999, border: 0, background: 'rgba(255,255,255,0.45)', padding: 0, cursor: 'pointer' };
 const activeDot = { ...dot, background: '#fff', width: 8, height: 8 };
-const videoProgress = { position: 'absolute', left: 14, right: 14, bottom: 38, width: 'calc(100% - 28px)', accentColor: '#2e7dff' };
+const videoProgress = { position: 'absolute', left: 14, right: 14, bottom: 8, width: 'calc(100% - 28px)', accentColor: '#2e7dff', zIndex: 3 };
 const emptyState = { marginTop: 12, padding: 18, borderRadius: 16, border: '1px solid rgba(94,128,202,0.28)', background: 'rgba(12,18,39,0.66)', display: 'grid', gap: 14, color: '#fff' };
 const emptyTitle = { margin: 0, fontSize: 18 };
 const emptyCopy = { margin: '6px 0 0', color: 'rgba(255,255,255,0.82)', lineHeight: 1.5 };
