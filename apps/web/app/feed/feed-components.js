@@ -30,7 +30,6 @@ export function FeedPost({
       <div style={postTopRow}>
         <div style={avatar}>{(listing.title || 'B').slice(0, 1).toUpperCase()}</div>
         <div style={{ minWidth: 0 }}>
-          <div style={postTitle}>{listing.title}</div>
           <div style={postMeta}>
             <span style={postBusiness}>{businessName || listing.category || 'Listing'}</span>
             <span>·</span>
@@ -43,7 +42,7 @@ export function FeedPost({
         <div style={postActions}>
           <button type='button' aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'} onClick={onToggleFavorite} style={bookmarkBtn(isFavorite)}>
             <span style={bookmarkIcon(isFavorite)}>
-              <svg viewBox='0 0 24 24' aria-hidden='true' focusable='false' style={{ width: 20, height: 20, display: 'block', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
+              <svg viewBox='0 0 24 24' aria-hidden='true' focusable='false' style={{ width: 20, height: 20, display: 'block', fill: isFavorite ? 'currentColor' : 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
                 <path d='M6 3.75h12a1 1 0 0 1 1 1V21l-7-4-7 4V4.75a1 1 0 0 1 1-1Z' />
               </svg>
             </span>
@@ -285,7 +284,6 @@ const postShell = { color: '#fff', padding: 0 };
 const postTopRow = { display: 'grid', gridTemplateColumns: '42px minmax(0, 1fr) auto', gap: 14, alignItems: 'center', marginBottom: 10 };
 const postActions = { display: 'flex', alignItems: 'center', gap: 10, position: 'relative' };
 const avatar = { width: 42, height: 42, borderRadius: 999, display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg, #ffd6e8, #c7d6ff)', color: '#0f172a', fontWeight: 800, fontSize: 18 };
-const postTitle = { fontSize: 18, lineHeight: 1.15, fontWeight: 800, color: '#fff', marginBottom: 2 };
 const postMeta = { display: 'flex', flexWrap: 'wrap', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.82)', alignItems: 'center' };
 const postBusiness = { fontWeight: 700, color: '#fff' };
 const postLocation = { marginTop: 4, fontSize: 13, color: 'rgba(255,255,255,0.72)' };
