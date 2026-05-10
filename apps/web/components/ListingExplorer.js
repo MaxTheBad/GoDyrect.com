@@ -519,26 +519,22 @@ export default function ListingExplorer({ initialSearch = '', initialIndustry = 
             return (
               <article key={l.id} style={listingCard}>
                 <div style={cardTopRow}>
-                  <div style={avatarWrap}>
+                  <a href={`/profile/view?id=${l.seller_id}`} style={identityLink}>
                     {seller?.avatar_url ? <img src={seller.avatar_url} alt='seller' style={sellerAvatar} /> : <div style={sellerAvatarFallback}>{(seller?.full_name || seller?.handle || '?').slice(0,1).toUpperCase()}</div>}
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <a href={`/listing?id=${l.id}`} style={titleLink}>{l.title}</a>
-                    <div style={postMeta}>
-                      <span style={postBusiness}>{businessNames[l.business_id] || 'Business'}</span>
-                      <span>·</span>
-                      <span>Posted by {seller?.full_name || seller?.handle || 'Seller'}</span>
-                      <span>·</span>
-                      <span>{prettyCategory(l.category)}</span>
-                    </div>
-                    <div style={postLocation}>{[l.city, l.state, l.country].filter(Boolean).join(', ') || 'Location not set'}</div>
-                  </div>
-                  <div style={postActions}>
-                    <a href={`/listing?id=${l.id}`} style={openPill}>Open</a>
-                    <button type='button' style={menuBtn} onClick={() => setActionMenuFor((v) => (v === l.id ? '' : l.id))}>⋯</button>
-                  </div>
+                    <span>{seller?.full_name || seller?.handle || 'Seller'}</span>
+                  </a>
+                  {l.business_id ? (
+                    <a href={`/business/view?id=${l.business_id}`} style={bizIdentityLink}>
+                      <div style={bizLogoPlaceholder}>{(businessNames[l.business_id] || 'B').slice(0, 1).toUpperCase()}</div>
+                      <span>{businessNames[l.business_id] || 'Business'}</span>
+                    </a>
+                  ) : null}
                 </div>
 
+                <a href={`/listing?id=${l.id}`} style={titleLink}>{l.title}</a>
+                <div style={{ opacity: 0.85, color: 'rgba(235,241,255,0.78)', fontSize: 13 }}>
+                  {prettyCategory(l.category)} · {l.business_age_years ?? 0} years · {[l.city, l.state, l.country].filter(Boolean).join(', ') || 'Location not set'}
+                </div>
                 {currentMedia ? (
                   <div style={mediaStageWrap}>
                     <button
@@ -575,6 +571,7 @@ export default function ListingExplorer({ initialSearch = '', initialIndustry = 
                 <div style={cardBottom}>
                   <strong style={{ color: '#fff' }}>${Number(l.asking_price || 0).toLocaleString()}</strong>
                   <div style={{ position: 'relative' }}>
+                    <button type='button' style={menuBtn} onClick={() => setActionMenuFor((v) => (v === l.id ? '' : l.id))}>⋯</button>
                     {actionMenuFor === l.id ? (
                       <div style={menuPanel}>
                         <button type='button' onClick={() => { toggleFavorite(l.id); setActionMenuFor(''); }} style={menuItem}>{isFavorite ? '★ Saved' : '☆ Favorite'}</button>
