@@ -36,6 +36,13 @@ export default function SettingsPage() {
     setMsg(nextRole === 'not_sure' ? 'Onboarding reset.' : 'Role saved.');
   }
 
+  async function signOut() {
+    if (!supabase) return setMsg('Supabase env vars are missing.');
+    const { error } = await supabase.auth.signOut();
+    if (error) return setMsg(error.message);
+    window.location.href = '/login';
+  }
+
   return (
     <main style={wrap}>
       <div style={card}>
@@ -109,6 +116,7 @@ export default function SettingsPage() {
           <a href='/profile' style={btn}>Profile Settings</a>
           <a href='/businesses' style={btn}>My Businesses</a>
           <a href='/legal/privacy' style={btn}>Privacy Policy</a>
+          <button type='button' onClick={signOut} style={btnReset}>Sign out</button>
         </div>
 
         {msg ? <p style={{ color: '#cdd9ff' }}>{msg}</p> : null}
