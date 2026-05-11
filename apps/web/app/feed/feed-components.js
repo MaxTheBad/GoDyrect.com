@@ -42,9 +42,15 @@ export function FeedPost({
         <div style={postActions}>
           <button type='button' aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'} onClick={onToggleFavorite} style={bookmarkBtn(isFavorite)}>
             <span style={bookmarkIcon(isFavorite)}>
-              <svg viewBox='0 0 24 24' aria-hidden='true' focusable='false' style={{ width: 20, height: 20, display: 'block', fill: isFavorite ? 'currentColor' : 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
-                <path d='M6 3.75h12a1 1 0 0 1 1 1V21l-7-4-7 4V4.75a1 1 0 0 1 1-1Z' />
-              </svg>
+              {isFavorite ? (
+                <svg viewBox='0 0 24 24' aria-hidden='true' focusable='false' style={{ width: 20, height: 20, display: 'block', fill: 'currentColor' }}>
+                  <path d='M6 3.75h12a1 1 0 0 1 1 1V21l-7-4-7 4V4.75a1 1 0 0 1 1-1Z' />
+                </svg>
+              ) : (
+                <svg viewBox='0 0 24 24' aria-hidden='true' focusable='false' style={{ width: 20, height: 20, display: 'block', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }}>
+                  <path d='M6 3.75h12a1 1 0 0 1 1 1V21l-7-4-7 4V4.75a1 1 0 0 1 1-1Z' />
+                </svg>
+              )}
             </span>
           </button>
           <div style={{ position: 'relative' }}>
@@ -292,7 +298,7 @@ const bookmarkBtn = (active) => ({
   height: 48,
   borderRadius: 999,
   border: '1px solid rgba(215,219,229,0.9)',
-  background: active ? 'rgba(46,125,255,0.18)' : '#fff',
+  background: active ? 'rgba(46,125,255,0.14)' : '#fff',
   color: active ? '#2e7dff' : '#111827',
   display: 'grid',
   placeItems: 'center',
