@@ -51,14 +51,24 @@ export default function SettingsPage() {
 
           <div style={roleGrid}>
             {roleOptions.map((opt) => (
-              <button
-                key={opt.value}
-                type='button'
-                style={roleButton(role === opt.value)}
-                onClick={() => saveRole(opt.value)}
-              >
-                {opt.label}
-              </button>
+              opt.value === 'buyer' || opt.value === 'seller' ? (
+                <a
+                  key={opt.value}
+                  href={`/onboarding/${opt.value}`}
+                  style={{ ...roleButton(role === opt.value), textDecoration: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  {opt.label}
+                </a>
+              ) : (
+                <button
+                  key={opt.value}
+                  type='button'
+                  style={roleButton(role === opt.value)}
+                  onClick={() => saveRole(opt.value)}
+                >
+                  {opt.label}
+                </button>
+              )
             ))}
           </div>
 

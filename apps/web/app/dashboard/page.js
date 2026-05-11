@@ -31,8 +31,8 @@ export default function DashboardPage() {
           Welcome back{profile?.full_name ? `, ${profile.full_name}` : ''}. Pick buyer, seller, or broker to tailor what you see. You can change it anytime in Settings.
         </p>
         <div style={choiceGrid}>
-          <a href='/settings' style={choiceCard(profile?.role === 'buyer')}>Buyer</a>
-          <a href='/settings' style={choiceCard(profile?.role === 'seller')}>Seller</a>
+          <a href='/onboarding/buyer' style={choiceCard(profile?.role === 'buyer')}>Buyer</a>
+          <a href='/onboarding/seller' style={choiceCard(profile?.role === 'seller')}>Seller</a>
           <a href='/settings' style={choiceCard(profile?.role === 'broker')}>Broker</a>
           <a href='/settings' style={resetCard}>Reset onboarding</a>
         </div>

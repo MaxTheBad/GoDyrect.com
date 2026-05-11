@@ -9,6 +9,9 @@ create table if not exists public.profiles (
   full_name text,
   phone text,
   role text check (role in ('buyer','seller','broker','not_sure')) default 'buyer',
+  interests jsonb default '[]'::jsonb,
+  buyer_notes text,
+  seller_notes text,
   marketing_opt_in boolean default false,
   terms_accepted_at timestamptz,
   avatar_url text,
@@ -343,6 +346,9 @@ for insert with check (
 -- Ensure profile fields exist for existing projects
 alter table public.profiles add column if not exists phone text;
 alter table public.profiles add column if not exists role text;
+alter table public.profiles add column if not exists interests jsonb default '[]'::jsonb;
+alter table public.profiles add column if not exists buyer_notes text;
+alter table public.profiles add column if not exists seller_notes text;
 alter table public.profiles add column if not exists marketing_opt_in boolean default false;
 alter table public.profiles add column if not exists terms_accepted_at timestamptz;
 alter table public.profiles alter column role set default 'buyer';
