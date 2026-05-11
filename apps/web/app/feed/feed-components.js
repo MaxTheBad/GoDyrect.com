@@ -26,6 +26,7 @@ export function FeedPost({
   const [mediaProgress, setMediaProgress] = useState(0);
   const [showPlayer, setShowPlayer] = useState(false);
   const poster = activeMedia?.thumbnail_url || listing?.thumbnail_url || '';
+  const fallbackVisual = poster || buildFallbackPoster(listing.title, businessName);
 
   return (
     <article style={postShell}>
@@ -82,6 +83,7 @@ export function FeedPost({
               poster={poster || undefined}
               playsInline
               controls={false}
+              preload='metadata'
               onClick={() => {
                 const video = videoRef.current;
                 if (!video) return;
@@ -106,6 +108,15 @@ export function FeedPost({
           ) : (
             <img src={activeMedia.thumbnail_url || activeMedia.url} alt='listing media' style={heroMediaAsset} />
           )}
+          {activeMedia.media_type === 'video' && !poster ? (
+            <div style={fallbackPoster}>
+              <div style={fallbackPosterInner}>
+                <div style={fallbackPosterBadge}>Video</div>
+                <div style={fallbackPosterTitle}>{listing.title || businessName || 'Listing preview'}</div>
+                <div style={fallbackPosterSub}>Tap to play</div>
+              </div>
+            </div>
+          ) : null}
           {activeMedia.media_type === 'video' ? (
             <input
               type='range'
@@ -359,6 +370,11 @@ const heroMediaFrame = {
   border: '1px solid #e5e7eb',
 };
 const heroMediaAsset = { width: '100%', height: '100%', objectFit: 'contain', display: 'block', background: '#050a1a' };
+const fallbackPoster = { position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg, #0f1732 0%, #1a2b62 100%)', zIndex: 0 };
+const fallbackPosterInner = { width: '100%', height: '100%', display: 'grid', placeItems: 'center', padding: 20, textAlign: 'center', color: '#fff' };
+const fallbackPosterBadge = { padding: '6px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', fontSize: 12, letterSpacing: 0.4, textTransform: 'uppercase', marginBottom: 10 };
+const fallbackPosterTitle = { fontSize: 18, fontWeight: 800, lineHeight: 1.2, maxWidth: 300, textShadow: '0 2px 8px rgba(0,0,0,0.35)' };
+const fallbackPosterSub = { marginTop: 8, fontSize: 13, color: 'rgba(255,255,255,0.82)' };
 const mediaTitleOverlay = { position: 'absolute', left: 0, right: 0, top: 0, padding: '10px 14px 0', zIndex: 2, pointerEvents: 'none', background: 'linear-gradient(180deg, rgba(5,10,26,0.86) 0%, rgba(5,10,26,0) 100%)' };
 const mediaTitle = { color: '#fff', fontWeight: 800, fontSize: 16, lineHeight: 1.15, textShadow: '0 1px 2px rgba(0,0,0,0.5)' };
 const mediaCaption = { position: 'absolute', left: 0, right: 0, bottom: 44, padding: '16px 16px 14px', fontSize: 14, lineHeight: 1.4, color: '#fff', background: 'linear-gradient(180deg, rgba(15,23,42,0) 0%, rgba(15,23,42,0.72) 100%)', textShadow: '0 1px 2px rgba(0,0,0,0.35)', whiteSpace: 'pre-wrap', pointerEvents: 'none', zIndex: 2 };
@@ -374,6 +390,33 @@ const playerModal = { position: 'fixed', inset: 0, background: 'rgba(3,7,18,0.85
 const playerModalInner = { position: 'relative', width: 'min(96vw, 720px)', borderRadius: 20, overflow: 'hidden', background: '#050a1a', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 30px 90px rgba(0,0,0,0.55)' };
 const closePlayerBtn = { position: 'absolute', right: 10, top: 10, zIndex: 2, width: 34, height: 34, borderRadius: 999, border: 0, background: 'rgba(15,23,42,0.82)', color: '#fff', cursor: 'pointer', fontSize: 22, lineHeight: 1 };
 const playerMedia = { width: '100%', height: 'auto', display: 'block', background: '#050a1a' };
+
+function buildFallbackPoster(title, businessName) {
+  const text = [title, businessName].filter(Boolean).join(' · ') || 'GoDyrect listing';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+    <defs>
+      <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#0f1732"/>
+        <stop offset="100%" stop-color="#1e3a8a"/>
+      </linearGradient>
+    </defs>
+    <rect width="1280" height="720" fill="url(#g)"/>
+    <circle cx="640" cy="360" r="88" fill="rgba(255,255,255,0.12)"/>
+    <polygon points="610,315 610,405 690,360" fill="#ffffff"/>
+    <text x="640" y="510" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700" text-anchor="middle">${escapeXml(text)}</text>
+    <text x="640" y="560" fill="rgba(255,255,255,0.84)" font-family="Arial, Helvetica, sans-serif" font-size="22" text-anchor="middle">Tap to play</text>
+  </svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+function escapeXml(value = '') {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
 const emptyState = { marginTop: 12, padding: 18, borderRadius: 16, border: '1px solid rgba(94,128,202,0.28)', background: 'rgba(12,18,39,0.66)', display: 'grid', gap: 14, color: '#fff' };
 const emptyTitle = { margin: 0, fontSize: 18 };
 const emptyCopy = { margin: '6px 0 0', color: 'rgba(255,255,255,0.82)', lineHeight: 1.5 };
