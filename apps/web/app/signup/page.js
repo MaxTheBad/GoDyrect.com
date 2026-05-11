@@ -26,6 +26,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}/confirmed`,
         data: {
           full_name: fullName,
           phone,
@@ -67,6 +68,17 @@ export default function SignupPage() {
 
     setMsg('Confirmation email sent again. Check spam/promotions too.');
     setCooldown(45);
+    startCountdown(45);
+  }
+
+
+
+  function markInvalid(field, message) {
+    setErrors((prev) => ({ ...prev, [field]: message }));
+  }
+
+  function startCountdown(seconds) {
+    setCooldown(seconds);
     const timer = setInterval(() => {
       setCooldown((curr) => {
         if (curr <= 1) {
@@ -76,12 +88,6 @@ export default function SignupPage() {
         return curr - 1;
       });
     }, 1000);
-  }
-
-
-
-  function markInvalid(field, message) {
-    setErrors((prev) => ({ ...prev, [field]: message }));
   }
 
   return (
@@ -155,7 +161,7 @@ export default function SignupPage() {
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <button style={btn} onClick={resendConfirmation} disabled={cooldown > 0}>
-                {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend confirmation'}
+                {cooldown > 0 ? `For security purposes, you can only request this after ${cooldown} seconds.` : 'Resend confirmation'}
               </button>
               <a href='/login' style={{ ...ghostBtn, textDecoration: 'none' }}>Go to login</a>
             </div>
