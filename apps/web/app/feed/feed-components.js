@@ -24,6 +24,8 @@ export function FeedPost({
   const videoRef = useRef(null);
   const [showActions, setShowActions] = useState(false);
   const [mediaProgress, setMediaProgress] = useState(0);
+  const [showPlayer, setShowPlayer] = useState(false);
+  const poster = activeMedia?.thumbnail_url || listing?.thumbnail_url || '';
 
   return (
     <article style={postShell}>
@@ -77,6 +79,7 @@ export function FeedPost({
             <video
               ref={videoRef}
               src={activeMedia.url}
+              poster={poster || undefined}
               playsInline
               controls={false}
               onClick={() => {
@@ -89,6 +92,11 @@ export function FeedPost({
                 }
               }}
               onTimeUpdate={() => {
+                const video = videoRef.current;
+                if (!video?.duration) return;
+                setMediaProgress((video.currentTime / video.duration) * 100);
+              }}
+              onLoadedData={() => {
                 const video = videoRef.current;
                 if (!video?.duration) return;
                 setMediaProgress((video.currentTime / video.duration) * 100);
@@ -115,6 +123,16 @@ export function FeedPost({
               style={videoProgress}
             />
           ) : null}
+          {activeMedia.media_type === 'video' ? (
+            <button
+              type='button'
+              aria-label='Open full screen viewer'
+              style={fullscreenBtn}
+              onClick={() => setShowPlayer(true)}
+            >
+              ⤢
+            </button>
+          ) : null}
           {listing.description ? <div style={mediaCaption}>{listing.description}</div> : null}
           {mediaCount > 1 ? (
             <>
@@ -132,6 +150,25 @@ export function FeedPost({
                 ))}
               </div>
             </>
+          ) : null}
+          {showPlayer ? (
+            <div style={playerModal} onClick={() => setShowPlayer(false)} role='presentation'>
+              <div style={playerModalInner} onClick={(e) => e.stopPropagation()} role='presentation'>
+                <button type='button' aria-label='Close viewer' style={closePlayerBtn} onClick={() => setShowPlayer(false)}>×</button>
+                {activeMedia.media_type === 'video' ? (
+                  <video
+                    src={activeMedia.url}
+                    poster={poster || undefined}
+                    playsInline
+                    controls
+                    autoPlay
+                    style={playerMedia}
+                  />
+                ) : (
+                  <img src={activeMedia.thumbnail_url || activeMedia.url} alt='listing media' style={playerMedia} />
+                )}
+              </div>
+            </div>
           ) : null}
         </div>
       ) : null}
@@ -332,6 +369,11 @@ const carouselDots = { position: 'absolute', left: '50%', bottom: 10, transform:
 const dot = { width: 7, height: 7, borderRadius: 999, border: 0, background: 'rgba(255,255,255,0.45)', padding: 0, cursor: 'pointer' };
 const activeDot = { ...dot, background: '#fff', width: 8, height: 8 };
 const videoProgress = { position: 'absolute', left: 14, right: 14, bottom: 8, width: 'calc(100% - 28px)', accentColor: '#2e7dff', zIndex: 3 };
+const fullscreenBtn = { position: 'absolute', right: 12, bottom: 30, width: 34, height: 34, borderRadius: 999, border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(15,23,42,0.72)', color: '#fff', cursor: 'pointer', zIndex: 4, display: 'grid', placeItems: 'center', fontSize: 18, lineHeight: 1 };
+const playerModal = { position: 'fixed', inset: 0, background: 'rgba(3,7,18,0.85)', display: 'grid', placeItems: 'center', zIndex: 50, padding: 16 };
+const playerModalInner = { position: 'relative', width: 'min(96vw, 720px)', borderRadius: 20, overflow: 'hidden', background: '#050a1a', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 30px 90px rgba(0,0,0,0.55)' };
+const closePlayerBtn = { position: 'absolute', right: 10, top: 10, zIndex: 2, width: 34, height: 34, borderRadius: 999, border: 0, background: 'rgba(15,23,42,0.82)', color: '#fff', cursor: 'pointer', fontSize: 22, lineHeight: 1 };
+const playerMedia = { width: '100%', height: 'auto', display: 'block', background: '#050a1a' };
 const emptyState = { marginTop: 12, padding: 18, borderRadius: 16, border: '1px solid rgba(94,128,202,0.28)', background: 'rgba(12,18,39,0.66)', display: 'grid', gap: 14, color: '#fff' };
 const emptyTitle = { margin: 0, fontSize: 18 };
 const emptyCopy = { margin: '6px 0 0', color: 'rgba(255,255,255,0.82)', lineHeight: 1.5 };

@@ -36,7 +36,13 @@ export default function SignupPage() {
       },
     });
 
-    if (error) return setMsg(error.message);
+    if (error) {
+      const errMsg = String(error.message || '').toLowerCase();
+      if (errMsg.includes('already registered') || errMsg.includes('user already registered') || errMsg.includes('duplicate')) {
+        return setMsg('That email already exists. Please sign in instead.');
+      }
+      return setMsg(error.message);
+    }
 
     const userId = data?.user?.id;
     if (userId) {
