@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { Webhook } from 'standardwebhooks';
 
 function escapeHtml(value = '') {
   return String(value)
@@ -41,15 +42,28 @@ function buildEmailHtml({ email, confirmationUrl, siteUrl = 'https://godyrect.co
 
 export async function POST(req) {
   const apiKey = process.env.RESEND_API_KEY;
+  const hookSecret = process.env.SEND_EMAIL_HOOK_SECRET;
   if (!apiKey) {
     return NextResponse.json({ error: 'Missing RESEND_API_KEY' }, { status: 500 });
   }
+  if (!hookSecret) {
+    return NextResponse.json({ error: 'Missing SEND_EMAIL_HOOK_SECRET' }, { status: 500 });
+  }
 
-  const body = await req.json().catch(() => ({}));
-  const eventType = body?.type || body?.email_action_type || body?.template || '';
-  const confirmationUrl = body?.confirmation_url || body?.action_link || body?.url || body?.redirect_to || '';
-  const email = body?.email || body?.user_email || body?.recipient_email || '';
-  const siteUrl = body?.site_url || 'https://godyrect.com';
+  const payload = await req.text();
+  const headers = Object.fromEntries(req.headers);
+
+  let body;
+  try {
+    body = new Webhook(hookSecret.replace('v1,whsec_', '')).verify(payload, headers);
+  } catch (error) {
+    return NextResponse.json({ error: 'Invalid hook signature', details: error?.message || String(error) }, { status: 403 });
+  }
+
+  const eventType = body?.email_data?.email_action_type || '';
+  const confirmationUrl = body?.email_data?.redirect_to || body?.email_data?.action_link || body?.email_data?.url || '';
+  const email = body?.user?.email || '';
+  const siteUrl = body?.email_data?.site_url || 'https://godyrect.com';
 
   if (!confirmationUrl || !email) {
     return NextResponse.json({ error: 'Missing email or confirmation URL' }, { status: 400 });
