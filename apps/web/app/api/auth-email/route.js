@@ -52,17 +52,25 @@ export async function POST(req) {
 
   const payload = await req.text();
   const headers = Object.fromEntries(req.headers);
+  const secret = hookSecret.startsWith('v1,whsec_') ? hookSecret.slice('v1,whsec_'.length) : hookSecret;
 
   let body;
   try {
-    body = new Webhook(hookSecret.replace('v1,whsec_', '')).verify(payload, headers);
+    body = new Webhook(secret).verify(payload, headers);
   } catch (error) {
-    return NextResponse.json({ error: 'Invalid hook signature', details: error?.message || String(error) }, { status: 403 });
+    return NextResponse.json(
+      {
+        error: 'Invalid hook signature',
+        details: error?.message || String(error),
+        hint: 'Make sure SEND_EMAIL_HOOK_SECRET matches the exact secret from Supabase Auth Hooks, including the v1,whsec_ prefix in the stored value.',
+      },
+      { status: 403 }
+    );
   }
 
   const eventType = body?.email_data?.email_action_type || '';
   const confirmationUrl = body?.email_data?.redirect_to || body?.email_data?.action_link || body?.email_data?.url || '';
-  const email = body?.user?.email || '';
+  const email = body?.user?.email || body?.user?.user_email || '';
   const siteUrl = body?.email_data?.site_url || 'https://godyrect.com';
 
   if (!confirmationUrl || !email) {
