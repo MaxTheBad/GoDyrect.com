@@ -20,7 +20,7 @@ function buildEmailHtml({ email, confirmationUrl, siteUrl = 'https://godyrect.co
       <div style="background:#121b3f;border:1px solid #2a3c78;border-radius:20px;overflow:hidden;">
         <div style="padding:28px 28px 16px;text-align:center;background:linear-gradient(180deg,#16275f 0%,#0b1020 100%);">
           <img src="${logo}" alt="GoDyrect" style="height:42px;width:auto;object-fit:contain;display:block;margin:0 auto 16px;" />
-          <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#8fb7ff;font-weight:700;">Confirm your signup</div>
+          <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#8fb7ff;font-weight:700;">Welcome to GoDyrect</div>
           <h1 style="margin:12px 0 0;font-size:32px;line-height:1.1;">Welcome to GoDyrect</h1>
         </div>
         <div style="padding:28px;">
@@ -57,7 +57,7 @@ export async function POST(req) {
 
   const subject = eventType.toLowerCase().includes('recovery')
     ? 'Reset your GoDyrect password'
-    : 'Confirm your GoDyrect signup';
+    : 'Welcome to GoDyrect';
 
   const html = buildEmailHtml({ email, confirmationUrl, siteUrl });
 
