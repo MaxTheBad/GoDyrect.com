@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 export function FeedPost({
   listing,
@@ -233,14 +233,24 @@ export function FeedHero({
   peopleCount,
   compact = false,
 }) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setIsMobile(window.innerWidth < 768);
+    sync();
+    window.addEventListener('resize', sync);
+    return () => window.removeEventListener('resize', sync);
+  }, []);
+
+  const mobileHero = compact || isMobile;
   return (
-    <section style={compact ? compactHeroShell : heroShell}>
+    <section style={mobileHero ? compactHeroShell : heroShell}>
       <div style={heroOverlay} />
-      <div style={compact ? compactHeroContent : heroContent}>
+      <div style={mobileHero ? compactHeroContent : heroContent}>
         <div style={heroPanel}>
-          <div style={heroTopline}>Discover deals, businesses, and brokers</div>
-          <h1 style={heroTitle}>Find a business for sale</h1>
-          <p style={heroSubtitle}>Search by business name, city, state, or ZIP. Keep your feed focused on what you actually want to buy.</p>
+          <div style={mobileHero ? heroToplineMobile : heroTopline}>Discover deals, businesses, and brokers</div>
+          <h1 style={mobileHero ? heroTitleMobile : heroTitle}>Find a business for sale</h1>
+          <p style={mobileHero ? heroSubtitleMobile : heroSubtitle}>Search by business name, city, state, or ZIP. Keep your feed focused on what you actually want to buy.</p>
 
           <div style={heroSearchWrap}>
             <div style={heroTabs}>
@@ -248,7 +258,7 @@ export function FeedHero({
               <button type='button' style={industry === 'startup' ? activeTab : tabButton} onClick={() => setIndustry('startup')}>Franchises</button>
             </div>
 
-            <div style={searchBar}>
+            <div style={mobileHero ? searchBarMobile : searchBar}>
               <div style={searchFieldWrap}>
                 <label style={srOnly} htmlFor='feed-search'>Search</label>
                 <input
@@ -256,13 +266,13 @@ export function FeedHero({
                   value={searchDraft}
                   onChange={(e) => setSearchDraft(e.target.value)}
                   placeholder='California, Miami, 33101, coffee shop...'
-                  style={searchInput}
+                  style={mobileHero ? searchInputMobile : searchInput}
                 />
               </div>
-              <div style={divider} />
+              {mobileHero ? null : <div style={divider} />}
               <div style={searchFieldWrap}>
                 <label style={srOnly} htmlFor='feed-industry'>Industry</label>
-                <select id='feed-industry' value={industry} onChange={(e) => setIndustry(e.target.value)} style={searchSelect}>
+                <select id='feed-industry' value={industry} onChange={(e) => setIndustry(e.target.value)} style={mobileHero ? searchSelectMobile : searchSelect}>
                   <option value='all'>All Industries</option>
                   <option value='established'>Established Businesses</option>
                   <option value='asset_sale'>Asset Sales</option>
@@ -270,11 +280,11 @@ export function FeedHero({
                   <option value='startup'>Start-Ups</option>
                 </select>
               </div>
-              <button type='button' style={searchBtn} onClick={onSearch}>Search</button>
+              <button type='button' style={mobileHero ? searchBtnMobile : searchBtn} onClick={onSearch}>Search</button>
             </div>
           </div>
 
-          <div style={statsRow}>
+          <div style={mobileHero ? statsRowMobile : statsRow}>
             <div style={statCard}>
               <span style={statLabel}>Posts</span>
               <strong style={statValue}>{rowsCount.toLocaleString()}</strong>
@@ -312,23 +322,31 @@ export const heroOverlay = {
   inset: 0,
   background: 'linear-gradient(180deg, rgba(6,10,24,0.35) 0%, rgba(11,16,32,0.8) 52%, rgba(11,16,32,0.98) 100%)',
 };
-export const heroContent = { position: 'relative', zIndex: 1, minHeight: '100vh', display: 'grid', placeItems: 'center', padding: '48px 16px 32px' };
-export const compactHeroContent = { ...heroContent, minHeight: 'auto', padding: '28px 16px 10px' };
+export const heroContent = { position: 'relative', zIndex: 1, minHeight: '100vh', display: 'grid', placeItems: 'center', padding: '32px 16px 24px' };
+export const compactHeroContent = { ...heroContent, minHeight: 'auto', padding: '14px 12px 8px' };
 export const heroPanel = { width: 'min(1080px, 100%)', display: 'grid', gap: 16, justifyItems: 'center', textAlign: 'center', padding: '20px 0 8px', border: 0, background: 'transparent', boxShadow: 'none' };
 export const heroTopline = { fontSize: 12, letterSpacing: 1.2, textTransform: 'uppercase', color: '#9fc0ff' };
+export const heroToplineMobile = { ...heroTopline, fontSize: 11 };
 export const heroTitle = { margin: 0, fontSize: 'clamp(40px, 7vw, 78px)', lineHeight: 0.95, fontWeight: 800, color: '#fff', textShadow: '0 8px 24px rgba(0,0,0,0.35)' };
+export const heroTitleMobile = { ...heroTitle, fontSize: 'clamp(28px, 8vw, 42px)', lineHeight: 1.02 };
 export const heroSubtitle = { margin: 0, maxWidth: 760, fontSize: 18, lineHeight: 1.5, color: 'rgba(235,241,255,0.88)' };
+export const heroSubtitleMobile = { ...heroSubtitle, fontSize: 14, maxWidth: 560, lineHeight: 1.45 };
 export const heroSearchWrap = { width: 'min(100%, 980px)', display: 'grid', gap: 14, justifyItems: 'center' };
 export const heroTabs = { display: 'inline-flex', gap: 8, padding: 6, borderRadius: 999, background: 'rgba(12,18,39,0.72)', border: '1px solid rgba(94,128,202,0.34)' };
 export const tabButton = { border: 0, borderRadius: 999, background: 'transparent', color: 'rgba(255,255,255,0.85)', padding: '10px 18px', fontSize: 14, fontWeight: 700, cursor: 'pointer' };
 export const activeTab = { ...tabButton, background: '#ffffff', color: '#1457d6', boxShadow: '0 6px 16px rgba(0,0,0,0.18)' };
 export const searchBar = { width: 'min(100%, 980px)', display: 'grid', gridTemplateColumns: 'minmax(0, 1.35fr) 1px minmax(220px, 0.95fr) auto', alignItems: 'stretch', borderRadius: 18, overflow: 'hidden', background: '#fff', boxShadow: '0 18px 40px rgba(4, 10, 28, 0.24)' };
+export const searchBarMobile = { width: 'min(100%, 980px)', display: 'grid', gridTemplateColumns: '1fr', alignItems: 'stretch', borderRadius: 18, overflow: 'hidden', background: '#fff', boxShadow: '0 18px 40px rgba(4, 10, 28, 0.24)' };
 export const searchFieldWrap = { display: 'grid' };
 export const divider = { width: 1, background: '#e1e7f2' };
 export const searchInput = { width: '100%', border: 0, padding: '22px 20px', fontSize: 18, outline: 'none', color: '#0f172a' };
+export const searchInputMobile = { ...searchInput, minHeight: 56, padding: '18px 18px', fontSize: 16 };
 export const searchSelect = { width: '100%', border: 0, padding: '22px 18px', fontSize: 18, outline: 'none', color: '#334155', background: 'transparent' };
+export const searchSelectMobile = { ...searchSelect, minHeight: 52, padding: '16px 18px', fontSize: 16, borderTop: '1px solid #e1e7f2' };
 export const searchBtn = { border: '1px solid #2a3c78', background: '#2e7dff', color: '#fff', padding: '0 34px', fontSize: 18, fontWeight: 800, cursor: 'pointer', boxShadow: '0 8px 20px rgba(46,125,255,0.28)' };
+export const searchBtnMobile = { ...searchBtn, minHeight: 54, padding: '0 18px', fontSize: 16, borderRadius: 0 };
 export const statsRow = { width: 'min(100%, 980px)', display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12, marginTop: 14 };
+export const statsRowMobile = { width: 'min(100%, 980px)', display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8, marginTop: 10 };
 export const statCard = { borderRadius: 18, padding: '14px 16px', background: 'rgba(12,18,39,0.66)', border: '1px solid rgba(94,128,202,0.28)', textAlign: 'left' };
 export const statLabel = { display: 'block', fontSize: 12, letterSpacing: 0.6, textTransform: 'uppercase', color: 'rgba(159,192,255,0.92)' };
 export const statValue = { display: 'block', marginTop: 8, fontSize: 24, color: '#fff' };
