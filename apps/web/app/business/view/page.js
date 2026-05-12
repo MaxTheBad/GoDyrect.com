@@ -45,7 +45,12 @@ export default function BusinessProfilePage() {
   }, [id]);
 
   async function toggleFollow() {
-    if (!supabase || !viewerId || !id) return;
+    if (!supabase || !id) return;
+    if (!viewerId) {
+      setMsg('Please sign in to follow businesses.');
+      window.location.href = `/login?returnTo=${encodeURIComponent(`/business/view?id=${id}`)}`;
+      return;
+    }
     if (isFollowing) {
       const { error } = await supabase.from('business_follows').delete().eq('follower_user_id', viewerId).eq('business_id', id);
       if (error) return setMsg(error.message);
@@ -72,7 +77,7 @@ export default function BusinessProfilePage() {
             <div style={muted}>{business.category || 'Business'} · {[business.city, business.state, business.country].filter(Boolean).join(', ') || 'Location not set'}</div>
             <div style={muted}>{followerCount} follower{followerCount === 1 ? '' : 's'}</div>
           </div>
-          {viewerId ? <button style={btn} onClick={toggleFollow}>{isFollowing ? 'Unfollow Business' : 'Follow Business'}</button> : null}
+          <button style={btn} onClick={toggleFollow}>{isFollowing ? 'Unfollow Business' : 'Follow Business'}</button>
         </div>
         {business.description ? <p style={{ whiteSpace: 'pre-wrap', color: 'rgba(255,255,255,0.86)', marginTop: 6, lineHeight: 1.6 }}>{business.description}</p> : null}
 

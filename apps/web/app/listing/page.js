@@ -123,6 +123,7 @@ export default function ListingDetailPage() {
     if (!supabase) return;
     if (!viewerId) {
       setMsg('Please sign in to save favorites.');
+      window.location.href = `/login?returnTo=${encodeURIComponent(`/listing?id=${listing.id}`)}`;
       return;
     }
 
@@ -139,7 +140,13 @@ export default function ListingDetailPage() {
   }
 
   async function toggleFollowSeller() {
-    if (!supabase || !viewerId || !listing || viewerId === listing.seller_id) return;
+    if (!supabase || !listing) return;
+    if (!viewerId) {
+      setMsg('Please sign in to follow sellers.');
+      window.location.href = `/login?returnTo=${encodeURIComponent(`/listing?id=${listing.id}`)}`;
+      return;
+    }
+    if (viewerId === listing.seller_id) return;
     if (isFollowingSeller) {
       const { error } = await supabase.from('user_follows').delete().eq('follower_user_id', viewerId).eq('followed_user_id', listing.seller_id);
       if (error) return setMsg(error.message);
@@ -163,7 +170,12 @@ export default function ListingDetailPage() {
   }
 
   async function toggleFollowBusiness() {
-    if (!supabase || !viewerId || !listing?.business_id) return;
+    if (!supabase || !listing?.business_id) return;
+    if (!viewerId) {
+      setMsg('Please sign in to follow businesses.');
+      window.location.href = `/login?returnTo=${encodeURIComponent(`/listing?id=${listing.id}`)}`;
+      return;
+    }
     if (isFollowingBusiness) {
       const { error } = await supabase.from('business_follows').delete().eq('follower_user_id', viewerId).eq('business_id', listing.business_id);
       if (error) return setMsg(error.message);
@@ -226,7 +238,7 @@ export default function ListingDetailPage() {
             </div>
           </a>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-            {viewerId && viewerId !== listing.seller_id ? (
+            {viewerId !== listing.seller_id ? (
               <button onClick={toggleFollowSeller} style={ghostBtn}>{isFollowingSeller ? 'Unfollow Seller' : 'Follow Seller'}</button>
             ) : null}
             {listing.business_id ? (

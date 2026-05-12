@@ -8,6 +8,7 @@ export default function FavoritesPage() {
   const [userId, setUserId] = useState('');
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(true);
+  const [needsLogin, setNeedsLogin] = useState(false);
 
   useEffect(() => {
     async function loadFavorites() {
@@ -20,6 +21,7 @@ export default function FavoritesPage() {
       const uid = auth?.user?.id;
       if (!uid) {
         setMsg('Please sign in to view favorites.');
+        setNeedsLogin(true);
         setLoading(false);
         return;
       }
@@ -77,7 +79,12 @@ export default function FavoritesPage() {
         <p style={{ opacity: 0.8, marginTop: -4 }}>Businesses you saved.</p>
 
         {loading ? <p>Loading favorites...</p> : null}
-        {msg ? <p>{msg}</p> : null}
+        {msg ? (
+          <div style={{ display: 'grid', gap: 8 }}>
+            <p>{msg}</p>
+            {needsLogin ? <a href='/login?returnTo=%2Ffavorites' style={loginBtn}>Sign in</a> : null}
+          </div>
+        ) : null}
         {!loading && !msg && rows.length === 0 ? <p>No favorites yet.</p> : null}
 
         <div style={{ display: 'grid', gap: 10 }}>
@@ -106,3 +113,4 @@ const card = { maxWidth: 980, margin: '0 auto', background: '#121b3f', border: '
 const row = { border: '1px solid #304178', borderRadius: 10, background: '#0e1738', padding: 12, display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' };
 const ghostBtn = { border: '1px solid #304178', borderRadius: 10, background: '#0e1738', color: '#fff', padding: '10px 12px', textDecoration: 'none' };
 const dangerBtn = { border: '1px solid #7a3040', borderRadius: 10, background: '#3a1520', color: '#ffd7dd', padding: '10px 12px', cursor: 'pointer' };
+const loginBtn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 'fit-content', padding: '10px 14px', borderRadius: 10, background: '#2e7dff', color: '#fff', textDecoration: 'none', fontWeight: 700 };

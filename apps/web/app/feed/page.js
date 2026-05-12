@@ -15,6 +15,7 @@ export default function FeedPage() {
   const [hasFollows, setHasFollows] = useState(false);
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(true);
+  const [needsLogin, setNeedsLogin] = useState(false);
 
   useEffect(() => {
     async function loadFeed() {
@@ -24,6 +25,7 @@ export default function FeedPage() {
       const uid = auth?.user?.id;
       if (!uid) {
         setMsg('Please sign in to view your feed.');
+        setNeedsLogin(true);
         setLoading(false);
         return;
       }
@@ -137,6 +139,7 @@ export default function FeedPage() {
     const uid = auth?.user?.id;
     if (!uid) {
       setMsg('Please sign in to save favorites.');
+      window.location.href = `/login?returnTo=${encodeURIComponent('/feed')}`;
       return;
     }
 
@@ -164,7 +167,12 @@ export default function FeedPage() {
         </div>
 
         {loading ? <p style={statusText}>Loading feed...</p> : null}
-        {msg ? <p style={statusText}>{msg}</p> : null}
+        {msg ? (
+          <div style={loginPrompt}>
+            <p style={statusText}>{msg}</p>
+            {needsLogin ? <a href="/login?returnTo=%2Ffeed" style={loginBtn}>Sign in</a> : null}
+          </div>
+        ) : null}
         <FeedEmptyState loading={loading} msg={msg} hasFollows={hasFollows} />
 
         <div style={hasFollows ? feedColumn : feedColumnTight}>
@@ -219,6 +227,7 @@ function badge(role) {
 }
 
 const wrap = { minHeight: '100vh', background: '#0b1020', color: '#fff', overflowX: 'hidden' };
+const loginPrompt = { display: 'grid', gap: 8 };
 const heroShell = {
   position: 'relative',
   minHeight: '100vh',
@@ -293,6 +302,7 @@ const feedColumnTight = {
   marginTop: 8,
 };
 const statusText = { margin: '16px 0 0', color: '#cdd9ff' };
+const loginBtn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 'fit-content', padding: '10px 14px', borderRadius: 10, background: '#2e7dff', color: '#fff', textDecoration: 'none', fontWeight: 700 };
 const bottomExploreWrap = { marginTop: 16, display: 'flex', justifyContent: 'center' };
 const exploreBtn = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '10px 14px', textDecoration: 'none', fontWeight: 600 };
 const postShell = {

@@ -1,18 +1,25 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [msg, setMsg] = useState('');
+  const [returnTo, setReturnTo] = useState('/dashboard');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const next = new URLSearchParams(window.location.search).get('returnTo');
+    if (next) setReturnTo(next);
+  }, []);
 
   async function submit(e) {
     e.preventDefault();
     if (!supabase) return setMsg('Supabase env vars are missing.');
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setMsg(error ? error.message : 'Logged in. Redirecting...');
-    if (!error) setTimeout(() => (window.location.href = '/dashboard'), 600);
+    if (!error) setTimeout(() => (window.location.href = returnTo || '/dashboard'), 600);
   }
 
   return (

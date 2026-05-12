@@ -1,15 +1,31 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 export default function BottomNav() {
   const [isMobile, setIsMobile] = useState(false);
+  const [userId, setUserId] = useState('');
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
+  }, []);
+
+  useEffect(() => {
+    async function loadUser() {
+      if (!supabase) return;
+      const { data } = await supabase.auth.getUser();
+      setUserId(data?.user?.id || '');
+    }
+    loadUser();
+    if (!supabase) return;
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserId(session?.user?.id || '');
+    });
+    return () => subscription?.subscription?.unsubscribe();
   }, []);
 
   if (!isMobile) return null;
@@ -28,7 +44,7 @@ export default function BottomNav() {
         <HeartIcon />
         <span style={label}>Favorites</span>
       </a>
-      <a href='/listings/new' style={{ ...item, ...center }}>
+      <a href={userId ? '/listings/new' : '/login?returnTo=%2Flistings%2Fnew'} style={{ ...item, ...center }}>
         <PlusIcon />
         <span style={{ ...label, color: '#fff' }}>Post</span>
       </a>

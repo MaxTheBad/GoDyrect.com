@@ -53,7 +53,13 @@ export default function PublicProfilePage() {
   }, [id]);
 
   async function toggleFollow() {
-    if (!supabase || !viewerId || !id || viewerId === id) return;
+    if (!supabase || !id) return;
+    if (!viewerId) {
+      setMsg('Please sign in to follow people.');
+      window.location.href = `/login?returnTo=${encodeURIComponent(`/profile/view?id=${id}`)}`;
+      return;
+    }
+    if (viewerId === id) return;
     if (isFollowing) {
       const { error } = await supabase.from('user_follows').delete().eq('follower_user_id', viewerId).eq('followed_user_id', id);
       if (error) return setMsg(error.message);
@@ -81,7 +87,7 @@ export default function PublicProfilePage() {
             {profile.handle ? <p style={{ margin: '4px 0 0', opacity: 0.8, color: 'rgba(255,255,255,0.72)' }}>@{profile.handle}</p> : null}
             <small style={{ opacity: 0.8, color: 'rgba(255,255,255,0.72)' }}>{followerCount} follower{followerCount === 1 ? '' : 's'}</small>
           </div>
-          {viewerId && viewerId !== id ? <button style={followBtn} onClick={toggleFollow}>{isFollowing ? 'Unfollow' : 'Follow'}</button> : null}
+          {viewerId !== id ? <button style={followBtn} onClick={toggleFollow}>{isFollowing ? 'Unfollow' : 'Follow'}</button> : null}
         </div>
         {profile.role ? <span style={badge(profile.role)}>{profile.role === 'not_sure' ? 'Not sure yet' : profile.role}</span> : null}
         {profile.bio ? <p style={{ marginTop: 10, color: 'rgba(255,255,255,0.85)', lineHeight: 1.6 }}>{profile.bio}</p> : null}

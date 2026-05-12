@@ -29,6 +29,7 @@ export default function VideoEditor({ onChange }) {
   const [duration, setDuration] = useState(0);
   const [selectedOverlayId, setSelectedOverlayId] = useState(null);
   const [currentClipUrl, setCurrentClipUrl] = useState('');
+  const [isMobile, setIsMobile] = useState(false);
   const videoRef = useRef(null);
   const fileInputRef = useRef(null);
   const previewRef = useRef(null);
@@ -41,6 +42,13 @@ export default function VideoEditor({ onChange }) {
     });
     setDuration(total);
   }, [clips]);
+
+  useEffect(() => {
+    const sync = () => setIsMobile(window.innerWidth < 900);
+    sync();
+    window.addEventListener('resize', sync);
+    return () => window.removeEventListener('resize', sync);
+  }, []);
 
   useEffect(() => {
     if (activeClipIndex > Math.max(0, clips.length - 1)) {
@@ -266,9 +274,9 @@ export default function VideoEditor({ onChange }) {
         </div>
       </div>
 
-      <div style={workspace}>
+      <div style={isMobile ? workspaceMobile : workspace}>
         <div style={previewPane}>
-          <div style={previewFrame} ref={previewRef}>
+          <div style={isMobile ? previewFrameMobile : previewFrame} ref={previewRef}>
             {currentClip ? (
               <>
                 <video
@@ -314,7 +322,7 @@ export default function VideoEditor({ onChange }) {
           </div>
         </div>
 
-        <div style={sidebar}>
+        <div style={isMobile ? sidebarMobile : sidebar}>
           <section style={panel}>
             <div style={panelLabel}>Transitions</div>
             <div style={transitionRow}>
@@ -487,6 +495,12 @@ const workspace = {
   gap: 16,
   alignItems: 'start',
 };
+const workspaceMobile = {
+  display: 'grid',
+  gridTemplateColumns: '1fr',
+  gap: 16,
+  alignItems: 'start',
+};
 const previewPane = {
   background: 'radial-gradient(circle at top, rgba(61, 92, 169, 0.25), rgba(5, 10, 22, 0.95))',
   border: '1px solid rgba(125, 168, 255, 0.14)',
@@ -503,6 +517,11 @@ const previewFrame = {
   overflow: 'hidden',
   background: '#020617',
   border: '1px solid rgba(255,255,255,0.08)',
+};
+const previewFrameMobile = {
+  ...previewFrame,
+  aspectRatio: '4 / 5',
+  maxHeight: '68vh',
 };
 const video = {
   width: '100%',
@@ -586,6 +605,10 @@ const emptyText = {
 const sidebar = {
   display: 'grid',
   gap: 14,
+};
+const sidebarMobile = {
+  ...sidebar,
+  position: 'static',
 };
 const panel = {
   borderRadius: 20,

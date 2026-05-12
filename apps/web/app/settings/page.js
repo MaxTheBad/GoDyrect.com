@@ -52,6 +52,14 @@ export default function SettingsPage() {
           <p style={{ opacity: 0.85, color: 'rgba(255,255,255,0.75)', margin: 0 }}>Manage your account and onboarding preferences from here.</p>
         </div>
 
+        {!userId ? (
+          <div style={section}>
+            <h3 style={{ marginTop: 0, color: '#fff' }}>Sign in required</h3>
+            <p style={muted}>Please sign in to manage your profile, onboarding, and preferences.</p>
+            <a href='/login?returnTo=%2Fsettings' style={btnPrimary}>Sign in</a>
+          </div>
+        ) : null}
+
         <section style={section}>
           <h3 style={{ marginTop: 0, color: '#fff' }}>Onboarding</h3>
           <p style={muted}>Pick the path that matches what you’re here to do. You can change it anytime or reset it back to “not sure yet.”</p>

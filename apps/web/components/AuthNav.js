@@ -74,7 +74,15 @@ export default function AuthNav() {
 
   if (isMobile) {
     return (
-      <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}>
+        {user ? (
+          <button style={mobilePill} onClick={signOut}>Sign out</button>
+        ) : (
+          <>
+            <a href='/login' style={mobilePill}>Sign in</a>
+            <a href='/signup' style={mobilePillSecondary}>Sign up</a>
+          </>
+        )}
         <button style={hamburgerBtn} onClick={() => setMenuOpen((v) => !v)} aria-label='Menu'>☰</button>
         {menuOpen ? <div style={mobileMenu}>{user ? loggedInLinks : loggedOutLinks}</div> : null}
       </div>
@@ -124,9 +132,27 @@ const ghostBtn = {
 const hamburgerBtn = {
   border: 0,
   background: 'transparent',
-  color: '#111827',
+  color: '#fff',
   fontSize: 26,
   lineHeight: 1,
   padding: 2,
   cursor: 'pointer',
+};
+
+const mobilePill = {
+  border: '1px solid rgba(255,255,255,0.18)',
+  borderRadius: 999,
+  background: '#111',
+  color: '#fff',
+  padding: '8px 12px',
+  cursor: 'pointer',
+  textDecoration: 'none',
+  fontWeight: 600,
+  fontSize: 13,
+};
+
+const mobilePillSecondary = {
+  ...mobilePill,
+  background: '#2e7dff',
+  borderColor: '#2e7dff',
 };
