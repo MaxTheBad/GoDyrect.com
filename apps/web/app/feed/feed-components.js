@@ -27,6 +27,7 @@ export function FeedPost({
   const [showPlayer, setShowPlayer] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
+  const [previewFrameReady, setPreviewFrameReady] = useState(false);
   const poster = activeMedia?.thumbnail_url || listing?.thumbnail_url || '';
   const fallbackVisual = poster || buildFallbackPoster(listing.title, businessName);
 
@@ -106,9 +107,34 @@ export function FeedPost({
                   const video = videoRef.current;
                   if (!video?.duration) return;
                   setMediaProgress((video.currentTime / video.duration) * 100);
+                  const targetTime = Math.min(0.9, Math.max(0.1, video.duration * 0.08));
+                  try {
+                    video.currentTime = targetTime;
+                  } catch {
+                    // Some browsers need a brief delay before seeking.
+                    window.setTimeout(() => {
+                      const nextVideo = videoRef.current;
+                      if (!nextVideo) return;
+                      try {
+                        nextVideo.currentTime = targetTime;
+                      } catch {}
+                    }, 50);
+                  }
                 }}
-                onCanPlay={() => setVideoReady(true)}
-                onPlay={() => setIsPlaying(true)}
+                onSeeked={() => {
+                  setPreviewFrameReady(true);
+                }}
+                onCanPlay={() => {
+                  setVideoReady(true);
+                  const video = videoRef.current;
+                  if (video && !isPlaying) {
+                    video.pause();
+                  }
+                }}
+                onPlay={() => {
+                  setIsPlaying(true);
+                  setPreviewFrameReady(true);
+                }}
                 onPause={() => setIsPlaying(false)}
                 style={heroMediaAsset}
               />
@@ -122,7 +148,7 @@ export function FeedPost({
                 }}
                 style={{ ...videoCoverButton, opacity: isPlaying ? 0 : 1, pointerEvents: isPlaying ? 'none' : 'auto' }}
               >
-                <div style={videoCoverPill}>{videoReady ? 'Tap to play' : 'Loading video...'}</div>
+                <div style={videoCoverPill}>{previewFrameReady ? 'Tap to play' : 'Loading video...'}</div>
               </button>
             </>
           ) : (
