@@ -313,7 +313,7 @@ export default function VideoEditor({ onChange }) {
                 </div>
               </>
             ) : (
-              <div style={emptyState}>
+              <div style={isMobile ? emptyStateMobile : emptyState}>
                 <div style={emptyIcon}>+</div>
                 <div style={emptyText}>Drop in a clip to start editing.</div>
                 <button type="button" onClick={() => fileInputRef.current?.click()} style={primaryBtn}>Add your first clip</button>
@@ -521,7 +521,7 @@ const previewFrame = {
 const previewFrameMobile = {
   ...previewFrame,
   aspectRatio: '4 / 5',
-  maxHeight: '68vh',
+  maxHeight: '58vh',
 };
 const video = {
   width: '100%',
@@ -586,6 +586,11 @@ const emptyState = {
   textAlign: 'center',
   padding: 32,
   color: '#c5d3ef',
+};
+const emptyStateMobile = {
+  ...emptyState,
+  height: '56vh',
+  minHeight: 420,
 };
 const emptyIcon = {
   width: 84,
