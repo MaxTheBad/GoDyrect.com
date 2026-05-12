@@ -166,6 +166,7 @@ export function FeedPost({
                 playsInline
                 controls={false}
                 preload='auto'
+                muted
                 crossOrigin='anonymous'
                 onClick={() => {
                   const video = videoRef.current;
@@ -204,16 +205,9 @@ export function FeedPost({
                 onPause={() => setIsPlaying(false)}
                 style={{
                   ...heroMediaAsset,
-                  display: isPlaying ? 'block' : 'none',
-                }}
-              />
-              <img
-                src={previewFrameUrl || fallbackVisual}
-                alt='listing media preview'
-                style={{
-                  ...heroMediaAsset,
-                  display: isPlaying ? 'none' : 'block',
-                  zIndex: 1,
+                  display: 'block',
+                  pointerEvents: 'none',
+                  opacity: isPlaying ? 1 : 1,
                 }}
               />
               <button

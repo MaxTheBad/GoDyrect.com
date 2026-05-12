@@ -361,10 +361,8 @@ export default function VideoEditor({ onChange }) {
                   onEnded={handleEnded}
                   playsInline
                   controls={false}
+                  muted
                 />
-                {previewFrameUrl && !playing ? (
-                  <img src={previewFrameUrl} alt={currentClip.title || 'clip preview'} style={previewPreview} />
-                ) : null}
                 <div style={gradientOverlay} />
                 {!playing ? <div style={tapToPlayBadge}>Tap to play</div> : null}
                 {textOverlays.map((overlay) => (
