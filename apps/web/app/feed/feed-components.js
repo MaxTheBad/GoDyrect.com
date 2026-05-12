@@ -26,6 +26,7 @@ export function FeedPost({
   const [mediaProgress, setMediaProgress] = useState(0);
   const [showPlayer, setShowPlayer] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const poster = activeMedia?.thumbnail_url || listing?.thumbnail_url || '';
   const fallbackVisual = poster || buildFallbackPoster(listing.title, businessName);
 
@@ -78,37 +79,42 @@ export function FeedPost({
             <div style={mediaTitle}>{listing.title}</div>
           </div>
           {activeMedia.media_type === 'video' ? (
-            <video
-              ref={videoRef}
-              src={activeMedia.url}
-              poster={poster || undefined}
-              playsInline
-              controls={false}
-              preload='metadata'
-              onClick={() => {
-                const video = videoRef.current;
-                if (!video) return;
-                if (video.paused) {
-                  void video.play().then(() => setIsPlaying(true)).catch(() => {});
-                } else {
-                  video.pause();
-                  setIsPlaying(false);
-                }
-              }}
-              onTimeUpdate={() => {
-                const video = videoRef.current;
-                if (!video?.duration) return;
-                setMediaProgress((video.currentTime / video.duration) * 100);
-              }}
-              onLoadedData={() => {
-                const video = videoRef.current;
-                if (!video?.duration) return;
-                setMediaProgress((video.currentTime / video.duration) * 100);
-              }}
-              onPlay={() => setIsPlaying(true)}
-              onPause={() => setIsPlaying(false)}
-              style={heroMediaAsset}
-            />
+            <>
+              <img src={fallbackVisual} alt='Video thumbnail' style={videoStill} />
+              <video
+                ref={videoRef}
+                src={activeMedia.url}
+                poster={fallbackVisual}
+                playsInline
+                controls={false}
+                preload='metadata'
+                onClick={() => {
+                  const video = videoRef.current;
+                  if (!video) return;
+                  if (video.paused) {
+                    void video.play().then(() => setIsPlaying(true)).catch(() => {});
+                  } else {
+                    video.pause();
+                    setIsPlaying(false);
+                  }
+                }}
+                onTimeUpdate={() => {
+                  const video = videoRef.current;
+                  if (!video?.duration) return;
+                  setMediaProgress((video.currentTime / video.duration) * 100);
+                }}
+                onLoadedData={() => {
+                  const video = videoRef.current;
+                  if (!video?.duration) return;
+                  setMediaProgress((video.currentTime / video.duration) * 100);
+                  setVideoReady(true);
+                }}
+                onCanPlay={() => setVideoReady(true)}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                style={{ ...heroMediaAsset, opacity: isPlaying && videoReady ? 1 : 0, transition: 'opacity 180ms ease' }}
+              />
+            </>
           ) : (
             <img src={activeMedia.thumbnail_url || activeMedia.url} alt='listing media' style={heroMediaAsset} />
           )}
@@ -400,7 +406,8 @@ const heroMediaFrame = {
   background: '#050a1a',
   border: '1px solid #e5e7eb',
 };
-const heroMediaAsset = { width: '100%', height: '100%', objectFit: 'contain', display: 'block', background: '#050a1a' };
+const heroMediaAsset = { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', background: '#050a1a' };
+const videoStill = { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', background: '#050a1a' };
 const fallbackPoster = { position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg, #0f1732 0%, #1a2b62 100%)', zIndex: 1, border: 0, padding: 0, cursor: 'pointer' };
 const fallbackPosterInner = { width: '100%', height: '100%', display: 'grid', placeItems: 'center', padding: 20, textAlign: 'center', color: '#fff' };
 const fallbackPosterBadge = { padding: '6px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', fontSize: 12, letterSpacing: 0.4, textTransform: 'uppercase', marginBottom: 10 };
