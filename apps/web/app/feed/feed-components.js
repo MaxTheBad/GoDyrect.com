@@ -197,20 +197,18 @@ export function FeedPost({
                 onPause={() => setIsPlaying(false)}
                 style={{
                   ...heroMediaAsset,
-                  opacity: isPlaying ? 1 : 0,
+                  display: isPlaying ? 'block' : 'none',
                 }}
               />
-              {!isPlaying ? (
-                <img
-                  src={previewFrameUrl || fallbackVisual}
-                  alt='listing media preview'
-                  style={{
-                    ...heroMediaAsset,
-                    opacity: 1,
-                    zIndex: 1,
-                  }}
-                />
-              ) : null}
+              <img
+                src={previewFrameUrl || fallbackVisual}
+                alt='listing media preview'
+                style={{
+                  ...heroMediaAsset,
+                  display: isPlaying ? 'none' : 'block',
+                  zIndex: 1,
+                }}
+              />
               <button
                 type='button'
                 aria-label='Play video'
