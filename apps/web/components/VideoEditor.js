@@ -88,6 +88,7 @@ export default function VideoEditor({ onChange }) {
     tempVideo.preload = 'auto';
     tempVideo.muted = true;
     tempVideo.playsInline = true;
+    tempVideo.crossOrigin = 'anonymous';
     tempVideo.src = currentClipUrl;
 
     const cleanup = () => {
@@ -348,7 +349,7 @@ export default function VideoEditor({ onChange }) {
 
       <div style={isMobile ? workspaceMobile : workspace}>
         <div style={previewPane}>
-          <div style={isMobile ? previewFrameMobile : previewFrame} ref={previewRef}>
+      <div style={isMobile ? previewFrameMobile : previewFrame} ref={previewRef}>
             {currentClip ? (
               <>
                 <video
@@ -365,6 +366,7 @@ export default function VideoEditor({ onChange }) {
                   <img src={previewFrameUrl} alt={currentClip.title || 'clip preview'} style={previewPreview} />
                 ) : null}
                 <div style={gradientOverlay} />
+                {!playing ? <div style={tapToPlayBadge}>Tap to play</div> : null}
                 {textOverlays.map((overlay) => (
                   <button
                     key={overlay.id}
@@ -640,6 +642,20 @@ const playControls = {
   justifyContent: 'space-between',
   alignItems: 'center',
   gap: 12,
+  pointerEvents: 'none',
+};
+const tapToPlayBadge = {
+  position: 'absolute',
+  left: '50%',
+  top: '50%',
+  transform: 'translate(-50%, -50%)',
+  zIndex: 3,
+  padding: '10px 14px',
+  borderRadius: 999,
+  background: 'rgba(15, 23, 42, 0.68)',
+  border: '1px solid rgba(255,255,255,0.16)',
+  color: '#fff',
+  fontWeight: 700,
   pointerEvents: 'none',
 };
 const playBtn = {

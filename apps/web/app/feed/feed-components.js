@@ -45,22 +45,21 @@ export function FeedPost({
 
   useEffect(() => {
     if (activeMedia?.media_type !== 'video') return undefined;
-    const video = videoRef.current;
-    if (!video) return undefined;
+    const tempVideo = document.createElement('video');
+    const canvas = previewCanvasRef.current || document.createElement('canvas');
+    previewCanvasRef.current = canvas;
 
     let cancelled = false;
     const targetTime = 0.45;
     const captureFrame = () => {
-      const canvas = previewCanvasRef.current || document.createElement('canvas');
-      previewCanvasRef.current = canvas;
-      const width = video.videoWidth || 720;
-      const height = video.videoHeight || 1280;
+      const width = tempVideo.videoWidth || 720;
+      const height = tempVideo.videoHeight || 1280;
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       try {
-        ctx.drawImage(video, 0, 0, width, height);
+        ctx.drawImage(tempVideo, 0, 0, width, height);
         const next = canvas.toDataURL('image/jpeg', 0.84);
         if (!cancelled && next) {
           setPreviewFrameUrl(next);
@@ -75,10 +74,10 @@ export function FeedPost({
 
     const onLoaded = () => {
       try {
-        if (!Number.isFinite(video.duration) || video.duration <= 0) return;
-        const seekTo = Math.min(Math.max(targetTime, 0.08), Math.max(0.1, video.duration * 0.12));
-        if (Math.abs(video.currentTime - seekTo) > 0.1) {
-          video.currentTime = seekTo;
+        if (!Number.isFinite(tempVideo.duration) || tempVideo.duration <= 0) return;
+        const seekTo = Math.min(Math.max(targetTime, 0.08), Math.max(0.1, tempVideo.duration * 0.12));
+        if (Math.abs(tempVideo.currentTime - seekTo) > 0.1) {
+          tempVideo.currentTime = seekTo;
         }
       } catch {
         setPreviewFrameReady(true);
@@ -88,18 +87,25 @@ export function FeedPost({
     const onSeeked = () => {
       captureFrame();
       try {
-        video.pause();
+        tempVideo.pause();
       } catch {}
     };
 
-    video.addEventListener('loadedmetadata', onLoaded);
-    video.addEventListener('seeked', onSeeked);
-    if (video.readyState >= 1) onLoaded();
+    tempVideo.preload = 'auto';
+    tempVideo.muted = true;
+    tempVideo.playsInline = true;
+    tempVideo.crossOrigin = 'anonymous';
+    tempVideo.src = activeMedia.url;
+    tempVideo.addEventListener('loadedmetadata', onLoaded);
+    tempVideo.addEventListener('seeked', onSeeked);
+    if (tempVideo.readyState >= 1) onLoaded();
 
     return () => {
       cancelled = true;
-      video.removeEventListener('loadedmetadata', onLoaded);
-      video.removeEventListener('seeked', onSeeked);
+      tempVideo.removeEventListener('loadedmetadata', onLoaded);
+      tempVideo.removeEventListener('seeked', onSeeked);
+      tempVideo.removeAttribute('src');
+      tempVideo.load();
     };
   }, [activeMedia?.media_type, activeMedia?.url]);
 
@@ -160,6 +166,7 @@ export function FeedPost({
                 playsInline
                 controls={false}
                 preload='auto'
+                crossOrigin='anonymous'
                 onClick={() => {
                   const video = videoRef.current;
                   if (!video) return;
@@ -219,7 +226,7 @@ export function FeedPost({
                 }}
                 style={{ ...videoCoverButton, opacity: isPlaying ? 0 : 1, pointerEvents: isPlaying ? 'none' : 'auto' }}
               >
-                <div style={videoCoverPill}>{previewFrameReady ? 'Tap to play' : 'Loading video...'}</div>
+                <div style={videoCoverPill}>{previewFrameReady || previewFrameUrl ? 'Tap to play' : 'Loading video...'}</div>
               </button>
             </>
           ) : (
