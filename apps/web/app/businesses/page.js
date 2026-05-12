@@ -73,7 +73,6 @@ export default function MyBusinessesPage() {
   const [userId, setUserId] = useState('');
   const [rows, setRows] = useState([]);
   const [membersByBusiness, setMembersByBusiness] = useState({});
-  const [profileOptions, setProfileOptions] = useState([]);
   const [detailsByBusiness, setDetailsByBusiness] = useState({});
   const [newBusinessName, setNewBusinessName] = useState('');
   const [newBusinessRole, setNewBusinessRole] = useState('Owner');
@@ -81,7 +80,6 @@ export default function MyBusinessesPage() {
   const [newBusinessState, setNewBusinessState] = useState('Florida');
   const [newBusinessZip, setNewBusinessZip] = useState('');
   const [newBusinessCountry, setNewBusinessCountry] = useState('United States');
-  const [inviteByBusiness, setInviteByBusiness] = useState({});
   const [focusBusinessId, setFocusBusinessId] = useState('');
   const [savedBusinessId, setSavedBusinessId] = useState('');
   const [msg, setMsg] = useState('');
@@ -93,14 +91,11 @@ export default function MyBusinessesPage() {
     if (!uid) return setMsg('Please sign in to manage businesses.');
     setUserId(uid);
 
-    const [{ data: memberships, error: membershipsErr }, { data: profiles }] = await Promise.all([
-      supabase
-        .from('business_memberships')
-        .select('id,business_id,user_id,role,is_admin,status,businesses(id,name,status,created_by,description,category,start_date,annual_revenue,annual_profit,default_asking_price,city,state,zip,country,county,keywords)')
-        .eq('user_id', uid)
-        .eq('status', 'approved'),
-      supabase.from('profiles').select('id,full_name,handle').limit(500),
-    ]);
+    const { data: memberships, error: membershipsErr } = await supabase
+      .from('business_memberships')
+      .select('id,business_id,user_id,role,is_admin,status,businesses(id,name,status,created_by,description,category,start_date,annual_revenue,annual_profit,default_asking_price,city,state,zip,country,county,keywords)')
+      .eq('user_id', uid)
+      .eq('status', 'approved');
 
     if (membershipsErr) {
       if (membershipsErr.message?.includes("businesses_1.zip") || membershipsErr.message?.includes('zip does not exist')) {
@@ -122,8 +117,6 @@ export default function MyBusinessesPage() {
     }));
 
     setRows(businessRows);
-    setProfileOptions(profiles || []);
-
     const details = {};
     businessRows.forEach((row) => {
       const b = row.business || {};
@@ -245,24 +238,6 @@ export default function MyBusinessesPage() {
     }, 100);
   }
 
-  async function inviteMember(businessId) {
-    const invite = inviteByBusiness[businessId] || {};
-    if (!supabase || !businessId || !invite.user_id) return;
-
-    const { error } = await supabase.from('business_memberships').upsert({
-      business_id: businessId,
-      user_id: invite.user_id,
-      role: invite.role || 'Authorized Representative',
-      is_admin: !!invite.is_admin,
-      status: 'approved',
-    }, { onConflict: 'business_id,user_id' });
-
-    if (error) return setMsg(error.message);
-    setInviteByBusiness((prev) => ({ ...prev, [businessId]: { user_id: '', role: 'Authorized Representative', is_admin: false } }));
-    setMsg('Member added.');
-    loadAll();
-  }
-
   async function setAdmin(memberId, makeAdmin) {
     const { error } = await supabase.from('business_memberships').update({ is_admin: makeAdmin }).eq('id', memberId);
     if (error) return setMsg(error.message);
@@ -299,7 +274,6 @@ export default function MyBusinessesPage() {
           {rows.map((row) => {
             const members = membersByBusiness[row.business_id] || [];
             const canManage = row.is_admin;
-            const invite = inviteByBusiness[row.business_id] || { user_id: '', role: 'Authorized Representative', is_admin: false };
             const details = detailsByBusiness[row.business_id] || emptyDetails;
             const age = yearsSince(details.start_date);
             const completePct = completeness(details);
@@ -398,18 +372,9 @@ export default function MyBusinessesPage() {
                 </div>
 
                 {canManage ? (
-                  <div style={inviteGrid}>
-                    <select style={input} value={invite.user_id} onChange={(e) => setInviteByBusiness((prev) => ({ ...prev, [row.business_id]: { ...invite, user_id: e.target.value } }))}>
-                      <option value=''>Select user</option>
-                      {profileOptions.filter((p) => p.id !== userId).map((p) => (
-                        <option key={p.id} value={p.id}>{p.full_name || p.handle || p.id}</option>
-                      ))}
-                    </select>
-                    <select style={input} value={invite.role} onChange={(e) => setInviteByBusiness((prev) => ({ ...prev, [row.business_id]: { ...invite, role: e.target.value } }))}>
-                      <option>Owner</option><option>CEO</option><option>Founder</option><option>Broker</option><option>Managing Partner</option><option>Authorized Representative</option>
-                    </select>
-                    <label style={label}><input type='checkbox' checked={invite.is_admin} onChange={(e) => setInviteByBusiness((prev) => ({ ...prev, [row.business_id]: { ...invite, is_admin: e.target.checked } }))} /> Admin</label>
-                    <button style={btnPrimary} type='button' onClick={() => inviteMember(row.business_id)}>Add</button>
+                  <div style={inviteBanner}>
+                    <strong>Invite members later</strong>
+                    <span style={{ opacity: 0.85 }}>Email invites will replace this user picker in v2 so people can accept access by email.</span>
                   </div>
                 ) : null}
               </section>
@@ -433,4 +398,4 @@ const label = { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 };
 const savedBanner = { marginTop: 10, border: '1px solid #2f8f5b', borderRadius: 10, background: '#123825', color: '#d8ffe9', padding: '10px 12px', display: 'grid', gap: 6 };
 const savedManageBtn = { width: 'fit-content', border: '1px solid #57b987', borderRadius: 999, background: '#16472f', color: '#e9fff3', padding: '6px 10px', cursor: 'pointer', fontWeight: 600 };
 const detailsGrid = { marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8 };
-const inviteGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8, marginTop: 10, alignItems: 'center' };
+const inviteBanner = { marginTop: 10, border: '1px dashed #304178', borderRadius: 10, background: 'rgba(255,255,255,0.03)', padding: '10px 12px', display: 'grid', gap: 4 };
