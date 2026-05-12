@@ -103,7 +103,9 @@ export default function MyBusinessesPage() {
     ]);
 
     if (membershipsErr) {
-      if (membershipsErr.message?.includes("public.business_memberships")) {
+      if (membershipsErr.message?.includes("businesses_1.zip") || membershipsErr.message?.includes('zip does not exist')) {
+        setMsg('Your Supabase database is missing the businesses.zip column. Run the latest supabase/schema.sql migration, then refresh.');
+      } else if (membershipsErr.message?.includes("public.business_memberships")) {
         setMsg('Business tables are not created yet in Supabase. Run latest supabase/schema.sql in SQL editor, then refresh.');
       } else {
         setMsg(membershipsErr.message);
@@ -314,7 +316,7 @@ export default function MyBusinessesPage() {
                   <a href={`/listings/new?business=${row.business_id}`} style={btn}>Post as this business</a>
                 </div>
 
-                <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+                <div style={detailsGrid}>
                   <textarea style={{ ...input, gridColumn: '1 / -1' }} rows={3} placeholder='Business description' value={details.description} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, description: e.target.value } }))} />
                   <select style={input} value={details.category} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, category: e.target.value } }))}>
                     <option value='established'>Established Businesses</option>
@@ -365,7 +367,7 @@ export default function MyBusinessesPage() {
                   </select>
                   <input style={input} placeholder='County' value={details.county} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, county: e.target.value } }))} />
                   <input style={{ ...input, gridColumn: '1 / -1' }} placeholder='Keywords (comma separated)' value={details.keywords} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, keywords: e.target.value } }))} />
-                  <button style={btnPrimary} type='button' onClick={() => saveDetails(row.business_id)}>Save Business Details</button>
+                  <button style={{ ...btnPrimary, gridColumn: '1 / -1' }} type='button' onClick={() => saveDetails(row.business_id)}>Save Business Details</button>
                 </div>
 
                 {savedBusinessId === row.business_id ? (
@@ -396,7 +398,7 @@ export default function MyBusinessesPage() {
                 </div>
 
                 {canManage ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr auto auto', gap: 8, marginTop: 10 }}>
+                  <div style={inviteGrid}>
                     <select style={input} value={invite.user_id} onChange={(e) => setInviteByBusiness((prev) => ({ ...prev, [row.business_id]: { ...invite, user_id: e.target.value } }))}>
                       <option value=''>Select user</option>
                       {profileOptions.filter((p) => p.id !== userId).map((p) => (
@@ -419,9 +421,9 @@ export default function MyBusinessesPage() {
   );
 }
 
-const wrap = { minHeight: '100vh', padding: 24, background: '#0b1020', color: '#fff' };
-const card = { maxWidth: 980, margin: '0 auto', background: '#121b3f', border: '1px solid #2a3c78', borderRadius: 12, padding: 16, display: 'grid', gap: 12 };
-const createWrap = { display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr auto', gap: 8 };
+const wrap = { minHeight: '100vh', padding: '16px 12px 96px', background: '#0b1020', color: '#fff', overflowX: 'hidden' };
+const card = { maxWidth: 980, margin: '0 auto', width: '100%', background: '#121b3f', border: '1px solid #2a3c78', borderRadius: 12, padding: 16, display: 'grid', gap: 12, boxSizing: 'border-box' };
+const createWrap = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8 };
 const bizCard = { border: '1px solid #304178', borderRadius: 10, background: '#0e1738', padding: 12 };
 const memberRow = { border: '1px solid #304178', borderRadius: 8, padding: 8, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' };
 const input = { borderRadius: 8, border: '1px solid #304178', background: '#0b1431', color: '#fff', padding: '10px 12px' };
@@ -430,3 +432,5 @@ const btnPrimary = { border: 0, borderRadius: 8, background: '#2e7dff', color: '
 const label = { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 };
 const savedBanner = { marginTop: 10, border: '1px solid #2f8f5b', borderRadius: 10, background: '#123825', color: '#d8ffe9', padding: '10px 12px', display: 'grid', gap: 6 };
 const savedManageBtn = { width: 'fit-content', border: '1px solid #57b987', borderRadius: 999, background: '#16472f', color: '#e9fff3', padding: '6px 10px', cursor: 'pointer', fontWeight: 600 };
+const detailsGrid = { marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8 };
+const inviteGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8, marginTop: 10, alignItems: 'center' };
