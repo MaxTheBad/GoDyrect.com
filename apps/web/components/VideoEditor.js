@@ -147,6 +147,18 @@ export default function VideoEditor({ onChange }) {
     propagate(clips, next, transitionType);
   }
 
+  function openFilePicker() {
+    const input = fileInputRef.current;
+    if (!input) return;
+    if (typeof input.showPicker === 'function') {
+      try {
+        input.showPicker();
+        return;
+      } catch {}
+    }
+    input.click();
+  }
+
   function updateOverlay(id, data) {
     const next = textOverlays.map((overlay) => (overlay.id === id ? { ...overlay, ...data } : overlay));
     setTextOverlays(next);
@@ -269,7 +281,7 @@ export default function VideoEditor({ onChange }) {
             onChange={(e) => addFiles(e.target.files)}
             style={hiddenInput}
           />
-          <button type="button" onClick={() => fileInputRef.current?.click()} style={primaryBtn}>Add clips</button>
+          <button type="button" onClick={openFilePicker} style={primaryBtn}>Add clips</button>
           <button type="button" onClick={addTextOverlay} style={secondaryBtn}>Add text</button>
         </div>
       </div>
@@ -316,7 +328,7 @@ export default function VideoEditor({ onChange }) {
               <div style={isMobile ? emptyStateMobile : emptyState}>
                 <div style={emptyIcon}>+</div>
                 <div style={emptyText}>Drop in a clip to start editing.</div>
-                <button type="button" onClick={() => fileInputRef.current?.click()} style={primaryBtn}>Add your first clip</button>
+                <button type="button" onClick={openFilePicker} style={primaryBtn}>Add your first clip</button>
               </div>
             )}
           </div>

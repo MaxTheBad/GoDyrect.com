@@ -22,14 +22,86 @@ export function FeedPost({
   const activeMedia = media[activeIndex] || media[0];
   const mediaCount = media.length;
   const videoRef = useRef(null);
+  const previewCanvasRef = useRef(null);
   const [showActions, setShowActions] = useState(false);
   const [mediaProgress, setMediaProgress] = useState(0);
   const [showPlayer, setShowPlayer] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoReady, setVideoReady] = useState(false);
   const [previewFrameReady, setPreviewFrameReady] = useState(false);
+  const [previewFrameUrl, setPreviewFrameUrl] = useState('');
   const poster = activeMedia?.thumbnail_url || listing?.thumbnail_url || '';
   const fallbackVisual = poster || buildFallbackPoster(listing.title, businessName);
+
+  useEffect(() => {
+    setShowActions(false);
+    setMediaProgress(0);
+    setShowPlayer(false);
+    setIsPlaying(false);
+    setVideoReady(false);
+    setPreviewFrameReady(false);
+    setPreviewFrameUrl('');
+  }, [activeMedia?.url]);
+
+  useEffect(() => {
+    if (activeMedia?.media_type !== 'video') return undefined;
+    const video = videoRef.current;
+    if (!video) return undefined;
+
+    let cancelled = false;
+    const targetTime = 0.45;
+    const captureFrame = () => {
+      const canvas = previewCanvasRef.current || document.createElement('canvas');
+      previewCanvasRef.current = canvas;
+      const width = video.videoWidth || 720;
+      const height = video.videoHeight || 1280;
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      try {
+        ctx.drawImage(video, 0, 0, width, height);
+        const next = canvas.toDataURL('image/jpeg', 0.84);
+        if (!cancelled && next) {
+          setPreviewFrameUrl(next);
+          setPreviewFrameReady(true);
+        }
+      } catch {
+        if (!cancelled) {
+          setPreviewFrameReady(true);
+        }
+      }
+    };
+
+    const onLoaded = () => {
+      try {
+        if (!Number.isFinite(video.duration) || video.duration <= 0) return;
+        const seekTo = Math.min(Math.max(targetTime, 0.08), Math.max(0.1, video.duration * 0.12));
+        if (Math.abs(video.currentTime - seekTo) > 0.1) {
+          video.currentTime = seekTo;
+        }
+      } catch {
+        setPreviewFrameReady(true);
+      }
+    };
+
+    const onSeeked = () => {
+      captureFrame();
+      try {
+        video.pause();
+      } catch {}
+    };
+
+    video.addEventListener('loadedmetadata', onLoaded);
+    video.addEventListener('seeked', onSeeked);
+    if (video.readyState >= 1) onLoaded();
+
+    return () => {
+      cancelled = true;
+      video.removeEventListener('loadedmetadata', onLoaded);
+      video.removeEventListener('seeked', onSeeked);
+    };
+  }, [activeMedia?.media_type, activeMedia?.url]);
 
   return (
     <article style={postShell}>
@@ -84,7 +156,7 @@ export function FeedPost({
               <video
                 ref={videoRef}
                 src={activeMedia.url}
-                poster={fallbackVisual}
+                poster={previewFrameUrl || fallbackVisual}
                 playsInline
                 controls={false}
                 preload='auto'
@@ -107,19 +179,6 @@ export function FeedPost({
                   const video = videoRef.current;
                   if (!video?.duration) return;
                   setMediaProgress((video.currentTime / video.duration) * 100);
-                  const targetTime = Math.min(0.9, Math.max(0.1, video.duration * 0.08));
-                  try {
-                    video.currentTime = targetTime;
-                  } catch {
-                    // Some browsers need a brief delay before seeking.
-                    window.setTimeout(() => {
-                      const nextVideo = videoRef.current;
-                      if (!nextVideo) return;
-                      try {
-                        nextVideo.currentTime = targetTime;
-                      } catch {}
-                    }, 50);
-                  }
                 }}
                 onSeeked={() => {
                   setPreviewFrameReady(true);
@@ -136,8 +195,22 @@ export function FeedPost({
                   setPreviewFrameReady(true);
                 }}
                 onPause={() => setIsPlaying(false)}
-                style={heroMediaAsset}
+                style={{
+                  ...heroMediaAsset,
+                  opacity: isPlaying ? 1 : 0,
+                }}
               />
+              {!isPlaying ? (
+                <img
+                  src={previewFrameUrl || fallbackVisual}
+                  alt='listing media preview'
+                  style={{
+                    ...heroMediaAsset,
+                    opacity: 1,
+                    zIndex: 1,
+                  }}
+                />
+              ) : null}
               <button
                 type='button'
                 aria-label='Play video'
@@ -236,7 +309,7 @@ export function FeedEmptyState({ loading, msg, hasFollows, hasSearch = false, ex
         </div>
         <div style={emptyActions}>
           <a href={exploreHref} style={primaryAction}>Explore listings</a>
-          <a href='/businesses' style={secondaryAction}>Follow businesses</a>
+          <a href='/businesses' style={secondaryAction}>Create business</a>
         </div>
       </div>
     );

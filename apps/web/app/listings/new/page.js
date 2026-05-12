@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 const VideoEditor = dynamic(() => import('../../../components/VideoEditor'), { ssr: false });
 import { useRouter } from 'next/navigation';
@@ -61,6 +61,7 @@ export default function NewListingPage() {
   const [missingFields, setMissingFields] = useState([]);
   const [errors, setErrors] = useState({});
   const [editorState, setEditorState] = useState({ clips: [], manifest: null });
+  const titleRef = useRef(null);
 
   useEffect(() => {
     async function checkAuth() {
@@ -143,8 +144,15 @@ export default function NewListingPage() {
     e.preventDefault();
     setErrors({});
     setMissingFields([]);
+    const showTitleError = () => {
+      setErrors((p) => ({ ...p, title: 'Title is required.' }));
+      requestAnimationFrame(() => {
+        titleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        titleRef.current?.focus?.();
+      });
+    };
     if (!form.business_id) return setErrors((p) => ({ ...p, business_id: 'Choose an approved business first.' }));
-    if (!form.title.trim()) return setErrors((p) => ({ ...p, title: 'Title is required.' }));
+    if (!form.title.trim()) return showTitleError();
     const parsedAskingPrice = Number(parseCurrencyInput(form.asking_price));
     if (!form.asking_price || !Number.isFinite(parsedAskingPrice) || parsedAskingPrice <= 0) return setErrors((p) => ({ ...p, asking_price: 'Enter a valid asking price.' }));
     if (!supabase) return setMsg('Supabase env vars missing.');
@@ -277,7 +285,17 @@ export default function NewListingPage() {
           {approvedBusinesses.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
         </select>
 
-        <input style={withError('title')} placeholder='Listing title / headline' value={form.title} onChange={(e) => update('title', e.target.value)} required />
+        <div style={{ display: 'grid', gap: 6 }}>
+          <input
+            ref={titleRef}
+            style={withError('title')}
+            placeholder='Listing title / headline'
+            value={form.title}
+            onChange={(e) => update('title', e.target.value)}
+            required
+          />
+          {errors.title ? <div style={{ color: '#ff8b94', fontSize: 13 }}>{errors.title}</div> : null}
+        </div>
         <label style={label}>Posting as role</label>
         <input style={input} value={form.lister_role} readOnly />
 

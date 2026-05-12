@@ -40,23 +40,36 @@ export async function POST(req) {
     }
 
     const outputPath = path.join(workDir, 'rendered.mp4');
-    const filterParts = [];
-    for (let i = 0; i < inputPaths.length; i++) {
-      filterParts.push(`[${i}:v]fps=30,scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuv420p[v${i}]`);
-    }
-    filterParts.push(`${inputPaths.map((_, i) => `[v${i}]`).join('')}concat=n=${inputPaths.length}:v=1:a=0[outv]`);
+    if (inputPaths.length === 1) {
+      await runFfmpeg([
+        '-y',
+        '-i', inputPaths[0],
+        '-vf', 'fps=30,scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuv420p',
+        '-an',
+        '-movflags', '+faststart',
+        '-preset', 'veryfast',
+        '-crf', '20',
+        outputPath,
+      ], workDir);
+    } else {
+      const filterParts = [];
+      for (let i = 0; i < inputPaths.length; i++) {
+        filterParts.push(`[${i}:v]fps=30,scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:(ow-iw)/2:(oh-ih)/2,setsar=1,format=yuv420p[v${i}]`);
+      }
+      filterParts.push(`${inputPaths.map((_, i) => `[v${i}]`).join('')}concat=n=${inputPaths.length}:v=1:a=0[outv]`);
 
-    await runFfmpeg([
-      '-y',
-      ...inputPaths.flatMap((inputPath) => ['-i', inputPath]),
-      '-filter_complex', filterParts.join(';'),
-      '-map', '[outv]',
-      '-an',
-      '-movflags', '+faststart',
-      '-preset', 'veryfast',
-      '-crf', '20',
-      outputPath,
-    ], workDir);
+      await runFfmpeg([
+        '-y',
+        ...inputPaths.flatMap((inputPath) => ['-i', inputPath]),
+        '-filter_complex', filterParts.join(';'),
+        '-map', '[outv]',
+        '-an',
+        '-movflags', '+faststart',
+        '-preset', 'veryfast',
+        '-crf', '20',
+        outputPath,
+      ], workDir);
+    }
 
     const outputBytes = await fs.readFile(outputPath);
     const response = new Response(outputBytes, {
