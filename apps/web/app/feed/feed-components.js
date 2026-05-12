@@ -80,14 +80,13 @@ export function FeedPost({
           </div>
           {activeMedia.media_type === 'video' ? (
             <>
-              <img src={fallbackVisual} alt='Video thumbnail' style={videoStill} />
               <video
                 ref={videoRef}
                 src={activeMedia.url}
                 poster={fallbackVisual}
                 playsInline
                 controls={false}
-                preload='metadata'
+                preload='auto'
                 onClick={() => {
                   const video = videoRef.current;
                   if (!video) return;
@@ -103,39 +102,32 @@ export function FeedPost({
                   if (!video?.duration) return;
                   setMediaProgress((video.currentTime / video.duration) * 100);
                 }}
-                onLoadedData={() => {
+                onLoadedMetadata={() => {
                   const video = videoRef.current;
                   if (!video?.duration) return;
                   setMediaProgress((video.currentTime / video.duration) * 100);
-                  setVideoReady(true);
                 }}
                 onCanPlay={() => setVideoReady(true)}
                 onPlay={() => setIsPlaying(true)}
                 onPause={() => setIsPlaying(false)}
-                style={{ ...heroMediaAsset, opacity: isPlaying && videoReady ? 1 : 0, transition: 'opacity 180ms ease' }}
+                style={heroMediaAsset}
               />
+              <button
+                type='button'
+                aria-label='Play video'
+                onClick={() => {
+                  const video = videoRef.current;
+                  if (!video) return;
+                  void video.play().then(() => setIsPlaying(true)).catch(() => {});
+                }}
+                style={{ ...videoCoverButton, opacity: isPlaying ? 0 : 1, pointerEvents: isPlaying ? 'none' : 'auto' }}
+              >
+                <div style={videoCoverPill}>{videoReady ? 'Tap to play' : 'Loading video...'}</div>
+              </button>
             </>
           ) : (
             <img src={activeMedia.thumbnail_url || activeMedia.url} alt='listing media' style={heroMediaAsset} />
           )}
-          {activeMedia.media_type === 'video' && !poster ? (
-            <button
-              type='button'
-              aria-label='Play video'
-              onClick={() => {
-                const video = videoRef.current;
-                if (!video) return;
-                void video.play().then(() => setIsPlaying(true)).catch(() => {});
-              }}
-              style={fallbackPoster}
-            >
-              <div style={fallbackPosterInner}>
-                <div style={fallbackPosterBadge}>Video</div>
-                <div style={fallbackPosterTitle}>{listing.title || businessName || 'Listing preview'}</div>
-                <div style={fallbackPosterSub}>{isPlaying ? 'Playing' : 'Tap to play'}</div>
-              </div>
-            </button>
-          ) : null}
           {activeMedia.media_type === 'video' ? (
             <input
               type='range'
@@ -407,12 +399,8 @@ const heroMediaFrame = {
   border: '1px solid #e5e7eb',
 };
 const heroMediaAsset = { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', background: '#050a1a' };
-const videoStill = { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', background: '#050a1a' };
-const fallbackPoster = { position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', background: 'linear-gradient(135deg, #0f1732 0%, #1a2b62 100%)', zIndex: 1, border: 0, padding: 0, cursor: 'pointer' };
-const fallbackPosterInner = { width: '100%', height: '100%', display: 'grid', placeItems: 'center', padding: 20, textAlign: 'center', color: '#fff' };
-const fallbackPosterBadge = { padding: '6px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', fontSize: 12, letterSpacing: 0.4, textTransform: 'uppercase', marginBottom: 10 };
-const fallbackPosterTitle = { fontSize: 18, fontWeight: 800, lineHeight: 1.2, maxWidth: 300, textShadow: '0 2px 8px rgba(0,0,0,0.35)' };
-const fallbackPosterSub = { marginTop: 8, fontSize: 13, color: 'rgba(255,255,255,0.82)' };
+const videoCoverButton = { position: 'absolute', inset: 0, zIndex: 2, border: 0, padding: 0, margin: 0, background: 'linear-gradient(135deg, rgba(15,23,42,0.08) 0%, rgba(15,23,42,0.2) 100%)', display: 'grid', placeItems: 'center', cursor: 'pointer' };
+const videoCoverPill = { padding: '10px 14px', borderRadius: 999, background: 'rgba(15,23,42,0.56)', border: '1px solid rgba(255,255,255,0.16)', color: '#fff', fontWeight: 700, letterSpacing: 0.2 };
 const mediaTitleOverlay = { position: 'absolute', left: 0, right: 0, top: 0, padding: '10px 14px 0', zIndex: 2, pointerEvents: 'none', background: 'linear-gradient(180deg, rgba(5,10,26,0.86) 0%, rgba(5,10,26,0) 100%)' };
 const mediaTitle = { color: '#fff', fontWeight: 800, fontSize: 16, lineHeight: 1.15, textShadow: '0 1px 2px rgba(0,0,0,0.5)' };
 const mediaCaption = { position: 'absolute', left: 0, right: 0, bottom: 44, padding: '16px 16px 14px', fontSize: 14, lineHeight: 1.4, color: '#fff', background: 'linear-gradient(180deg, rgba(15,23,42,0) 0%, rgba(15,23,42,0.72) 100%)', textShadow: '0 1px 2px rgba(0,0,0,0.35)', whiteSpace: 'pre-wrap', pointerEvents: 'none', zIndex: 2 };
