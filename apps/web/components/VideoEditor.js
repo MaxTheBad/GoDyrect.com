@@ -29,6 +29,7 @@ export default function VideoEditor({ onChange }) {
   const [duration, setDuration] = useState(0);
   const [selectedOverlayId, setSelectedOverlayId] = useState(null);
   const [currentClipUrl, setCurrentClipUrl] = useState('');
+  const [previewFrameUrl, setPreviewFrameUrl] = useState('');
   const [isMobile, setIsMobile] = useState(false);
   const videoRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -67,12 +68,71 @@ export default function VideoEditor({ onChange }) {
     const clip = clips[activeClipIndex];
     if (!clip?.file) {
       setCurrentClipUrl('');
+      setPreviewFrameUrl('');
       return undefined;
     }
     const url = URL.createObjectURL(clip.file);
     setCurrentClipUrl(url);
     return () => URL.revokeObjectURL(url);
   }, [activeClipIndex, clips]);
+
+  useEffect(() => {
+    if (!currentClipUrl) {
+      setPreviewFrameUrl('');
+      return undefined;
+    }
+
+    let cancelled = false;
+    const tempVideo = document.createElement('video');
+    const canvas = document.createElement('canvas');
+    tempVideo.preload = 'auto';
+    tempVideo.muted = true;
+    tempVideo.playsInline = true;
+    tempVideo.src = currentClipUrl;
+
+    const cleanup = () => {
+      tempVideo.removeAttribute('src');
+      tempVideo.load();
+    };
+
+    const capture = () => {
+      const width = tempVideo.videoWidth || 720;
+      const height = tempVideo.videoHeight || 1280;
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      try {
+        ctx.drawImage(tempVideo, 0, 0, width, height);
+        const next = canvas.toDataURL('image/jpeg', 0.84);
+        if (!cancelled && next) setPreviewFrameUrl(next);
+      } catch {
+        if (!cancelled) setPreviewFrameUrl('');
+      }
+    };
+
+    tempVideo.onloadedmetadata = () => {
+      try {
+        const target = Math.min(0.45, Math.max(0.08, (tempVideo.duration || 0) * 0.08));
+        tempVideo.currentTime = target;
+      } catch {
+        setPreviewFrameUrl('');
+      }
+    };
+
+    tempVideo.onseeked = () => {
+      capture();
+    };
+
+    tempVideo.onerror = () => {
+      if (!cancelled) setPreviewFrameUrl('');
+    };
+
+    return () => {
+      cancelled = true;
+      cleanup();
+    };
+  }, [currentClipUrl]);
 
   useEffect(() => {
     if (!playing) return;
@@ -301,6 +361,9 @@ export default function VideoEditor({ onChange }) {
                   playsInline
                   controls={false}
                 />
+                {previewFrameUrl && !playing ? (
+                  <img src={previewFrameUrl} alt={currentClip.title || 'clip preview'} style={previewPreview} />
+                ) : null}
                 <div style={gradientOverlay} />
                 {textOverlays.map((overlay) => (
                   <button
@@ -536,6 +599,14 @@ const previewFrameMobile = {
   maxHeight: '58vh',
 };
 const video = {
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  display: 'block',
+};
+const previewPreview = {
+  position: 'absolute',
+  inset: 0,
   width: '100%',
   height: '100%',
   objectFit: 'cover',
