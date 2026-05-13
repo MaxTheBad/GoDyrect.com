@@ -45,21 +45,22 @@ export function FeedPost({
 
   useEffect(() => {
     if (activeMedia?.media_type !== 'video') return undefined;
-    const tempVideo = document.createElement('video');
-    const canvas = previewCanvasRef.current || document.createElement('canvas');
-    previewCanvasRef.current = canvas;
+    const video = videoRef.current;
+    if (!video) return undefined;
 
     let cancelled = false;
     const targetTime = 0.45;
     const captureFrame = () => {
-      const width = tempVideo.videoWidth || 720;
-      const height = tempVideo.videoHeight || 1280;
+      const canvas = previewCanvasRef.current || document.createElement('canvas');
+      previewCanvasRef.current = canvas;
+      const width = video.videoWidth || 720;
+      const height = video.videoHeight || 1280;
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       try {
-        ctx.drawImage(tempVideo, 0, 0, width, height);
+        ctx.drawImage(video, 0, 0, width, height);
         const next = canvas.toDataURL('image/jpeg', 0.84);
         if (!cancelled && next) {
           setPreviewFrameUrl(next);
@@ -74,10 +75,10 @@ export function FeedPost({
 
     const onLoaded = () => {
       try {
-        if (!Number.isFinite(tempVideo.duration) || tempVideo.duration <= 0) return;
-        const seekTo = Math.min(Math.max(targetTime, 0.08), Math.max(0.1, tempVideo.duration * 0.12));
-        if (Math.abs(tempVideo.currentTime - seekTo) > 0.1) {
-          tempVideo.currentTime = seekTo;
+        if (!Number.isFinite(video.duration) || video.duration <= 0) return;
+        const seekTo = Math.min(Math.max(targetTime, 0.08), Math.max(0.1, video.duration * 0.12));
+        if (Math.abs(video.currentTime - seekTo) > 0.1) {
+          video.currentTime = seekTo;
         }
       } catch {
         setPreviewFrameReady(true);
@@ -87,25 +88,18 @@ export function FeedPost({
     const onSeeked = () => {
       captureFrame();
       try {
-        tempVideo.pause();
+        video.pause();
       } catch {}
     };
 
-    tempVideo.preload = 'auto';
-    tempVideo.muted = true;
-    tempVideo.playsInline = true;
-    tempVideo.crossOrigin = 'anonymous';
-    tempVideo.src = activeMedia.url;
-    tempVideo.addEventListener('loadedmetadata', onLoaded);
-    tempVideo.addEventListener('seeked', onSeeked);
-    if (tempVideo.readyState >= 1) onLoaded();
+    video.addEventListener('loadedmetadata', onLoaded);
+    video.addEventListener('seeked', onSeeked);
+    if (video.readyState >= 1) onLoaded();
 
     return () => {
       cancelled = true;
-      tempVideo.removeEventListener('loadedmetadata', onLoaded);
-      tempVideo.removeEventListener('seeked', onSeeked);
-      tempVideo.removeAttribute('src');
-      tempVideo.load();
+      video.removeEventListener('loadedmetadata', onLoaded);
+      video.removeEventListener('seeked', onSeeked);
     };
   }, [activeMedia?.media_type, activeMedia?.url]);
 
@@ -187,6 +181,12 @@ export function FeedPost({
                   const video = videoRef.current;
                   if (!video?.duration) return;
                   setMediaProgress((video.currentTime / video.duration) * 100);
+                  if (!isPlaying) {
+                    const seekTo = Math.min(0.45, Math.max(0.08, video.duration * 0.12));
+                    try {
+                      video.currentTime = seekTo;
+                    } catch {}
+                  }
                 }}
                 onSeeked={() => {
                   setPreviewFrameReady(true);

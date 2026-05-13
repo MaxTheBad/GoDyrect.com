@@ -82,29 +82,20 @@ export default function VideoEditor({ onChange }) {
       return undefined;
     }
 
+    const video = videoRef.current;
+    if (!video) return undefined;
     let cancelled = false;
-    const tempVideo = document.createElement('video');
     const canvas = document.createElement('canvas');
-    tempVideo.preload = 'auto';
-    tempVideo.muted = true;
-    tempVideo.playsInline = true;
-    tempVideo.crossOrigin = 'anonymous';
-    tempVideo.src = currentClipUrl;
-
-    const cleanup = () => {
-      tempVideo.removeAttribute('src');
-      tempVideo.load();
-    };
 
     const capture = () => {
-      const width = tempVideo.videoWidth || 720;
-      const height = tempVideo.videoHeight || 1280;
+      const width = video.videoWidth || 720;
+      const height = video.videoHeight || 1280;
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
       try {
-        ctx.drawImage(tempVideo, 0, 0, width, height);
+        ctx.drawImage(video, 0, 0, width, height);
         const next = canvas.toDataURL('image/jpeg', 0.84);
         if (!cancelled && next) setPreviewFrameUrl(next);
       } catch {
@@ -112,26 +103,31 @@ export default function VideoEditor({ onChange }) {
       }
     };
 
-    tempVideo.onloadedmetadata = () => {
+    const onLoaded = () => {
       try {
-        const target = Math.min(0.45, Math.max(0.08, (tempVideo.duration || 0) * 0.08));
-        tempVideo.currentTime = target;
+        if (!Number.isFinite(video.duration) || video.duration <= 0) return;
+        const target = Math.min(0.45, Math.max(0.08, video.duration * 0.08));
+        video.currentTime = target;
       } catch {
         setPreviewFrameUrl('');
       }
     };
 
-    tempVideo.onseeked = () => {
-      capture();
-    };
-
-    tempVideo.onerror = () => {
+    const onSeeked = () => capture();
+    const onError = () => {
       if (!cancelled) setPreviewFrameUrl('');
     };
 
+    video.addEventListener('loadedmetadata', onLoaded);
+    video.addEventListener('seeked', onSeeked);
+    video.addEventListener('error', onError);
+    if (video.readyState >= 1) onLoaded();
+
     return () => {
       cancelled = true;
-      cleanup();
+      video.removeEventListener('loadedmetadata', onLoaded);
+      video.removeEventListener('seeked', onSeeked);
+      video.removeEventListener('error', onError);
     };
   }, [currentClipUrl]);
 
