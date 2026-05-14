@@ -26,15 +26,18 @@ export function FeedPost({
   const [mediaProgress, setMediaProgress] = useState(0);
   const [showPlayer, setShowPlayer] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [previewErrored, setPreviewErrored] = useState(false);
   const poster = activeMedia?.thumbnail_url || listing?.thumbnail_url || '';
   const thumbnailSrc = poster || (activeMedia?.media_type === 'video' && activeMedia?.url ? `/api/video-thumbnail?src=${encodeURIComponent(activeMedia.url)}` : '');
   const fallbackVisual = poster || buildFallbackPoster(listing.title, businessName);
+  const previewVisual = previewErrored ? fallbackVisual : (thumbnailSrc || fallbackVisual);
 
   useEffect(() => {
     setShowActions(false);
     setMediaProgress(0);
     setShowPlayer(false);
     setIsPlaying(false);
+    setPreviewErrored(false);
   }, [activeMedia?.url]);
 
   return (
@@ -135,8 +138,9 @@ export function FeedPost({
               />
               {!isPlaying ? (
                 <img
-                  src={thumbnailSrc || fallbackVisual}
+                  src={previewVisual}
                   alt='listing media preview'
+                  onError={() => setPreviewErrored(true)}
                   style={{
                     ...heroMediaAsset,
                     display: 'block',
@@ -158,7 +162,7 @@ export function FeedPost({
               </button>
             </>
           ) : (
-            <img src={activeMedia.thumbnail_url || activeMedia.url} alt='listing media' style={heroMediaAsset} />
+            <img src={activeMedia.thumbnail_url || activeMedia.url} alt='listing media' style={heroMediaAsset} onError={() => setPreviewErrored(true)} />
           )}
           {activeMedia.media_type === 'video' ? (
             <input
@@ -212,7 +216,7 @@ export function FeedPost({
                 {activeMedia.media_type === 'video' ? (
                   <video
                     src={activeMedia.url}
-                    poster={thumbnailSrc || poster || undefined}
+                    poster={previewVisual || poster || undefined}
                     playsInline
                     controls
                     autoPlay
