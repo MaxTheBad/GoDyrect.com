@@ -44,6 +44,43 @@ export function FeedPost({
   }, [activeMedia?.url]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function loadThumbnail() {
+      if (activeMedia?.media_type !== 'video') return;
+      if (poster) {
+        setPreviewFrameUrl(poster);
+        setPreviewFrameReady(true);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/video-thumbnail', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ src: activeMedia.url }),
+        });
+        if (!response.ok) throw new Error('thumbnail fetch failed');
+        const blob = await response.blob();
+        if (cancelled) return;
+        setPreviewFrameUrl(URL.createObjectURL(blob));
+        setPreviewFrameReady(true);
+      } catch {
+        if (!cancelled) {
+          setPreviewFrameUrl('');
+          setPreviewFrameReady(true);
+        }
+      }
+    }
+
+    void loadThumbnail();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeMedia?.media_type, activeMedia?.url, poster]);
+
+  useEffect(() => {
     if (activeMedia?.media_type !== 'video') return undefined;
     const video = videoRef.current;
     if (!video) return undefined;
@@ -181,12 +218,6 @@ export function FeedPost({
                   const video = videoRef.current;
                   if (!video?.duration) return;
                   setMediaProgress((video.currentTime / video.duration) * 100);
-                  if (!isPlaying) {
-                    const seekTo = Math.min(0.45, Math.max(0.08, video.duration * 0.12));
-                    try {
-                      video.currentTime = seekTo;
-                    } catch {}
-                  }
                 }}
                 onSeeked={() => {
                   setPreviewFrameReady(true);
@@ -205,11 +236,22 @@ export function FeedPost({
                 onPause={() => setIsPlaying(false)}
                 style={{
                   ...heroMediaAsset,
-                  display: 'block',
+                  display: isPlaying ? 'block' : 'none',
                   pointerEvents: 'none',
-                  opacity: isPlaying ? 1 : 1,
+                  opacity: 1,
                 }}
               />
+              {!isPlaying ? (
+                <img
+                  src={previewFrameUrl || fallbackVisual}
+                  alt='listing media preview'
+                  style={{
+                    ...heroMediaAsset,
+                    display: 'block',
+                    zIndex: 1,
+                  }}
+                />
+              ) : null}
               <button
                 type='button'
                 aria-label='Play video'
@@ -220,7 +262,7 @@ export function FeedPost({
                 }}
                 style={{ ...videoCoverButton, opacity: isPlaying ? 0 : 1, pointerEvents: isPlaying ? 'none' : 'auto' }}
               >
-                <div style={videoCoverPill}>{previewFrameReady || previewFrameUrl ? 'Tap to play' : 'Loading video...'}</div>
+                <div style={videoCoverPill}>Tap to play</div>
               </button>
             </>
           ) : (

@@ -246,10 +246,29 @@ export default function NewListingPage() {
       const upload = await supabase.storage.from('listing-media').upload(pathName, renderFile, { upsert: true });
       if (upload.error) return setMsg(upload.error.message);
       const { data: pub } = supabase.storage.from('listing-media').getPublicUrl(pathName);
+      let thumbnailUrl = null;
+      try {
+        const thumbResponse = await fetch('/api/video-thumbnail', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ src: pub.publicUrl }),
+        });
+        if (thumbResponse.ok) {
+          const thumbBlob = await thumbResponse.blob();
+          const thumbFile = new File([thumbBlob], `listing-${listing.id}.jpg`, { type: 'image/jpeg' });
+          const thumbPath = `${user.id}/${listing.id}/thumb-${Date.now()}.jpg`;
+          const thumbUpload = await supabase.storage.from('listing-media').upload(thumbPath, thumbFile, { upsert: true });
+          if (!thumbUpload.error) {
+            const { data: thumbPub } = supabase.storage.from('listing-media').getPublicUrl(thumbPath);
+            thumbnailUrl = thumbPub.publicUrl;
+          }
+        }
+      } catch {}
       const mediaInsert = await supabase.from('listing_media').insert({
         listing_id: listing.id,
         media_type: 'video',
         url: pub.publicUrl,
+        thumbnail_url: thumbnailUrl,
         sort_order: 0,
       });
       if (mediaInsert.error) return setMsg(mediaInsert.error.message);
