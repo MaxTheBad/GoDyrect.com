@@ -30,6 +30,7 @@ export default function VideoEditor({ onChange }) {
   const [selectedOverlayId, setSelectedOverlayId] = useState(null);
   const [currentClipUrl, setCurrentClipUrl] = useState('');
   const [previewFrameUrl, setPreviewFrameUrl] = useState('');
+  const [thumbnailDataUrl, setThumbnailDataUrl] = useState('');
   const [isMobile, setIsMobile] = useState(false);
   const videoRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -69,6 +70,7 @@ export default function VideoEditor({ onChange }) {
     if (!clip?.file) {
       setCurrentClipUrl('');
       setPreviewFrameUrl('');
+      setThumbnailDataUrl('');
       return undefined;
     }
     const url = URL.createObjectURL(clip.file);
@@ -175,6 +177,26 @@ export default function VideoEditor({ onChange }) {
     propagate(next, textOverlays, transitionType);
   }
 
+  function captureThumbnailFromFrame() {
+    const video = videoRef.current;
+    if (!video) return;
+    const canvas = document.createElement('canvas');
+    const width = video.videoWidth || 720;
+    const height = video.videoHeight || 1280;
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    try {
+      ctx.drawImage(video, 0, 0, width, height);
+      const next = canvas.toDataURL('image/jpeg', 0.9);
+      if (!next) return;
+      setThumbnailDataUrl(next);
+      setPreviewFrameUrl(next);
+      propagate(clips, textOverlays, transitionType, next);
+    } catch {}
+  }
+
   function removeClip(idx) {
     const next = clips.slice();
     next.splice(idx, 1);
@@ -234,7 +256,7 @@ export default function VideoEditor({ onChange }) {
     propagate(clips, textOverlays, nextTransition);
   }
 
-  function propagate(nextClips, overlays, nextTransition) {
+  function propagate(nextClips, overlays, nextTransition, nextThumbnail = thumbnailDataUrl) {
     if (!onChange) return;
     const manifest = {
       created_at: new Date().toISOString(),
@@ -254,6 +276,7 @@ export default function VideoEditor({ onChange }) {
     onChange({
       clips: nextClips.map((clip) => clip.file),
       manifest,
+      thumbnailDataUrl: nextThumbnail || '',
     });
   }
 
@@ -486,6 +509,19 @@ export default function VideoEditor({ onChange }) {
                 </div>
               ))}
               {!textOverlays.length ? <div style={hint}>Add a caption or title, then drag it on the preview.</div> : null}
+            </div>
+          </section>
+
+          <section style={panel}>
+            <div style={panelHeader}>
+              <div style={panelLabel}>Thumbnail</div>
+              <button type="button" onClick={captureThumbnailFromFrame} style={miniAccentBtn} disabled={!clips.length}>
+                Use current frame
+              </button>
+            </div>
+            <div style={hint}>Pick the frame you want shown before play. This is what mobile will use first.</div>
+            <div style={thumbnailPreviewWrap}>
+              {thumbnailDataUrl ? <img src={thumbnailDataUrl} alt='Selected thumbnail' style={thumbnailPreview} /> : <div style={thumbnailEmpty}>No thumbnail selected yet.</div>}
             </div>
           </section>
         </div>
@@ -819,6 +855,27 @@ const overlayCard = {
   borderRadius: 16,
   border: '1px solid rgba(125, 168, 255, 0.12)',
   background: 'rgba(255,255,255,0.03)',
+};
+const thumbnailPreviewWrap = {
+  minHeight: 180,
+  borderRadius: 16,
+  border: '1px dashed rgba(125, 168, 255, 0.22)',
+  background: 'rgba(255,255,255,0.02)',
+  overflow: 'hidden',
+  display: 'grid',
+  placeItems: 'center',
+};
+const thumbnailPreview = {
+  width: '100%',
+  height: 180,
+  objectFit: 'cover',
+  display: 'block',
+};
+const thumbnailEmpty = {
+  color: '#8fa2c8',
+  fontSize: 13,
+  padding: 16,
+  textAlign: 'center',
 };
 const overlayInput = {
   width: '100%',

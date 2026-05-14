@@ -21,6 +21,18 @@ function parseCurrencyInput(value) {
   return String(num);
 }
 
+function dataUrlToFile(dataUrl, filename) {
+  if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) return null;
+  const [meta, content] = dataUrl.split(',');
+  if (!meta || !content) return null;
+  const mimeMatch = meta.match(/data:([^;]+);base64/);
+  const mime = mimeMatch?.[1] || 'image/jpeg';
+  const binary = atob(content);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return new File([bytes], filename, { type: mime });
+}
+
 function yearsSince(startDate) {
   if (!startDate) return null;
   const start = new Date(startDate);
@@ -60,7 +72,7 @@ export default function NewListingPage() {
   const [useDefaultAskingPrice, setUseDefaultAskingPrice] = useState(true);
   const [missingFields, setMissingFields] = useState([]);
   const [errors, setErrors] = useState({});
-  const [editorState, setEditorState] = useState({ clips: [], manifest: null });
+  const [editorState, setEditorState] = useState({ clips: [], manifest: null, thumbnailDataUrl: '' });
   const titleRef = useRef(null);
 
   useEffect(() => {
@@ -247,20 +259,26 @@ export default function NewListingPage() {
       if (upload.error) return setMsg(upload.error.message);
       const { data: pub } = supabase.storage.from('listing-media').getPublicUrl(pathName);
       let thumbnailUrl = null;
+      const chosenThumbnail = dataUrlToFile(editorState.thumbnailDataUrl, `listing-${listing.id}-thumbnail.jpg`);
       try {
-        const thumbResponse = await fetch('/api/video-thumbnail', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ src: pub.publicUrl }),
-        });
-        if (thumbResponse.ok) {
-          const thumbBlob = await thumbResponse.blob();
-          const thumbFile = new File([thumbBlob], `listing-${listing.id}.jpg`, { type: 'image/jpeg' });
+        if (chosenThumbnail) {
           const thumbPath = `${user.id}/${listing.id}/thumb-${Date.now()}.jpg`;
-          const thumbUpload = await supabase.storage.from('listing-media').upload(thumbPath, thumbFile, { upsert: true });
+          const thumbUpload = await supabase.storage.from('listing-media').upload(thumbPath, chosenThumbnail, { upsert: true });
           if (!thumbUpload.error) {
             const { data: thumbPub } = supabase.storage.from('listing-media').getPublicUrl(thumbPath);
             thumbnailUrl = thumbPub.publicUrl;
+          }
+        } else {
+          const thumbResponse = await fetch('/api/video-thumbnail?src=' + encodeURIComponent(pub.publicUrl));
+          if (thumbResponse.ok) {
+            const thumbBlob = await thumbResponse.blob();
+            const thumbFile = new File([thumbBlob], `listing-${listing.id}.jpg`, { type: 'image/jpeg' });
+            const thumbPath = `${user.id}/${listing.id}/thumb-${Date.now()}.jpg`;
+            const thumbUpload = await supabase.storage.from('listing-media').upload(thumbPath, thumbFile, { upsert: true });
+            if (!thumbUpload.error) {
+              const { data: thumbPub } = supabase.storage.from('listing-media').getPublicUrl(thumbPath);
+              thumbnailUrl = thumbPub.publicUrl;
+            }
           }
         }
       } catch {}
@@ -347,8 +365,8 @@ export default function NewListingPage() {
         ) : null}
 
         {/* Video editor queues a single render manifest instead of uploading raw clips */}
-        <VideoEditor onChange={({ clips, manifest }) => {
-          setEditorState({ clips: Array.isArray(clips) ? clips : [], manifest: manifest || null });
+        <VideoEditor onChange={({ clips, manifest, thumbnailDataUrl }) => {
+          setEditorState({ clips: Array.isArray(clips) ? clips : [], manifest: manifest || null, thumbnailDataUrl: thumbnailDataUrl || '' });
           setFiles(Array.isArray(clips) ? clips : []);
         }} />
 
