@@ -56,3 +56,40 @@ export async function POST(req) {
     return new Response(JSON.stringify({ error: String(err?.message || err) }), { status: 500 });
   }
 }
+
+export async function GET(req) {
+  try {
+    const src = new URL(req.url).searchParams.get('src');
+    if (!src) {
+      return new Response(JSON.stringify({ error: 'Missing src.' }), { status: 400 });
+    }
+
+    const workDir = await fs.mkdtemp(path.join(os.tmpdir(), 'godyrect-thumb-'));
+    const outputPath = path.join(workDir, 'thumb.jpg');
+
+    try {
+      await runFfmpeg([
+        '-y',
+        '-ss', '0.45',
+        '-i', src,
+        '-frames:v', '1',
+        '-vf', 'scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:(ow-iw)/2:(oh-ih)/2',
+        '-q:v', '2',
+        outputPath,
+      ], workDir);
+
+      const bytes = await fs.readFile(outputPath);
+      return new Response(bytes, {
+        status: 200,
+        headers: {
+          'Content-Type': 'image/jpeg',
+          'Cache-Control': 'public, max-age=86400, s-maxage=86400',
+        },
+      });
+    } finally {
+      await fs.rm(workDir, { recursive: true, force: true });
+    }
+  } catch (err) {
+    return new Response(JSON.stringify({ error: String(err?.message || err) }), { status: 500 });
+  }
+}

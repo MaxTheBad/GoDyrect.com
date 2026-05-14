@@ -22,15 +22,12 @@ export function FeedPost({
   const activeMedia = media[activeIndex] || media[0];
   const mediaCount = media.length;
   const videoRef = useRef(null);
-  const previewCanvasRef = useRef(null);
   const [showActions, setShowActions] = useState(false);
   const [mediaProgress, setMediaProgress] = useState(0);
   const [showPlayer, setShowPlayer] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [videoReady, setVideoReady] = useState(false);
-  const [previewFrameReady, setPreviewFrameReady] = useState(false);
-  const [previewFrameUrl, setPreviewFrameUrl] = useState('');
   const poster = activeMedia?.thumbnail_url || listing?.thumbnail_url || '';
+  const thumbnailSrc = poster || (activeMedia?.media_type === 'video' && activeMedia?.url ? `/api/video-thumbnail?src=${encodeURIComponent(activeMedia.url)}` : '');
   const fallbackVisual = poster || buildFallbackPoster(listing.title, businessName);
 
   useEffect(() => {
@@ -38,107 +35,7 @@ export function FeedPost({
     setMediaProgress(0);
     setShowPlayer(false);
     setIsPlaying(false);
-    setVideoReady(false);
-    setPreviewFrameReady(false);
-    setPreviewFrameUrl('');
   }, [activeMedia?.url]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadThumbnail() {
-      if (activeMedia?.media_type !== 'video') return;
-      if (poster) {
-        setPreviewFrameUrl(poster);
-        setPreviewFrameReady(true);
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/video-thumbnail', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ src: activeMedia.url }),
-        });
-        if (!response.ok) throw new Error('thumbnail fetch failed');
-        const blob = await response.blob();
-        if (cancelled) return;
-        setPreviewFrameUrl(URL.createObjectURL(blob));
-        setPreviewFrameReady(true);
-      } catch {
-        if (!cancelled) {
-          setPreviewFrameUrl('');
-          setPreviewFrameReady(true);
-        }
-      }
-    }
-
-    void loadThumbnail();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activeMedia?.media_type, activeMedia?.url, poster]);
-
-  useEffect(() => {
-    if (activeMedia?.media_type !== 'video') return undefined;
-    const video = videoRef.current;
-    if (!video) return undefined;
-
-    let cancelled = false;
-    const targetTime = 0.45;
-    const captureFrame = () => {
-      const canvas = previewCanvasRef.current || document.createElement('canvas');
-      previewCanvasRef.current = canvas;
-      const width = video.videoWidth || 720;
-      const height = video.videoHeight || 1280;
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      try {
-        ctx.drawImage(video, 0, 0, width, height);
-        const next = canvas.toDataURL('image/jpeg', 0.84);
-        if (!cancelled && next) {
-          setPreviewFrameUrl(next);
-          setPreviewFrameReady(true);
-        }
-      } catch {
-        if (!cancelled) {
-          setPreviewFrameReady(true);
-        }
-      }
-    };
-
-    const onLoaded = () => {
-      try {
-        if (!Number.isFinite(video.duration) || video.duration <= 0) return;
-        const seekTo = Math.min(Math.max(targetTime, 0.08), Math.max(0.1, video.duration * 0.12));
-        if (Math.abs(video.currentTime - seekTo) > 0.1) {
-          video.currentTime = seekTo;
-        }
-      } catch {
-        setPreviewFrameReady(true);
-      }
-    };
-
-    const onSeeked = () => {
-      captureFrame();
-      try {
-        video.pause();
-      } catch {}
-    };
-
-    video.addEventListener('loadedmetadata', onLoaded);
-    video.addEventListener('seeked', onSeeked);
-    if (video.readyState >= 1) onLoaded();
-
-    return () => {
-      cancelled = true;
-      video.removeEventListener('loadedmetadata', onLoaded);
-      video.removeEventListener('seeked', onSeeked);
-    };
-  }, [activeMedia?.media_type, activeMedia?.url]);
 
   return (
     <article style={postShell}>
@@ -193,7 +90,7 @@ export function FeedPost({
               <video
                 ref={videoRef}
                 src={activeMedia.url}
-                poster={previewFrameUrl || fallbackVisual}
+                poster={thumbnailSrc || fallbackVisual}
                 playsInline
                 controls={false}
                 preload='auto'
@@ -219,11 +116,7 @@ export function FeedPost({
                   if (!video?.duration) return;
                   setMediaProgress((video.currentTime / video.duration) * 100);
                 }}
-                onSeeked={() => {
-                  setPreviewFrameReady(true);
-                }}
                 onCanPlay={() => {
-                  setVideoReady(true);
                   const video = videoRef.current;
                   if (video && !isPlaying) {
                     video.pause();
@@ -231,7 +124,6 @@ export function FeedPost({
                 }}
                 onPlay={() => {
                   setIsPlaying(true);
-                  setPreviewFrameReady(true);
                 }}
                 onPause={() => setIsPlaying(false)}
                 style={{
@@ -243,7 +135,7 @@ export function FeedPost({
               />
               {!isPlaying ? (
                 <img
-                  src={previewFrameUrl || fallbackVisual}
+                  src={thumbnailSrc || fallbackVisual}
                   alt='listing media preview'
                   style={{
                     ...heroMediaAsset,
@@ -320,7 +212,7 @@ export function FeedPost({
                 {activeMedia.media_type === 'video' ? (
                   <video
                     src={activeMedia.url}
-                    poster={poster || undefined}
+                    poster={thumbnailSrc || poster || undefined}
                     playsInline
                     controls
                     autoPlay
