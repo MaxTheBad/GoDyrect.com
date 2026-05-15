@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 
 export default function EditListingPage() {
@@ -9,6 +9,8 @@ export default function EditListingPage() {
   const [msg, setMsg] = useState('');
   const [media, setMedia] = useState([]);
   const [newFiles, setNewFiles] = useState([]);
+  const [thumbEditor, setThumbEditor] = useState(null);
+  const thumbVideoRef = useRef(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -114,6 +116,38 @@ export default function EditListingPage() {
     setMedia((prev) => prev.filter((m) => m.id !== mediaId));
   }
 
+  async function saveThumbnailForMedia() {
+    if (!supabase || !thumbEditor?.media?.url) return;
+    const video = thumbVideoRef.current;
+    if (!video) return;
+    const canvas = document.createElement('canvas');
+    const width = video.videoWidth || 720;
+    const height = video.videoHeight || 1280;
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    try {
+      ctx.drawImage(video, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+      const blob = await (await fetch(dataUrl)).blob();
+      const thumbPath = `${Date.now()}-${thumbEditor.media.id}-thumb.jpg`;
+      const upload = await supabase.storage.from('listing-media').upload(thumbPath, blob, { upsert: true });
+      if (upload.error) return setMsg(upload.error.message);
+      const { data: pub } = supabase.storage.from('listing-media').getPublicUrl(thumbPath);
+      const { error } = await supabase
+        .from('listing_media')
+        .update({ thumbnail_url: pub.publicUrl })
+        .eq('id', thumbEditor.media.id);
+      if (error) return setMsg(error.message);
+      setMedia((prev) => prev.map((m) => (m.id === thumbEditor.media.id ? { ...m, thumbnail_url: pub.publicUrl } : m)));
+      setMsg('Thumbnail updated.');
+      setThumbEditor(null);
+    } catch (err) {
+      setMsg(String(err?.message || err));
+    }
+  }
+
   if (!id) {
     return <main style={wrap}><div style={card}><p>Missing listing id.</p><a href='/listings' style={{ color: '#8fb7ff' }}>Back to Listings</a></div></main>;
   }
@@ -153,6 +187,9 @@ export default function EditListingPage() {
             {media.map((m) => (
               <div key={m.id} style={mediaItem}>
                 {m.media_type === 'video' ? <video src={m.url} controls style={mediaEl} /> : <img src={m.thumbnail_url || m.url} alt='media' style={mediaEl} />}
+                {m.media_type === 'video' ? (
+                  <button type='button' style={thumbBtn} onClick={() => setThumbEditor({ media: m })}>Select thumbnail</button>
+                ) : null}
                 <button type='button' style={removeBtn} onClick={() => removeMedia(m.id)}>Remove</button>
               </div>
             ))}
@@ -171,6 +208,26 @@ export default function EditListingPage() {
         </div>
         {msg ? <p>{msg}</p> : null}
       </form>
+
+      {thumbEditor ? (
+        <div style={modal} onClick={() => setThumbEditor(null)} role='presentation'>
+          <div style={modalInner} onClick={(e) => e.stopPropagation()} role='presentation'>
+            <h2 style={{ marginTop: 0 }}>Select thumbnail</h2>
+            <p style={{ opacity: 0.8 }}>Move to the frame you want, then tap save.</p>
+            <video
+              ref={thumbVideoRef}
+              src={thumbEditor.media.url}
+              controls
+              playsInline
+              style={thumbVideo}
+            />
+            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <button type='button' style={btn} onClick={saveThumbnailForMedia}>Use current frame</button>
+              <button type='button' style={ghostBtn} onClick={() => setThumbEditor(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
@@ -185,4 +242,8 @@ const mediaSection = { marginTop: 8, border: '1px solid #304178', borderRadius: 
 const mediaGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 };
 const mediaItem = { border: '1px solid #304178', borderRadius: 8, overflow: 'hidden', background: '#0b1431', display: 'grid', gap: 6, padding: 6 };
 const mediaEl = { width: '100%', height: 90, objectFit: 'cover', borderRadius: 6 };
+const thumbBtn = { border: '1px solid #304178', borderRadius: 6, background: '#10204a', color: '#fff', padding: '6px 8px', cursor: 'pointer', fontSize: 12 };
 const removeBtn = { border: '1px solid #7a3040', borderRadius: 6, background: '#3a1520', color: '#ffd7dd', padding: '5px 8px', cursor: 'pointer', fontSize: 12 };
+const modal = { position: 'fixed', inset: 0, background: 'rgba(3,7,18,0.82)', display: 'grid', placeItems: 'center', padding: 16, zIndex: 60 };
+const modalInner = { width: 'min(96vw, 720px)', background: '#121b3f', border: '1px solid #304178', borderRadius: 16, padding: 16, color: '#fff' };
+const thumbVideo = { width: '100%', maxHeight: '70vh', borderRadius: 12, background: '#000' };
