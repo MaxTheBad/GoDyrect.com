@@ -234,6 +234,14 @@ export default function NewListingPage() {
 
     const renderClips = Array.isArray(editorState.clips) ? editorState.clips : [];
     if (renderClips.length) {
+      let pub;
+      if (renderClips.length === 1) {
+        const clip = renderClips[0];
+        const pathName = `${user.id}/${listing.id}/final-${Date.now()}-${clip.name || 'clip.mp4'}`;
+        const upload = await supabase.storage.from('listing-media').upload(pathName, clip, { upsert: true });
+        if (upload.error) return setMsg(upload.error.message);
+        pub = supabase.storage.from('listing-media').getPublicUrl(pathName).data;
+      } else {
       const renderForm = new FormData();
       renderClips.forEach((clip) => renderForm.append('clips', clip, clip.name));
       renderForm.append('manifest', JSON.stringify({
@@ -257,7 +265,8 @@ export default function NewListingPage() {
       const pathName = `${user.id}/${listing.id}/final-${Date.now()}.mp4`;
       const upload = await supabase.storage.from('listing-media').upload(pathName, renderFile, { upsert: true });
       if (upload.error) return setMsg(upload.error.message);
-      const { data: pub } = supabase.storage.from('listing-media').getPublicUrl(pathName);
+      pub = supabase.storage.from('listing-media').getPublicUrl(pathName).data;
+      }
       let thumbnailUrl = null;
       const chosenThumbnail = dataUrlToFile(editorState.thumbnailDataUrl, `listing-${listing.id}-thumbnail.jpg`);
       try {

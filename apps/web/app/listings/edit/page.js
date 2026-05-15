@@ -10,6 +10,8 @@ export default function EditListingPage() {
   const [media, setMedia] = useState([]);
   const [newFiles, setNewFiles] = useState([]);
   const [thumbEditor, setThumbEditor] = useState(null);
+  const [thumbTime, setThumbTime] = useState(0.5);
+  const [thumbPreview, setThumbPreview] = useState('');
   const thumbVideoRef = useRef(null);
 
   useEffect(() => {
@@ -117,20 +119,9 @@ export default function EditListingPage() {
   }
 
   async function saveThumbnailForMedia() {
-    if (!supabase || !thumbEditor?.media?.url) return;
-    const video = thumbVideoRef.current;
-    if (!video) return;
-    const canvas = document.createElement('canvas');
-    const width = video.videoWidth || 720;
-    const height = video.videoHeight || 1280;
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!supabase || !thumbEditor?.media?.url || !thumbPreview) return;
     try {
-      ctx.drawImage(video, 0, 0, width, height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-      const blob = await (await fetch(dataUrl)).blob();
+      const blob = await (await fetch(thumbPreview)).blob();
       const thumbPath = `${Date.now()}-${thumbEditor.media.id}-thumb.jpg`;
       const upload = await supabase.storage.from('listing-media').upload(thumbPath, blob, { upsert: true });
       if (upload.error) return setMsg(upload.error.message);
@@ -188,7 +179,7 @@ export default function EditListingPage() {
               <div key={m.id} style={mediaItem}>
                 {m.media_type === 'video' ? <video src={m.url} controls style={mediaEl} /> : <img src={m.thumbnail_url || m.url} alt='media' style={mediaEl} />}
                 {m.media_type === 'video' ? (
-                  <button type='button' style={thumbBtn} onClick={() => setThumbEditor({ media: m })}>Select thumbnail</button>
+                  <button type='button' style={thumbBtn} onClick={() => { setThumbPreview(''); setThumbTime(0.5); setThumbEditor({ media: m }); }}>Select thumbnail</button>
                 ) : null}
                 <button type='button' style={removeBtn} onClick={() => removeMedia(m.id)}>Remove</button>
               </div>
@@ -213,16 +204,61 @@ export default function EditListingPage() {
         <div style={modal} onClick={() => setThumbEditor(null)} role='presentation'>
           <div style={modalInner} onClick={(e) => e.stopPropagation()} role='presentation'>
             <h2 style={{ marginTop: 0 }}>Select thumbnail</h2>
-            <p style={{ opacity: 0.8 }}>Move to the frame you want, then tap save.</p>
-            <video
-              ref={thumbVideoRef}
-              src={thumbEditor.media.url}
-              controls
-              playsInline
-              style={thumbVideo}
+            <p style={{ opacity: 0.8 }}>Slide to the exact frame you want, then save it.</p>
+            <div style={thumbPreviewWrap}>
+              {thumbPreview ? <img src={thumbPreview} alt='Thumbnail preview' style={thumbPreviewImg} /> : (
+                <video
+                  ref={thumbVideoRef}
+                  src={thumbEditor.media.url}
+                  controls
+                  playsInline
+                  style={thumbVideo}
+                  onLoadedMetadata={() => {
+                    const video = thumbVideoRef.current;
+                    if (!video) return;
+                    const start = Math.min(0.5, Math.max(0.1, video.duration * 0.08 || 0.5));
+                    setThumbTime(start);
+                    try {
+                      video.currentTime = start;
+                    } catch {}
+                  }}
+                  onSeeked={() => {
+                    const video = thumbVideoRef.current;
+                    if (!video) return;
+                    const canvas = document.createElement('canvas');
+                    const width = video.videoWidth || 720;
+                    const height = video.videoHeight || 1280;
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) return;
+                    try {
+                      ctx.drawImage(video, 0, 0, width, height);
+                      setThumbPreview(canvas.toDataURL('image/jpeg', 0.92));
+                    } catch {}
+                  }}
+                />
+              )}
+            </div>
+            <input
+              type='range'
+              min='0'
+              max={Math.max(0.5, thumbEditor.media.duration || 10)}
+              step='0.1'
+              value={Math.min(thumbTime, Math.max(0.5, thumbEditor.media.duration || 10))}
+              style={thumbScrub}
+              onChange={(e) => {
+                const next = Number(e.target.value);
+                setThumbTime(next);
+                const video = thumbVideoRef.current;
+                if (!video) return;
+                try {
+                  video.currentTime = next;
+                } catch {}
+              }}
             />
             <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-              <button type='button' style={btn} onClick={saveThumbnailForMedia}>Use current frame</button>
+              <button type='button' style={btn} onClick={saveThumbnailForMedia}>Save thumbnail</button>
               <button type='button' style={ghostBtn} onClick={() => setThumbEditor(null)}>Cancel</button>
             </div>
           </div>
@@ -247,3 +283,6 @@ const removeBtn = { border: '1px solid #7a3040', borderRadius: 6, background: '#
 const modal = { position: 'fixed', inset: 0, background: 'rgba(3,7,18,0.82)', display: 'grid', placeItems: 'center', padding: 16, zIndex: 60 };
 const modalInner = { width: 'min(96vw, 720px)', background: '#121b3f', border: '1px solid #304178', borderRadius: 16, padding: 16, color: '#fff' };
 const thumbVideo = { width: '100%', maxHeight: '70vh', borderRadius: 12, background: '#000' };
+const thumbPreviewWrap = { width: '100%', borderRadius: 12, overflow: 'hidden', background: '#000', marginTop: 8 };
+const thumbPreviewImg = { width: '100%', height: 'auto', display: 'block' };
+const thumbScrub = { width: '100%', marginTop: 12, accentColor: '#2e7dff' };

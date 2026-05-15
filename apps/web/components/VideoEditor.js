@@ -31,6 +31,7 @@ export default function VideoEditor({ onChange }) {
   const [currentClipUrl, setCurrentClipUrl] = useState('');
   const [previewFrameUrl, setPreviewFrameUrl] = useState('');
   const [thumbnailDataUrl, setThumbnailDataUrl] = useState('');
+  const [thumbnailTime, setThumbnailTime] = useState(0.45);
   const [isMobile, setIsMobile] = useState(false);
   const videoRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -71,6 +72,7 @@ export default function VideoEditor({ onChange }) {
       setCurrentClipUrl('');
       setPreviewFrameUrl('');
       setThumbnailDataUrl('');
+      setThumbnailTime(0.45);
       return undefined;
     }
     const url = URL.createObjectURL(clip.file);
@@ -110,6 +112,7 @@ export default function VideoEditor({ onChange }) {
         if (!Number.isFinite(video.duration) || video.duration <= 0) return;
         const target = Math.min(0.45, Math.max(0.08, video.duration * 0.08));
         video.currentTime = target;
+        setThumbnailTime(target);
       } catch {
         setPreviewFrameUrl('');
       }
@@ -254,6 +257,35 @@ export default function VideoEditor({ onChange }) {
   function changeTransition(nextTransition) {
     setTransitionType(nextTransition);
     propagate(clips, textOverlays, nextTransition);
+  }
+
+  function seekThumbnail(seconds) {
+    const video = videoRef.current;
+    if (!video || !Number.isFinite(seconds)) return;
+    try {
+      video.currentTime = seconds;
+      setThumbnailTime(seconds);
+      setPlaying(false);
+      video.pause();
+      const canvas = document.createElement('canvas');
+      const width = video.videoWidth || 720;
+      const height = video.videoHeight || 1280;
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      setTimeout(() => {
+        try {
+          ctx.drawImage(video, 0, 0, width, height);
+          const next = canvas.toDataURL('image/jpeg', 0.9);
+          if (next) {
+            setThumbnailDataUrl(next);
+            setPreviewFrameUrl(next);
+            propagate(clips, textOverlays, transitionType, next);
+          }
+        } catch {}
+      }, 120);
+    } catch {}
   }
 
   function propagate(nextClips, overlays, nextTransition, nextThumbnail = thumbnailDataUrl) {
@@ -515,14 +547,27 @@ export default function VideoEditor({ onChange }) {
           <section style={panel}>
             <div style={panelHeader}>
               <div style={panelLabel}>Thumbnail</div>
-              <button type="button" onClick={captureThumbnailFromFrame} style={miniAccentBtn} disabled={!clips.length}>
-                Use current frame
-              </button>
             </div>
-            <div style={hint}>Pick the frame you want shown before play. This is what mobile will use first.</div>
+            <div style={hint}>Slide to the frame you want shown before play. This is what mobile will use first.</div>
+            <div style={thumbnailScrubWrap}>
+              <input
+                type="range"
+                min="0"
+                max={Math.max(0.1, currentClip?.duration || 10)}
+                step="0.1"
+                value={Math.min(thumbnailTime, Math.max(0.1, currentClip?.duration || 10))}
+                onChange={(e) => seekThumbnail(Number(e.target.value))}
+                style={thumbnailScrub}
+                disabled={!clips.length}
+              />
+              <div style={thumbnailScrubLabel}>{Math.round(thumbnailTime * 10) / 10}s</div>
+            </div>
             <div style={thumbnailPreviewWrap}>
               {thumbnailDataUrl ? <img src={thumbnailDataUrl} alt='Selected thumbnail' style={thumbnailPreview} /> : <div style={thumbnailEmpty}>No thumbnail selected yet.</div>}
             </div>
+            <button type="button" onClick={captureThumbnailFromFrame} style={miniAccentBtn} disabled={!clips.length}>
+              Use current frame
+            </button>
           </section>
         </div>
       </div>
@@ -864,6 +909,18 @@ const thumbnailPreviewWrap = {
   overflow: 'hidden',
   display: 'grid',
   placeItems: 'center',
+};
+const thumbnailScrubWrap = {
+  display: 'grid',
+  gap: 8,
+};
+const thumbnailScrub = {
+  width: '100%',
+  accentColor: '#2e7dff',
+};
+const thumbnailScrubLabel = {
+  color: '#9bb0d3',
+  fontSize: 12,
 };
 const thumbnailPreview = {
   width: '100%',
