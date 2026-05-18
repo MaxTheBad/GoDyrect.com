@@ -82,6 +82,7 @@ export default function MyBusinessesPage() {
   const [newBusinessCountry, setNewBusinessCountry] = useState('United States');
   const [focusBusinessId, setFocusBusinessId] = useState('');
   const [savedBusinessId, setSavedBusinessId] = useState('');
+  const [editingByBusiness, setEditingByBusiness] = useState({});
   const [msg, setMsg] = useState('');
 
   async function loadAll() {
@@ -232,10 +233,15 @@ export default function MyBusinessesPage() {
 
     setSavedBusinessId(businessId);
     setMsg('Business saved.');
+    setBusinessEditing(businessId, false);
     setTimeout(() => {
       const el = document.getElementById(`members-${businessId}`);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
+  }
+
+  function setBusinessEditing(businessId, editing) {
+    setEditingByBusiness((prev) => ({ ...prev, [businessId]: editing }));
   }
 
   async function setAdmin(memberId, makeAdmin) {
@@ -278,6 +284,21 @@ export default function MyBusinessesPage() {
             const age = yearsSince(details.start_date);
             const completePct = completeness(details);
             const roleTone = row.is_admin ? 'Owned / controlled by you' : 'You are a member';
+            const isEditing = !!editingByBusiness[row.business_id];
+            const summaryRows = [
+              ['Description', details.description || 'Not set'],
+              ['Category', details.category === 'asset_sale' ? 'Asset Sales' : details.category === 'real_estate' ? 'Real Estate' : details.category === 'startup' ? 'Start-up Businesses' : 'Established Businesses'],
+              ['Start date', details.start_date || 'Not set'],
+              ['Annual revenue', details.annual_revenue || 'Not set'],
+              ['Annual profit', details.annual_profit || 'Not set'],
+              ['Asking price', details.default_asking_price || 'Not set'],
+              ['City', details.city || 'Not set'],
+              ['State', details.state || 'Not set'],
+              ['ZIP', details.zip || 'Not set'],
+              ['Country', details.country || 'Not set'],
+              ['County', details.county || 'Not set'],
+              ['Keywords', details.keywords || 'Not set'],
+            ];
 
             return (
               <section id={`business-card-${row.business_id}`} key={row.business_id} style={row.business_id === focusBusinessId ? { ...bizCard, ...bizCardFocused } : bizCard}>
@@ -300,59 +321,82 @@ export default function MyBusinessesPage() {
 
                 <div style={bizDivider} />
 
-                <div style={detailsGrid}>
-                  <textarea style={{ ...input, gridColumn: '1 / -1' }} rows={3} placeholder='Business description' value={details.description} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, description: e.target.value } }))} />
-                  <select style={input} value={details.category} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, category: e.target.value } }))}>
-                    <option value='established'>Established Businesses</option>
-                    <option value='asset_sale'>Asset Sales</option>
-                    <option value='real_estate'>Real Estate</option>
-                    <option value='startup'>Start-up Businesses</option>
-                  </select>
-                  <input style={input} type='date' value={details.start_date} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, start_date: e.target.value } }))} />
-                  <input
-                    style={input}
-                    placeholder='Annual revenue'
-                    value={details.annual_revenue}
-                    onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, annual_revenue: e.target.value } }))}
-                    onBlur={() => setDetailsByBusiness((prev) => {
-                      const raw = parseCurrencyInput(details.annual_revenue);
-                      return { ...prev, [row.business_id]: { ...details, annual_revenue: raw ? formatCurrency(raw) : '' } };
-                    })}
-                  />
-                  <input
-                    style={input}
-                    placeholder='Annual profit'
-                    value={details.annual_profit}
-                    onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, annual_profit: e.target.value } }))}
-                    onBlur={() => setDetailsByBusiness((prev) => {
-                      const raw = parseCurrencyInput(details.annual_profit);
-                      return { ...prev, [row.business_id]: { ...details, annual_profit: raw ? formatCurrency(raw) : '' } };
-                    })}
-                  />
-                  <input
-                    style={input}
-                    placeholder='Default asking price'
-                    value={details.default_asking_price}
-                    onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, default_asking_price: e.target.value } }))}
-                    onBlur={() => setDetailsByBusiness((prev) => {
-                      const raw = parseCurrencyInput(details.default_asking_price);
-                      return { ...prev, [row.business_id]: { ...details, default_asking_price: raw ? formatCurrency(raw) : '' } };
-                    })}
-                  />
-                  <input style={input} placeholder='City' value={details.city} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, city: e.target.value } }))} />
-                  <select style={input} value={details.state} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, state: e.target.value } }))}>
-                    <option value=''>State</option>
-                    {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                  <input style={input} placeholder='ZIP code' value={details.zip} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, zip: e.target.value } }))} />
-                  <select style={input} value={details.country} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, country: e.target.value } }))}>
-                    <option value=''>Country</option>
-                    {countries.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                  <input style={input} placeholder='County' value={details.county} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, county: e.target.value } }))} />
-                  <input style={{ ...input, gridColumn: '1 / -1' }} placeholder='Keywords (comma separated)' value={details.keywords} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, keywords: e.target.value } }))} />
-                  <button style={{ ...btnPrimary, gridColumn: '1 / -1' }} type='button' onClick={() => saveDetails(row.business_id)}>Save Business Details</button>
-                </div>
+                {!isEditing ? (
+                  <div style={summaryWrap}>
+                    <div style={summaryGrid}>
+                      {summaryRows.map(([labelText, value]) => (
+                        <div key={`${row.business_id}-${labelText}`} style={summaryItem}>
+                          <div style={summaryLabel}>{labelText}</div>
+                          <div style={summaryValue}>{value}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={summaryActions}>
+                      <button type='button' style={btn} onClick={() => setBusinessEditing(row.business_id, true)}>
+                        Edit details
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={detailsGrid}>
+                    <textarea style={{ ...input, gridColumn: '1 / -1' }} rows={3} placeholder='Business description' value={details.description} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, description: e.target.value } }))} />
+                    <select style={input} value={details.category} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, category: e.target.value } }))}>
+                      <option value='established'>Established Businesses</option>
+                      <option value='asset_sale'>Asset Sales</option>
+                      <option value='real_estate'>Real Estate</option>
+                      <option value='startup'>Start-up Businesses</option>
+                    </select>
+                    <input style={input} type='date' value={details.start_date} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, start_date: e.target.value } }))} />
+                    <input
+                      style={input}
+                      placeholder='Annual revenue'
+                      value={details.annual_revenue}
+                      onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, annual_revenue: e.target.value } }))}
+                      onBlur={() => setDetailsByBusiness((prev) => {
+                        const raw = parseCurrencyInput(details.annual_revenue);
+                        return { ...prev, [row.business_id]: { ...details, annual_revenue: raw ? formatCurrency(raw) : '' } };
+                      })}
+                    />
+                    <input
+                      style={input}
+                      placeholder='Annual profit'
+                      value={details.annual_profit}
+                      onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, annual_profit: e.target.value } }))}
+                      onBlur={() => setDetailsByBusiness((prev) => {
+                        const raw = parseCurrencyInput(details.annual_profit);
+                        return { ...prev, [row.business_id]: { ...details, annual_profit: raw ? formatCurrency(raw) : '' } };
+                      })}
+                    />
+                    <input
+                      style={input}
+                      placeholder='Default asking price'
+                      value={details.default_asking_price}
+                      onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, default_asking_price: e.target.value } }))}
+                      onBlur={() => setDetailsByBusiness((prev) => {
+                        const raw = parseCurrencyInput(details.default_asking_price);
+                        return { ...prev, [row.business_id]: { ...details, default_asking_price: raw ? formatCurrency(raw) : '' } };
+                      })}
+                    />
+                    <input style={input} placeholder='City' value={details.city} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, city: e.target.value } }))} />
+                    <select style={input} value={details.state} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, state: e.target.value } }))}>
+                      <option value=''>State</option>
+                      {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    <input style={input} placeholder='ZIP code' value={details.zip} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, zip: e.target.value } }))} />
+                    <select style={input} value={details.country} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, country: e.target.value } }))}>
+                      <option value=''>Country</option>
+                      {countries.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    <input style={input} placeholder='County' value={details.county} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, county: e.target.value } }))} />
+                    <input style={{ ...input, gridColumn: '1 / -1' }} placeholder='Keywords (comma separated)' value={details.keywords} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, keywords: e.target.value } }))} />
+                    <div style={editActions}>
+                      <button style={{ ...btnPrimary, flex: 1 }} type='button' onClick={() => saveDetails(row.business_id)}>Save details</button>
+                      <button type='button' style={btn} onClick={() => setBusinessEditing(row.business_id, false)}>
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {savedBusinessId === row.business_id ? (
                   <div style={savedBanner}>
@@ -439,6 +483,20 @@ const label = { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 };
 const savedBanner = { marginTop: 10, border: '1px solid #2f8f5b', borderRadius: 10, background: '#123825', color: '#d8ffe9', padding: '10px 12px', display: 'grid', gap: 6 };
 const savedManageBtn = { width: 'fit-content', border: '1px solid #57b987', borderRadius: 999, background: '#16472f', color: '#e9fff3', padding: '6px 10px', cursor: 'pointer', fontWeight: 600 };
 const detailsGrid = { marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8 };
+const summaryWrap = { marginTop: 10, display: 'grid', gap: 12 };
+const summaryGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8 };
+const summaryItem = {
+  border: '1px solid rgba(143,183,255,0.14)',
+  borderRadius: 10,
+  background: 'rgba(255,255,255,0.03)',
+  padding: '10px 12px',
+  display: 'grid',
+  gap: 6,
+};
+const summaryLabel = { fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8fb7ff', opacity: 0.9 };
+const summaryValue = { fontSize: 14, lineHeight: 1.45, color: '#fff', whiteSpace: 'pre-wrap', wordBreak: 'break-word' };
+const summaryActions = { display: 'flex', justifyContent: 'flex-end' };
+const editActions = { gridColumn: '1 / -1', display: 'flex', gap: 8, flexWrap: 'wrap' };
 const inviteBanner = { marginTop: 10, border: '1px dashed #304178', borderRadius: 10, background: 'rgba(255,255,255,0.03)', padding: '10px 12px', display: 'grid', gap: 4 };
 const bizPill = (active) => ({
   display: 'inline-flex',
