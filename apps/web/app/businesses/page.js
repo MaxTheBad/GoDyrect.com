@@ -293,7 +293,9 @@ export default function MyBusinessesPage() {
                       <span>Completeness: {completePct}%</span>
                     </div>
                   </div>
-                  <a href={`/listings/new?business=${row.business_id}`} style={btn}>Post as this business</a>
+                  <a href={`/listings/new?business=${row.business_id}`} style={postAsBtn}>
+                    Post as this business
+                  </a>
                 </div>
 
                 <div style={bizDivider} />
@@ -397,18 +399,42 @@ export default function MyBusinessesPage() {
 const wrap = { minHeight: '100vh', padding: '16px 12px 96px', background: '#0b1020', color: '#fff', overflowX: 'hidden' };
 const card = { maxWidth: 980, margin: '0 auto', width: '100%', background: '#121b3f', border: '1px solid #2a3c78', borderRadius: 12, padding: 16, display: 'grid', gap: 12, boxSizing: 'border-box' };
 const createWrap = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8 };
-const bizCard = { border: '1px solid #304178', borderRadius: 14, background: '#0e1738', padding: 14, display: 'grid', gap: 12, boxShadow: '0 10px 28px rgba(0,0,0,0.18)' };
-const bizCardFocused = { border: '1px solid #8fb7ff', boxShadow: '0 0 0 2px rgba(143,183,255,0.25), 0 10px 28px rgba(0,0,0,0.18)' };
+const bizCard = {
+  border: '1px solid rgba(143,183,255,0.22)',
+  borderRadius: 18,
+  background: 'linear-gradient(180deg, rgba(18,27,63,0.98) 0%, rgba(10,16,37,0.98) 100%)',
+  padding: 16,
+  display: 'grid',
+  gap: 12,
+  boxShadow: '0 14px 34px rgba(0,0,0,0.24)',
+  position: 'relative',
+  overflow: 'hidden',
+};
+const bizCardFocused = { border: '1px solid #8fb7ff', boxShadow: '0 0 0 2px rgba(143,183,255,0.25), 0 14px 34px rgba(0,0,0,0.24)' };
 const bizHead = { display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'flex-start' };
 const bizTopLine = { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10 };
-const bizName = { fontSize: 18, lineHeight: 1.2 };
+const bizName = { fontSize: 20, lineHeight: 1.15 };
 const bizSubline = { marginTop: 6, opacity: 0.82, fontSize: 13 };
 const bizStats = { marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 12, color: '#b7c7ea' };
-const bizDivider = { height: 1, background: 'rgba(143,183,255,0.16)' };
+const bizDivider = { height: 1, background: 'linear-gradient(90deg, rgba(143,183,255,0.22), rgba(143,183,255,0.05))' };
 const memberRow = { border: '1px solid #304178', borderRadius: 8, padding: 8, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' };
 const input = { borderRadius: 8, border: '1px solid #304178', background: '#0b1431', color: '#fff', padding: '10px 12px' };
 const btn = { border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '8px 10px', textDecoration: 'none', cursor: 'pointer' };
 const btnPrimary = { border: 0, borderRadius: 8, background: '#2e7dff', color: '#fff', padding: '10px 12px', cursor: 'pointer' };
+const postAsBtn = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minWidth: 220,
+  padding: '14px 18px',
+  borderRadius: 14,
+  border: '1px solid rgba(46,125,255,0.56)',
+  background: 'linear-gradient(135deg, #2e7dff 0%, #4aa3ff 100%)',
+  color: '#fff',
+  textDecoration: 'none',
+  fontWeight: 800,
+  boxShadow: '0 12px 24px rgba(46,125,255,0.28)',
+};
 const label = { display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 };
 const savedBanner = { marginTop: 10, border: '1px solid #2f8f5b', borderRadius: 10, background: '#123825', color: '#d8ffe9', padding: '10px 12px', display: 'grid', gap: 6 };
 const savedManageBtn = { width: 'fit-content', border: '1px solid #57b987', borderRadius: 999, background: '#16472f', color: '#e9fff3', padding: '6px 10px', cursor: 'pointer', fontWeight: 600 };
