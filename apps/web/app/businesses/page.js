@@ -277,18 +277,26 @@ export default function MyBusinessesPage() {
             const details = detailsByBusiness[row.business_id] || emptyDetails;
             const age = yearsSince(details.start_date);
             const completePct = completeness(details);
+            const roleTone = row.is_admin ? 'Owned / controlled by you' : 'You are a member';
 
             return (
-              <section id={`business-card-${row.business_id}`} key={row.business_id} style={row.business_id === focusBusinessId ? { ...bizCard, border: '1px solid #8fb7ff', boxShadow: '0 0 0 2px rgba(143,183,255,0.25)' } : bizCard}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
-                  <div>
-                    <strong>{row.business?.name || 'Business'}</strong>
-                    <div style={{ opacity: 0.8, fontSize: 13 }}>Your role: {row.role}{row.is_admin ? ' · Admin' : ''}</div>
-                    <div style={{ opacity: 0.72, fontSize: 12 }}>{age !== null ? `Calculated age: ${age} year${age === 1 ? '' : 's'}` : 'Set start date to auto-calculate age'}</div>
-                    <div style={{ opacity: 0.72, fontSize: 12 }}>Profile completeness: {completePct}%</div>
+              <section id={`business-card-${row.business_id}`} key={row.business_id} style={row.business_id === focusBusinessId ? { ...bizCard, ...bizCardFocused } : bizCard}>
+                <div style={bizHead}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={bizTopLine}>
+                      <strong style={bizName}>{row.business?.name || 'Business'}</strong>
+                      <span style={bizPill(row.is_admin)}>{row.is_admin ? 'Owner' : 'Member'}</span>
+                    </div>
+                    <div style={bizSubline}>{roleTone} · Your role: {row.role}{row.is_admin ? ' · Admin' : ''}</div>
+                    <div style={bizStats}>
+                      <span>{age !== null ? `Age: ${age} year${age === 1 ? '' : 's'}` : 'Set start date to auto-calculate age'}</span>
+                      <span>Completeness: {completePct}%</span>
+                    </div>
                   </div>
                   <a href={`/listings/new?business=${row.business_id}`} style={btn}>Post as this business</a>
                 </div>
+
+                <div style={bizDivider} />
 
                 <div style={detailsGrid}>
                   <textarea style={{ ...input, gridColumn: '1 / -1' }} rows={3} placeholder='Business description' value={details.description} onChange={(e) => setDetailsByBusiness((prev) => ({ ...prev, [row.business_id]: { ...details, description: e.target.value } }))} />
@@ -389,7 +397,14 @@ export default function MyBusinessesPage() {
 const wrap = { minHeight: '100vh', padding: '16px 12px 96px', background: '#0b1020', color: '#fff', overflowX: 'hidden' };
 const card = { maxWidth: 980, margin: '0 auto', width: '100%', background: '#121b3f', border: '1px solid #2a3c78', borderRadius: 12, padding: 16, display: 'grid', gap: 12, boxSizing: 'border-box' };
 const createWrap = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8 };
-const bizCard = { border: '1px solid #304178', borderRadius: 10, background: '#0e1738', padding: 12 };
+const bizCard = { border: '1px solid #304178', borderRadius: 14, background: '#0e1738', padding: 14, display: 'grid', gap: 12, boxShadow: '0 10px 28px rgba(0,0,0,0.18)' };
+const bizCardFocused = { border: '1px solid #8fb7ff', boxShadow: '0 0 0 2px rgba(143,183,255,0.25), 0 10px 28px rgba(0,0,0,0.18)' };
+const bizHead = { display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'flex-start' };
+const bizTopLine = { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10 };
+const bizName = { fontSize: 18, lineHeight: 1.2 };
+const bizSubline = { marginTop: 6, opacity: 0.82, fontSize: 13 };
+const bizStats = { marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 12, fontSize: 12, color: '#b7c7ea' };
+const bizDivider = { height: 1, background: 'rgba(143,183,255,0.16)' };
 const memberRow = { border: '1px solid #304178', borderRadius: 8, padding: 8, display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' };
 const input = { borderRadius: 8, border: '1px solid #304178', background: '#0b1431', color: '#fff', padding: '10px 12px' };
 const btn = { border: '1px solid #304178', borderRadius: 8, background: '#0e1738', color: '#fff', padding: '8px 10px', textDecoration: 'none', cursor: 'pointer' };
@@ -399,3 +414,14 @@ const savedBanner = { marginTop: 10, border: '1px solid #2f8f5b', borderRadius: 
 const savedManageBtn = { width: 'fit-content', border: '1px solid #57b987', borderRadius: 999, background: '#16472f', color: '#e9fff3', padding: '6px 10px', cursor: 'pointer', fontWeight: 600 };
 const detailsGrid = { marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 8 };
 const inviteBanner = { marginTop: 10, border: '1px dashed #304178', borderRadius: 10, background: 'rgba(255,255,255,0.03)', padding: '10px 12px', display: 'grid', gap: 4 };
+const bizPill = (active) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  borderRadius: 999,
+  padding: '5px 10px',
+  fontSize: 12,
+  fontWeight: 700,
+  background: active ? 'rgba(46,125,255,0.18)' : 'rgba(255,255,255,0.06)',
+  color: active ? '#bcd4ff' : '#d7e1f7',
+  border: active ? '1px solid rgba(46,125,255,0.42)' : '1px solid rgba(255,255,255,0.08)',
+});
