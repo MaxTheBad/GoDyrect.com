@@ -73,53 +73,59 @@ export default function NewListingPage() {
   const [missingFields, setMissingFields] = useState([]);
   const [errors, setErrors] = useState({});
   const [editorState, setEditorState] = useState({ clips: [], manifest: null, thumbnailDataUrl: '' });
+  const [loadingAccess, setLoadingAccess] = useState(true);
   const titleRef = useRef(null);
 
   useEffect(() => {
     async function checkAuth() {
+      setLoadingAccess(true);
       if (!supabase) return;
-      const { data } = await supabase.auth.getUser();
-      const user = data?.user;
-      setIsAuthed(!!user);
-      if (!user) return;
+      try {
+        const { data } = await supabase.auth.getUser();
+        const user = data?.user;
+        setIsAuthed(!!user);
+        if (!user) return;
 
-      const requestedBusiness = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('business') : '';
+        const requestedBusiness = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('business') : '';
 
-      const { data: memberships, error } = await supabase
-        .from('business_memberships')
-        .select('business_id,role,businesses(id,name,status,description,category,start_date,annual_revenue,annual_profit,default_asking_price,city,state,country,county,keywords)')
-        .eq('user_id', user.id)
-        .eq('status', 'approved');
+        const { data: memberships, error } = await supabase
+          .from('business_memberships')
+          .select('business_id,role,businesses(id,name,status,description,category,start_date,annual_revenue,annual_profit,default_asking_price,city,state,country,county,keywords)')
+          .eq('user_id', user.id)
+          .eq('status', 'approved');
 
-      if (error) {
-        if (error.message?.includes("public.business_memberships")) {
-          setMsg('Business tables are not created yet in Supabase. Run latest supabase/schema.sql in SQL editor, then refresh.');
-        } else {
-          setMsg(error.message);
+        if (error) {
+          if (error.message?.includes("public.business_memberships")) {
+            setMsg('Business tables are not created yet in Supabase. Run latest supabase/schema.sql in SQL editor, then refresh.');
+          } else {
+            setMsg(error.message);
+          }
+          return;
         }
-        return;
-      }
 
-      const options = (memberships || [])
-        .filter((m) => m.businesses?.status === 'approved')
-        .map((m) => ({
-          id: m.business_id,
-          name: m.businesses?.name || 'Business',
-          role: m.role || 'Authorized Representative',
-          business: m.businesses,
-        }));
+        const options = (memberships || [])
+          .filter((m) => m.businesses?.status === 'approved')
+          .map((m) => ({
+            id: m.business_id,
+            name: m.businesses?.name || 'Business',
+            role: m.role || 'Authorized Representative',
+            business: m.businesses,
+          }));
 
-      setApprovedBusinesses(options);
+        setApprovedBusinesses(options);
 
-      if (options.length) {
-        const picked = options.find((o) => o.id === requestedBusiness) || options[0];
-        setForm((prev) => ({
-          ...prev,
-          business_id: picked.id,
-          lister_role: picked.role,
-          asking_price: picked.business?.default_asking_price ? formatCurrency(picked.business.default_asking_price) : prev.asking_price,
-        }));
-        setSelectedBusiness(picked.business || null);
+        if (options.length) {
+          const picked = options.find((o) => o.id === requestedBusiness) || options[0];
+          setForm((prev) => ({
+            ...prev,
+            business_id: picked.id,
+            lister_role: picked.role,
+            asking_price: picked.business?.default_asking_price ? formatCurrency(picked.business.default_asking_price) : prev.asking_price,
+          }));
+          setSelectedBusiness(picked.business || null);
+        }
+      } finally {
+        setLoadingAccess(false);
       }
     }
     checkAuth();
@@ -306,6 +312,14 @@ export default function NewListingPage() {
   }
 
   const withError = (key) => ({ ...input, border: errors[key] ? '1px solid #ef5350' : input.border });
+
+  if (loadingAccess) {
+    return (
+      <main style={wrap}>
+        <div style={card}><h1>Sell My Business</h1><p>Checking your account and approved businesses…</p></div>
+      </main>
+    );
+  }
 
   if (!isAuthed) {
     return (
