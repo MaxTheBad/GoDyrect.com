@@ -315,7 +315,17 @@ export default function NewListingPage() {
 
   if (isAuthed && approvedBusinesses.length === 0) {
     return (
-      <main style={wrap}><div style={card}><h1>Post Business</h1><p>You need an approved business before posting.</p><a href='/businesses' style={{ color: '#8fb7ff' }}>Go to My Businesses</a>{msg ? <p>{msg}</p> : null}</div></main>
+      <main style={wrap}>
+        <div style={card}>
+          <h1>Post Business</h1>
+          <p>You need an approved business before posting.</p>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <a href='/businesses' style={{ color: '#8fb7ff' }}>Go to My Businesses</a>
+            <a href='/businesses?create=1' style={{ color: '#8fb7ff' }}>Create business</a>
+          </div>
+          {msg ? <p>{msg}</p> : null}
+        </div>
+      </main>
     );
   }
 
