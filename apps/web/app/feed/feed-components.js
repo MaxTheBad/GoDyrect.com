@@ -85,6 +85,15 @@ export function FeedPost({
 
       {activeMedia ? (
         <div style={heroMediaFrame}>
+          <div style={heroMediaBackdrop}>
+            <img
+              src={previewVisual || activeMedia.thumbnail_url || activeMedia.url}
+              alt=''
+              aria-hidden='true'
+              style={heroMediaBackdropAsset}
+              onError={() => setPreviewErrored(true)}
+            />
+          </div>
           <div style={mediaTitleOverlay}>
             <div style={mediaTitle}>{listing.title}</div>
           </div>
@@ -433,6 +442,23 @@ const heroMediaFrame = {
   overflow: 'hidden',
   background: '#050a1a',
   border: '1px solid #e5e7eb',
+};
+const heroMediaBackdrop = {
+  position: 'absolute',
+  inset: 0,
+  overflow: 'hidden',
+  background: 'linear-gradient(180deg, rgba(5,10,26,0.96) 0%, rgba(5,10,26,0.92) 100%)',
+  pointerEvents: 'none',
+};
+const heroMediaBackdropAsset = {
+  position: 'absolute',
+  inset: '-8%',
+  width: '116%',
+  height: '116%',
+  objectFit: 'cover',
+  filter: 'blur(24px) saturate(0.95) brightness(0.78)',
+  transform: 'scale(1.12)',
+  opacity: 0.9,
 };
 const heroMediaAsset = { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', background: '#050a1a' };
 const videoCoverButton = { position: 'absolute', inset: 0, zIndex: 2, border: 0, padding: 0, margin: 0, background: 'linear-gradient(135deg, rgba(15,23,42,0.08) 0%, rgba(15,23,42,0.2) 100%)', display: 'grid', placeItems: 'center', cursor: 'pointer' };
