@@ -450,57 +450,67 @@ export default function VideoEditor({ onChange }) {
 
         <div style={isMobile ? sidebarMobile : sidebar}>
           <section style={panel}>
-            <div style={panelLabel}>Transitions</div>
-            <div style={transitionRow}>
-              {TRANSITIONS.map((transition) => (
-                <button
-                  key={transition.value}
-                  type="button"
-                  onClick={() => changeTransition(transition.value)}
-                  style={{
-                    ...chip,
-                    ...(transitionType === transition.value ? chipActive : null),
-                  }}
-                >
-                  {transition.label}
-                </button>
-              ))}
-            </div>
-            <div style={hint}>Use one transition style for the cut. Crossfade feels closest to IG/TikTok.</div>
-          </section>
-
-          <section style={panel}>
             <div style={panelHeader}>
               <div style={panelLabel}>Clips</div>
               <div style={smallMuted}>{clips.length} total</div>
             </div>
             <div style={clipRail}>
               {clips.map((clip, idx) => (
-                <div
-                  key={clip.id}
-                  draggable
-                  onDragStart={(e) => e.dataTransfer.setData('text/plain', String(idx))}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const from = Number(e.dataTransfer.getData('text/plain'));
-                    moveClip(from, idx);
-                  }}
-                  onClick={() => setActiveClipIndex(idx)}
-                  style={{
-                    ...clipCard,
-                    ...(idx === activeClipIndex ? clipCardActive : null),
-                  }}
-                >
-                  <div style={clipName}>{clip.title}</div>
-                  <div style={clipMeta}>{Math.round((clip.duration || 0) * 10) / 10}s</div>
-                  <div style={clipActions}>
-                    <button type="button" onClick={(e) => { e.stopPropagation(); moveClip(idx, idx - 1); }} style={miniBtn} disabled={idx === 0}>Up</button>
-                    <button type="button" onClick={(e) => { e.stopPropagation(); moveClip(idx, idx + 1); }} style={miniBtn} disabled={idx === clips.length - 1}>Down</button>
-                    <button type="button" onClick={(e) => { e.stopPropagation(); removeClip(idx); }} style={miniDangerBtn}>Remove</button>
+                <React.Fragment key={clip.id}>
+                  <div
+                    draggable
+                    onDragStart={(e) => e.dataTransfer.setData('text/plain', String(idx))}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      const from = Number(e.dataTransfer.getData('text/plain'));
+                      moveClip(from, idx);
+                    }}
+                    onClick={() => setActiveClipIndex(idx)}
+                    style={{
+                      ...clipCard,
+                      ...(idx === activeClipIndex ? clipCardActive : null),
+                    }}
+                  >
+                    <div style={clipHeaderRow}>
+                      <div>
+                        <div style={clipName}>{clip.title}</div>
+                        <div style={clipMeta}>{Math.round((clip.duration || 0) * 10) / 10}s</div>
+                      </div>
+                      <div style={clipIndexPill}>
+                        {idx + 1}
+                      </div>
+                    </div>
+                    <div style={clipActions}>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); moveClip(idx, idx - 1); }} style={miniBtn} disabled={idx === 0}>Up</button>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); moveClip(idx, idx + 1); }} style={miniBtn} disabled={idx === clips.length - 1}>Down</button>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); removeClip(idx); }} style={miniDangerBtn}>Remove</button>
+                    </div>
                   </div>
-                </div>
+                  {idx < clips.length - 1 ? (
+                    <div style={inlineTransitionWrap}>
+                      <div style={inlineTransitionLabel}>Transition</div>
+                      <div style={transitionRow}>
+                        {TRANSITIONS.map((transition) => (
+                          <button
+                            key={transition.value}
+                            type="button"
+                            onClick={() => changeTransition(transition.value)}
+                            style={{
+                              ...chip,
+                              ...(transitionType === transition.value ? chipActive : null),
+                            }}
+                          >
+                            {transition.label}
+                          </button>
+                        ))}
+                      </div>
+                      <div style={hint}>Choose what happens between clips.</div>
+                    </div>
+                  ) : null}
+                </React.Fragment>
               ))}
+              {!clips.length ? <div style={hint}>Add clips, then drag them into order. Transitions live between each clip.</div> : null}
             </div>
           </section>
 
@@ -841,6 +851,12 @@ const clipRail = {
   display: 'grid',
   gap: 10,
 };
+const clipHeaderRow = {
+  display: 'flex',
+  alignItems: 'flex-start',
+  justifyContent: 'space-between',
+  gap: 12,
+};
 const clipCard = {
   borderRadius: 16,
   border: '1px solid rgba(125, 168, 255, 0.16)',
@@ -865,11 +881,42 @@ const clipMeta = {
   color: '#9bb0d3',
   fontSize: 12,
 };
+const clipIndexPill = {
+  minWidth: 28,
+  height: 28,
+  padding: '0 8px',
+  borderRadius: 999,
+  display: 'grid',
+  placeItems: 'center',
+  background: 'rgba(46,125,255,0.14)',
+  color: '#bcd4ff',
+  border: '1px solid rgba(46,125,255,0.38)',
+  fontSize: 12,
+  fontWeight: 800,
+  flexShrink: 0,
+};
 const clipActions = {
   display: 'flex',
   gap: 8,
   marginTop: 10,
   flexWrap: 'wrap',
+};
+const inlineTransitionWrap = {
+  borderRadius: 16,
+  border: '1px solid rgba(46,125,255,0.16)',
+  background: 'rgba(255,255,255,0.02)',
+  padding: 12,
+  marginLeft: 12,
+  marginRight: 12,
+  display: 'grid',
+  gap: 8,
+};
+const inlineTransitionLabel = {
+  fontSize: 12,
+  textTransform: 'uppercase',
+  letterSpacing: '0.12em',
+  color: '#7da8ff',
+  fontWeight: 800,
 };
 const miniBtn = {
   border: '1px solid rgba(125, 168, 255, 0.18)',
