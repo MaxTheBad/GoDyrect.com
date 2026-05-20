@@ -451,10 +451,11 @@ export default function VideoEditor({ onChange }) {
         <div style={isMobile ? sidebarMobile : sidebar}>
           <section style={panel}>
             <div style={panelHeader}>
-              <div style={panelLabel}>Clips</div>
+              <div style={panelLabel}>Sequence</div>
               <div style={smallMuted}>{clips.length} total</div>
             </div>
-            <div style={clipRail}>
+            <div style={hint}>This is the cut: clip, transition, clip. Drag clips to reorder, tap a tile to edit it.</div>
+            <div style={sequenceRail}>
               {clips.map((clip, idx) => (
                 <React.Fragment key={clip.id}>
                   <div
@@ -468,29 +469,23 @@ export default function VideoEditor({ onChange }) {
                     }}
                     onClick={() => setActiveClipIndex(idx)}
                     style={{
-                      ...clipCard,
+                      ...sequenceClipCard,
                       ...(idx === activeClipIndex ? clipCardActive : null),
                     }}
                   >
-                    <div style={clipHeaderRow}>
-                      <div>
-                        <div style={clipName}>{clip.title}</div>
-                        <div style={clipMeta}>{Math.round((clip.duration || 0) * 10) / 10}s</div>
-                      </div>
-                      <div style={clipIndexPill}>
-                        {idx + 1}
-                      </div>
+                    <div style={clipThumbFrame}>
+                      <div style={clipThumbLabel}>{idx + 1}</div>
+                      <div style={clipThumbName}>{clip.title}</div>
                     </div>
+                    <div style={clipMeta}>{Math.round((clip.duration || 0) * 10) / 10}s</div>
                     <div style={clipActions}>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); moveClip(idx, idx - 1); }} style={miniBtn} disabled={idx === 0}>Up</button>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); moveClip(idx, idx + 1); }} style={miniBtn} disabled={idx === clips.length - 1}>Down</button>
                       <button type="button" onClick={(e) => { e.stopPropagation(); removeClip(idx); }} style={miniDangerBtn}>Remove</button>
                     </div>
                   </div>
                   {idx < clips.length - 1 ? (
-                    <div style={inlineTransitionWrap}>
+                    <div style={sequenceTransitionSlot}>
                       <div style={inlineTransitionLabel}>Transition</div>
-                      <div style={transitionRow}>
+                      <div style={transitionPillsInline}>
                         {TRANSITIONS.map((transition) => (
                           <button
                             key={transition.value}
@@ -505,12 +500,11 @@ export default function VideoEditor({ onChange }) {
                           </button>
                         ))}
                       </div>
-                      <div style={hint}>Choose what happens between clips.</div>
                     </div>
                   ) : null}
                 </React.Fragment>
               ))}
-              {!clips.length ? <div style={hint}>Add clips, then drag them into order. Transitions live between each clip.</div> : null}
+              {!clips.length ? <div style={sequenceEmpty}>Add clips to build the cut. Transition chips appear between clips automatically.</div> : null}
             </div>
           </section>
 
@@ -847,9 +841,13 @@ const hint = {
   fontSize: 13,
   lineHeight: 1.45,
 };
-const clipRail = {
-  display: 'grid',
-  gap: 10,
+const sequenceRail = {
+  display: 'flex',
+  gap: 12,
+  overflowX: 'auto',
+  paddingBottom: 4,
+  alignItems: 'stretch',
+  scrollSnapType: 'x mandatory',
 };
 const clipHeaderRow = {
   display: 'flex',
@@ -857,31 +855,35 @@ const clipHeaderRow = {
   justifyContent: 'space-between',
   gap: 12,
 };
-const clipCard = {
+const sequenceClipCard = {
+  minWidth: 190,
+  flex: '0 0 190px',
   borderRadius: 16,
   border: '1px solid rgba(125, 168, 255, 0.16)',
   background: 'rgba(255,255,255,0.03)',
-  padding: 12,
+  padding: 10,
   color: '#fff',
   cursor: 'pointer',
+  scrollSnapAlign: 'start',
+  display: 'grid',
+  gap: 10,
 };
 const clipCardActive = {
   borderColor: 'rgba(46, 125, 255, 0.82)',
   boxShadow: '0 0 0 1px rgba(46, 125, 255, 0.24) inset',
 };
-const clipName = {
-  fontSize: 14,
-  fontWeight: 800,
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
+const clipThumbFrame = {
+  borderRadius: 14,
+  minHeight: 120,
+  background: 'linear-gradient(180deg, rgba(8,13,27,0.9), rgba(8,13,27,0.68))',
+  border: '1px solid rgba(125, 168, 255, 0.12)',
+  padding: 10,
+  display: 'grid',
+  alignContent: 'space-between',
+  gap: 8,
 };
-const clipMeta = {
-  marginTop: 4,
-  color: '#9bb0d3',
-  fontSize: 12,
-};
-const clipIndexPill = {
+const clipThumbLabel = {
+  width: 'fit-content',
   minWidth: 28,
   height: 28,
   padding: '0 8px',
@@ -893,23 +895,24 @@ const clipIndexPill = {
   border: '1px solid rgba(46,125,255,0.38)',
   fontSize: 12,
   fontWeight: 800,
-  flexShrink: 0,
+};
+const clipThumbName = {
+  fontSize: 13,
+  fontWeight: 800,
+  lineHeight: 1.2,
+  color: '#fff',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+};
+const clipMeta = {
+  color: '#9bb0d3',
+  fontSize: 12,
 };
 const clipActions = {
   display: 'flex',
   gap: 8,
-  marginTop: 10,
   flexWrap: 'wrap',
-};
-const inlineTransitionWrap = {
-  borderRadius: 16,
-  border: '1px solid rgba(46,125,255,0.16)',
-  background: 'rgba(255,255,255,0.02)',
-  padding: 12,
-  marginLeft: 12,
-  marginRight: 12,
-  display: 'grid',
-  gap: 8,
 };
 const inlineTransitionLabel = {
   fontSize: 12,
@@ -917,6 +920,36 @@ const inlineTransitionLabel = {
   letterSpacing: '0.12em',
   color: '#7da8ff',
   fontWeight: 800,
+};
+const sequenceTransitionSlot = {
+  minWidth: 180,
+  flex: '0 0 180px',
+  borderRadius: 16,
+  border: '1px dashed rgba(125, 168, 255, 0.18)',
+  background: 'rgba(255,255,255,0.02)',
+  padding: 12,
+  display: 'grid',
+  gap: 8,
+  alignSelf: 'stretch',
+  justifyContent: 'center',
+  scrollSnapAlign: 'start',
+};
+const transitionPillsInline = {
+  display: 'flex',
+  gap: 8,
+  flexWrap: 'wrap',
+};
+const sequenceEmpty = {
+  minHeight: 140,
+  borderRadius: 16,
+  border: '1px dashed rgba(125, 168, 255, 0.18)',
+  background: 'rgba(255,255,255,0.02)',
+  color: '#9bb0d3',
+  padding: 16,
+  display: 'grid',
+  placeItems: 'center',
+  textAlign: 'center',
+  flex: '1 1 100%',
 };
 const miniBtn = {
   border: '1px solid rgba(125, 168, 255, 0.18)',
