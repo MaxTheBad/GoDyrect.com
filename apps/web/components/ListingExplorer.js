@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { US_STATES } from '../lib/us-states';
+import { FeedPost } from '../app/feed/feed-components';
 
 const sortOptions = ['Newest', 'Oldest', 'Price: Low to High', 'Price: High to Low'];
 const businessTypes = ['established', 'asset_sale', 'real_estate', 'startup'];
@@ -32,7 +33,6 @@ export default function ListingExplorer({ initialSearch = '', initialIndustry = 
   const [maxPrice, setMaxPrice] = useState('');
   const [sortBy, setSortBy] = useState('Newest');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [mediaModal, setMediaModal] = useState({ open: false, listingId: '', index: 0 });
   const [searchDraft, setSearchDraft] = useState(initialSearch);
   const [searchQuery, setSearchQuery] = useState(initialSearch.trim().toLowerCase());
   const [favoriteIds, setFavoriteIds] = useState([]);
@@ -40,9 +40,7 @@ export default function ListingExplorer({ initialSearch = '', initialIndustry = 
   const [sellerFollowIds, setSellerFollowIds] = useState([]);
   const [businessFollowIds, setBusinessFollowIds] = useState([]);
   const [sellerProfiles, setSellerProfiles] = useState({});
-  const [actionMenuFor, setActionMenuFor] = useState('');
   const [cardMediaIndex, setCardMediaIndex] = useState({});
-  const swipeStartX = useRef({});
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 900);
@@ -395,22 +393,6 @@ export default function ListingExplorer({ initialSearch = '', initialIndustry = 
     setArr(arr.includes(value) ? arr.filter((x) => x !== value) : [...arr, value]);
   }
 
-
-  function openMediaModal(listingId, index = 0) {
-    setMediaModal({ open: true, listingId, index });
-  }
-
-  function closeMediaModal() {
-    setMediaModal({ open: false, listingId: '', index: 0 });
-  }
-
-  function stepMedia(direction) {
-    const items = mediaPreview[mediaModal.listingId] || [];
-    if (!items.length) return;
-    const next = (mediaModal.index + direction + items.length) % items.length;
-    setMediaModal((prev) => ({ ...prev, index: next }));
-  }
-
   function stepCardMedia(listingId, direction) {
     const items = mediaPreview[listingId] || [];
     if (!items.length) return;
@@ -510,119 +492,40 @@ export default function ListingExplorer({ initialSearch = '', initialIndustry = 
           {filteredListings.map((l) => {
             const media = mediaPreview[l.id] || [];
             const currentIndex = cardMediaIndex[l.id] || 0;
-            const currentMedia = media[currentIndex];
             const isOwner = viewerId && viewerId === l.seller_id;
             const isFavorite = favoriteIds.includes(l.id);
             const followsSeller = sellerFollowIds.includes(l.seller_id);
             const followsBusiness = l.business_id ? businessFollowIds.includes(l.business_id) : false;
             const seller = sellerProfiles[l.seller_id];
             return (
-              <article key={l.id} style={listingCard}>
-                <div style={listingTopRow}>
-                  <div style={listingAvatar}>{(seller?.full_name || seller?.handle || l.title || 'B').slice(0, 1).toUpperCase()}</div>
-                  <div style={{ minWidth: 0 }}>
-                    <a href={`/listing?id=${l.id}`} style={listingTitle}>{l.title}</a>
-                    <div style={listingMeta}>
-                      <span style={listingBusiness}>{businessNames[l.business_id] || prettyCategory(l.category)}</span>
-                      <span>·</span>
-                      <span>Posted by {seller?.full_name || seller?.handle || 'Seller'}</span>
-                      <span>·</span>
-                      <span>{l.lister_role || 'Owner'}</span>
-                    </div>
-                    <div style={listingLocation}>{[l.city, l.state, l.country].filter(Boolean).join(', ') || 'Location not set'}</div>
-                  </div>
-                  <div style={listingActions}>
-                    <a href={`/listing?id=${l.id}`} style={listingOpenPill}>Open</a>
-                    <button type='button' style={menuBtn} aria-label='Open actions' onClick={() => setActionMenuFor((v) => (v === l.id ? '' : l.id))}>⋯</button>
-                    {actionMenuFor === l.id ? (
-                      <div style={menuPanel}>
-                        <button type='button' onClick={() => { toggleFavorite(l.id); setActionMenuFor(''); }} style={menuItem}>{isFavorite ? '★ Saved' : '☆ Favorite'}</button>
-                        {!isOwner ? <button type='button' onClick={() => { toggleFollowSeller(l.seller_id); setActionMenuFor(''); }} style={menuItem}>{followsSeller ? 'Unfollow Seller' : 'Follow Seller'}</button> : null}
-                        {l.business_id ? <button type='button' onClick={() => { toggleFollowBusiness(l.business_id); setActionMenuFor(''); }} style={menuItem}>{followsBusiness ? 'Unfollow Business' : 'Follow Business'}</button> : null}
-                        <a href={`/listing?id=${l.id}`} style={menuLink}>View</a>
-                        {isOwner ? <a href={`/listings/edit?id=${l.id}`} style={menuLink}>Edit</a> : <a href={`/messages?seller=${l.seller_id}&listing=${l.id}`} style={menuLink}>Message</a>}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-
-                {currentMedia ? (
-                  <div style={mediaStageWrap}>
-                    <button
-                      type='button'
-                      onClick={() => openMediaModal(l.id, currentIndex)}
-                      onTouchStart={(e) => { swipeStartX.current[l.id] = e.touches[0].clientX; }}
-                      onTouchEnd={(e) => {
-                        const start = swipeStartX.current[l.id];
-                        if (typeof start !== 'number') return;
-                        const delta = e.changedTouches[0].clientX - start;
-                        if (Math.abs(delta) < 35) return;
-                        stepCardMedia(l.id, delta < 0 ? 1 : -1);
-                      }}
-                      style={mediaMainBtn}
-                    >
-                      {currentMedia.media_type === 'video' ? (
-                        <video src={currentMedia.url} style={mediaMain} muted playsInline />
-                      ) : (
-                        <img src={currentMedia.url} alt='preview' style={mediaMain} />
-                      )}
-                    </button>
-                    {media.length > 1 ? (
-                      <>
-                        <button type='button' style={mediaNavLeft} onClick={() => stepCardMedia(l.id, -1)}>‹</button>
-                        <button type='button' style={mediaNavRight} onClick={() => stepCardMedia(l.id, 1)}>›</button>
-                        <div style={dotWrap}>
-                          {media.map((_, i) => <span key={i} style={i === currentIndex ? dotActive : dot} />)}
-                        </div>
-                      </>
-                    ) : null}
-                  </div>
-                ) : null}
-
+              <div key={l.id} style={{ display: 'grid', gap: 10 }}>
+                <FeedPost
+                  listing={l}
+                  businessName={businessNames[l.business_id] || prettyCategory(l.category)}
+                  businessLocation={[l.city, l.state, l.country].filter(Boolean).join(', ') || 'Location not set'}
+                  sellerName={seller?.full_name || seller?.handle || 'Seller'}
+                  media={media}
+                  activeIndex={currentIndex}
+                  onPrev={() => stepCardMedia(l.id, -1)}
+                  onNext={() => stepCardMedia(l.id, 1)}
+                  onPick={(index) => setCardMediaIndex((prev) => ({ ...prev, [l.id]: index }))}
+                  onOpen={`/listing?id=${l.id}`}
+                  isFavorite={isFavorite}
+                  onToggleFavorite={() => toggleFavorite(l.id)}
+                  onToggleSellerFollow={!isOwner ? () => toggleFollowSeller(l.seller_id) : null}
+                  onToggleBusinessFollow={l.business_id ? () => toggleFollowBusiness(l.business_id) : null}
+                  onEdit={isOwner ? () => window.location.assign(`/listings/edit?id=${l.id}`) : null}
+                />
                 <div style={cardBottom}>
                   <strong style={{ color: '#fff' }}>${Number(l.asking_price || 0).toLocaleString()}</strong>
                   <span style={listingFooterNote}>{prettyCategory(l.category)} · {l.business_age_years ?? 0} years</span>
                 </div>
-              </article>
+              </div>
             );
           })}
         </div>
       </section>
 
-
-      {mediaModal.open ? (
-        <div style={modalBackdrop} onClick={closeMediaModal}>
-          <div style={modalCard} onClick={(e) => e.stopPropagation()}>
-            {(() => {
-              const items = mediaPreview[mediaModal.listingId] || [];
-              const current = items[mediaModal.index];
-              if (!current) return <p style={{ color: '#fff' }}>No media.</p>;
-              return (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <strong style={{ color: '#fff' }}>Media preview</strong>
-                    <button style={closeBtn} onClick={closeMediaModal}>✕</button>
-                  </div>
-
-                  <div style={modalMediaWrap}>
-                    {current.media_type === 'video' ? (
-                      <video src={current.url} controls autoPlay style={modalMedia} />
-                    ) : (
-                      <img src={current.url} alt='media' style={modalMedia} />
-                    )}
-                  </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
-                    <button style={navBtn} onClick={() => stepMedia(-1)}>Prev</button>
-                    <span style={{ color: '#d1d5db', fontSize: 12 }}>{mediaModal.index + 1} / {items.length}</span>
-                    <button style={navBtn} onClick={() => stepMedia(1)}>Next</button>
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-        </div>
-      ) : null}
 
       {toast ? <div style={toastStyle}>{toast}</div> : null}
     </>
