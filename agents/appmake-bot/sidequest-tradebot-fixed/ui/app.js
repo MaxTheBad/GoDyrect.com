@@ -296,7 +296,10 @@ function card(tag,s,rt){
     const pnlHtml=Number.isFinite(pnlVal) ? `<span class="${pnlClass}"><b>PnL:</b> ${fmt(pnlVal)}</span>` : '<span class="muted"><b>PnL:</b> -</span>';
     return `<span class="muted">last trade: <b>${esc(latestTrade.symbol)}</b> <span class="muted">•</span> <span class="muted">${esc(formatEt(latestTrade.timestamp_et))}</span> <span class="muted">•</span> ${pnlHtml}</span>`;
   })();
-  el.innerHTML=`<span class="muted">${title} ${runMode} for ${elapsed}</span><br><span class="${pnl>=0?'ok':'bad'}">PNL: ${fmt(pnl)}</span><br><span class="muted">realized ${fmt(realized)} • unrealized ${fmt(unrealized)}</span><br>${posHtml}<br><span class="muted">watchlist: ${esc(watchItems)}</span><br><span class="muted">Opened ${opened} • Closed ${closed}</span><br>${lastTradeHtml}<br><button class="lane-view-more" data-lane="${esc(tag)}">View more</button>`;
+  const pnlLine = tag==='stocks' || tag==='overnight'
+    ? `<span class="${pnl>=0?'ok':'bad'}">PNL: ${fmt(pnl)}</span><br><span class="muted">realized ${fmt(realized)} • unrealized ${fmt(unrealized)}</span>`
+    : `<span class="${pnl>=0?'ok':'bad'}">PNL: ${fmt(pnl)}</span><br><span class="muted">realized ${fmt(realized)}</span>`;
+  el.innerHTML=`<span class="muted">${title} ${runMode} for ${elapsed}</span><br>${pnlLine}<br>${posHtml}<br><span class="muted">watchlist: ${esc(watchItems)}</span><br><span class="muted">Opened ${opened} • Closed ${closed}</span><br>${lastTradeHtml}<br><button class="lane-view-more" data-lane="${esc(tag)}">View more</button>`;
 }
 function normalizeStateItems(states){
   return tags.map((tag)=>{

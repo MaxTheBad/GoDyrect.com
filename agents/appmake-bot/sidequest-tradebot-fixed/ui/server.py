@@ -1370,13 +1370,18 @@ def render_lite_html():
     s_overnight = _state_summary("overnight")
 
     def block(name, s, b):
-        pnl = s.get("journal_today_realized_pnl", s.get("daily_pnl", 0.0))
+        pnl = s.get("total_pnl", s.get("journal_today_realized_pnl", s.get("daily_pnl", 0.0)))
         tr = s.get("journal_today_closed_trades", s.get("trades_today", 0))
         bal = s.get("paper_balance", 0.0)
         pos = s.get("position")
         pos_txt = "none"
         if isinstance(pos, dict):
             pos_txt = f"{pos.get('side','?')} {pos.get('symbol','?')} @ {pos.get('entry','?')}"
+            if name in {"Stocks", "Overnight"}:
+                live_px = pos.get("current_price")
+                live_pnl = pos.get("unrealized_pnl")
+                if live_px is not None and live_pnl is not None:
+                    pos_txt += f" | live {float(live_px):.2f} pnl {float(live_pnl):+.2f}"
         ranked = (s.get("watched_ranked") or [])[:8]
         wl = ", ".join([str(r.get("symbol")) for r in ranked]) if ranked else ", ".join((s.get("watched_symbols") or [])[:8])
         run = (b or {}).get("running", False)
