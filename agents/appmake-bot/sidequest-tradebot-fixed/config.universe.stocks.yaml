@@ -1,0 +1,211 @@
+mode: live
+exchange: alpaca
+symbol: AAPL
+timeframe: 1m
+poll_seconds: 10
+scanner:
+  # ── UNIVERSE vs WATCHLIST ────────────────────────────────────────────
+  # UNIVERSE = All possible stocks to scan (symbols: [ALL])
+  #   - Scanned in background during intraday rescan (every 10 min)
+  #   - Used to find new runners
+  # WATCHLIST = Filtered subset being actively traded (dynamic_max_watch: 20)
+  #   - Only 20 real bangers per day (not 80 mediocre candidates)
+  #   - Watcher loop fetches 5-30 bars per symbol (not 120!)
+  #   - Much lower API load, faster execution, better responsiveness
+  symbols:
+  - ALL
+  # Leave pinned_symbols empty so the stock runner stays fully dynamic across restarts.
+  # Any symbol that gets watched should be discovered by the scan, not hardcoded here.
+  pinned_symbols: []
+  # Leave symbol-specific overrides empty unless you explicitly want a one-off exception.
+  symbol_filter_overrides: {}
+  dynamic_enabled: true
+  dynamic_source: alpaca_us
+  dynamic_max_universe: 500
+  dynamic_max_intraday_checks: 500   # max symbols to deep-check per scan pass
+  dynamic_max_watch: 20  # keep the live shortlist tight; pinned symbols can still be layered on top
+  dynamic_rebalance_sec: 120  # fallback rebalance cadence when morning scan is disabled
+  intraday_rescan_interval_sec: 1800  # 30-minute runner refresh
+  runner_scan:
+    enabled: true
+    nasdaq_only: false
+    max_universe: 500
+    # max_intraday_checks: 200
+    max_watch: 20
+    min_price: 2.00
+    max_price: 5000
+    min_day_change_pct: 0.15   # top movers only
+    min_today_volume: 50000   # require real participation
+    # min_change_pct_10_bars: 0.04  # close 4%+ above 10 bars ago
+    # max_spread_bps: 180
+  dynamic_exchange: us
+  # ── MORNING SCAN (once-daily smart scanner) ──────────────────────────────
+  # Runs once per trading day at startup (or after midnight rollover).
+  # Scores all US stocks on: overnight gap, relative volume, 14-day ATR,
+  # and momentum direction. Selects top max_watch symbols as the day's watchlist.
+  # Pinned symbols (pinned_symbols above) are always included on top.
+  # Set enabled: false to revert to the old 30-min rolling rebalance.
+  morning_scan:
+    enabled: true          # restore the daily morning scan plus intraday refreshes
+    max_watch: 20          # keep the daily candidate list tight and runner-focused
+    min_gap_pct: 0.002     # minimum overnight gap % to qualify (0 = no gap filter)
+    min_rel_volume: 0.05   # was 0.3; AND-gated with gap_pct so reducing here is safe;
+                           # allows large-gap/low-vol names like LBGJ without overfitting
+    min_atr_pct: 0.003     # minimum ATR as % of price (filters untradeable flat names)
+    fetch_premarket: true  # fetch pre-market bars for PM high/low level computation
+risk:
+  starting_equity_usd: 99968
+  max_open_positions: 1  # trade the top watchlist stock only; do not shotgun multiple runners
+  max_position_notional_usd: 500
+  max_daily_loss_usd: 999999  # disabled — paper money
+  disable_max_consecutive_losses: true
+  disable_symbol_cooldown: true
+  auto_symbol_blacklist: false
+  stop_loss_pct: 5.0
+  take_profit_pct: 15.0
+  force_flatten_before_close_min: 1
+  market_close_hour_et: 16
+  market_close_minute_et: 0
+  dynamic_risk:
+    enabled: true
+    min_mult: 0.55
+    max_mult: 1.8
+    raise_after_win_streak: 3
+    raise_step: 0.16
+    cut_if_dd_ratio: 0.4
+    dd_cut_mult: 0.78
+    cut_after_chop_streak: 4
+    chop_cut_mult: 0.85
+strategy:
+  ai_gate_enabled: false   # Pure rules-based, no AI
+  force_first_watchlist_buy: true  # auto-enter the first eligible watchlist symbol
+  # ── SMA OPTIMIZATION FOR STOCKS ───────────────────────────────────────────────
+  # Stocks move more predictably than crypto. SMA works well.
+  # Current 9/21 is reasonable, but can test:
+  # - 10/30: Better for daily trends, smoother
+  # - 20/50: Even smoother, fewer whipsaws
+  # - 8/20: Faster for quick runners
+  fast_sma: 10             # Slightly longer for stock stability
+  slow_sma: 30             # Longer-term trend (typical for stocks)
+  allow_short: false
+  min_agreement: 2         # require at least 2 strategies to agree; VCX loss was triggered by mom-only (1/3)
+
+  # ── STOCK-SPECIFIC OPTIMIZATIONS ──────────────────────────────────────────────
+  # Stocks have predictable patterns stocks don't have in crypto/forex.
+  use_gap_detection: true          # Detect overnight gaps (high probability setup)
+  use_breakout_detection: true     # Volume breakout above resistance (strong signal)
+  use_relative_strength: true      # Compare stock vs SPY (outperformance = strength)
+
+trading_hours:
+  # US market hours (9:30-16:00 ET = 13:30-20:00 UTC)
+  # Avoid opening chaos and closing volatility
+  enabled: false
+  skip_before_utc: "14:00"         # Skip first 30 min after open (opening chaos)
+  skip_after_utc: "19:45"          # Skip last 15 min before close (closing volatility)
+  # Note: This uses UTC. Adjust if your server is in different timezone.
+  # For ET: 09:45 ET = 14:45 UTC, 15:45 ET = 20:45 UTC (UTC+5 in winter)
+
+execution:
+  market_type: spot
+  leverage: 1
+  reduce_only_on_exit: false  # Alpaca spot stocks reject reduceOnly — futures/crypto only
+  live_enabled: true   # enabled — using Alpaca paper account for real paper order execution
+  signal_to_order_sla_seconds: 60  # 60 sec SLA for stocks (more filters + key levels)
+controls:
+  kill_switch_file: /Users/clawd/.openclaw/workspace/agents/appmake-bot/sidequest-tradebot-fixed/KILL_SWITCH_STOCKS
+  state_file: /Users/clawd/.openclaw/workspace/agents/appmake-bot/sidequest-tradebot-fixed/.tradebot-data/state.stocks.json
+  journal_file: /Users/clawd/.openclaw/workspace/agents/appmake-bot/sidequest-tradebot-fixed/.tradebot-data/journal.stocks.jsonl
+  buy_now_file: /Users/clawd/.openclaw/workspace/agents/appmake-bot/sidequest-tradebot-fixed/BUY_NOW_STOCKS
+  sell_now_file: /Users/clawd/.openclaw/workspace/agents/appmake-bot/sidequest-tradebot-fixed/SELL_NOW_STOCKS
+alerts:
+  webhook_url: ''
+  min_seconds_between_alerts: 120
+ai_executor:
+  # Disabled: was burning API budget and blocking entries via HOLD 97% of the time.
+  # Re-enable only if you want AI-gated entries and have confirmed it acts on clear setups.
+  enabled: false
+  model: gpt-4o-mini
+  min_call_interval_sec: 8
+  max_calls_per_day: 3000
+  min_confidence_open: 0.5
+  min_confidence_close: 0.58
+  timeout_sec: 12
+  use_policy_cache: true
+  policy_min_confidence: 0.82
+  policy_learn_min_confidence: 0.86
+scalp_filters:
+  min_vol_ratio: 0.0
+  min_trendline_bias: 0.0
+  min_ob_imbalance: 0.0
+  max_spread_bps: 999999.0
+  require_price_above_vwap_for_long: false
+  min_signal_confidence: 0.0
+runner_mode:
+  enabled: true
+  ret15_runner_min: 0.02
+  vol_ratio_min: 0.18
+  max_spread_bps: 220
+  open_confidence_discount: 0.2
+  allow_chaos_override: true
+loose_filters:
+  # For illiquid/penny stocks (high spreads, low vol) that you still want to trade
+  # e.g., BBGI, ZNTL, CLIK. Assign via symbol_filter_overrides above.
+  min_vol_ratio: 0.01   # very permissive
+  min_trendline_bias: -0.5
+  min_ob_imbalance: -1.0
+  max_spread_bps: 500   # allow up to 5% spread
+  require_price_above_vwap_for_long: false
+  min_signal_confidence: 0.4  # lower threshold
+breakout_plan:
+  enabled: true
+  lookback_bars: 20
+  breakout_buffer_pct: 0.05
+  time_window_min: 30
+  min_vol_ratio: 1.0
+
+# ── ANA-STYLE KEY LEVEL BREAK TRADING ────────────────────────────────────────
+# For each active symbol, computes key levels (PDH, PDL, pre-market H/L, VWAP,
+# pivot points) and watches for a clean candle-close break above/below them.
+# When confirmed, overrides the ensemble signal with a directional entry and
+# places the stop loss just beyond the broken level (broken resistance = new support).
+# Set enabled: false to disable; all other bot behavior remains unchanged.
+
+key_levels:
+  enabled: false
+  asset_class: stock       # stock | crypto | forex | auto (auto detects from exchange)
+  confirmation_ticks: 2    # candles that must close above/below level to confirm break
+  level_buffer_pct: 0.001  # price must be this far beyond level to count (0.1%)
+  proximity_window_pct: 0.02  # only check levels within 2% of current price
+  stop_below_level_pct: 0.002 # stop placed 0.2% beyond broken level (tight level stop)
+
+profile: aggressive
+
+# ── SELF-LEARNING ─────────────────────────────────────────────────────────────
+# Enables end-of-day review, pattern library, signal boost/suppress, and
+# next-day watchlist pre-build. Set enabled: true to activate.
+self_learning:
+  enabled: true
+  eod_review_hour_et: 20          # run EOD review at 8 PM ET
+  pattern_library_path: /Volumes/My Passport/TradeBot/sidequest-tradebot-fixed/study/pattern_library.json
+  review_dir: /Volumes/My Passport/TradeBot/sidequest-tradebot-fixed/study/reviews
+  watchlist_dir: /Volumes/My Passport/TradeBot/sidequest-tradebot-fixed/study/watchlists
+  pattern_min_trades: 5           # min trades before pattern is considered reliable
+  pattern_min_win_rate: 0.55      # min win rate to keep pattern active
+  pattern_high_conf_win_rate: 0.70 # win rate threshold to mark pattern high_confidence
+  pattern_inactive_win_rate: 0.35  # win rate below which pattern is marked inactive
+  pattern_similarity_threshold: 0.70  # min field-match ratio to consider a pattern match
+  boost_confidence: 0.20          # confidence boost on winning pattern match
+  suppress_on_losing_pattern: true # set sig=hold when losing pattern matches
+
+runner_strategy:
+  enabled: true
+  min_vol_surge_ratio: 2.0   # was 3.0: SKYQ had 2.2x surge at start, got missed
+  min_move_pct: 0.015         # was 0.02: many runners start at 1.5% before accelerating
+  rsi_max: 85                 # was 80: strong runners ride 80-85 RSI for extended moves
+  rsi_min: 35                 # was 50: early runners often start at RSI 38-48, blocked before
+  entry_mode: immediate       # was pullback: pullback mode waited 5 bars then expired, letting runners escape
+  trailing_stop:
+    enabled: false
+    initial_stop_pct: 0.005   # initial stop = entry * (1 - 0.5%)
+    trail_pct: 0.008          # stop trails 0.8% below highest close since entry
+    all_trades: false         # false = trailing stop on runner trades only; true = all trades
