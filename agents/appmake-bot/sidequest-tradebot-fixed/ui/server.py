@@ -194,7 +194,15 @@ def _alpaca_positions_snapshot():
                 market_value = float(row.get("market_value") or 0.0)
                 cost_basis = float(row.get("cost_basis") or 0.0)
                 avg_entry = float(row.get("avg_entry_price") or 0.0)
+                current_price = float(row.get("current_price") or row.get("market_price") or 0.0)
+                if not current_price and qty:
+                    current_price = market_value / qty if market_value else avg_entry
                 unrealized = market_value - cost_basis if market_value or cost_basis else 0.0
+                if not unrealized and "unrealized_pl" in row:
+                    try:
+                        unrealized = float(row.get("unrealized_pl") or 0.0)
+                    except Exception:
+                        pass
                 out[sym] = {
                     "symbol": sym,
                     "side": str(row.get("side") or "long"),
@@ -204,7 +212,7 @@ def _alpaca_positions_snapshot():
                     "cost_basis": cost_basis,
                     "unrealized_pnl": unrealized,
                     "unrealized_pnl_pct": float(row.get("unrealized_plpc") or 0.0) * 100.0,
-                    "current_price": float(row.get("current_price") or 0.0),
+                    "current_price": current_price,
                 }
         return out
     except Exception:
