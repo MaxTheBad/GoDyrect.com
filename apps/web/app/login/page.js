@@ -7,6 +7,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [msg, setMsg] = useState('');
   const [returnTo, setReturnTo] = useState('/dashboard');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -17,9 +18,20 @@ export default function LoginPage() {
   async function submit(e) {
     e.preventDefault();
     if (!supabase) return setMsg('Supabase env vars are missing.');
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setMsg(error ? error.message : 'Logged in. Redirecting...');
-    if (!error) setTimeout(() => (window.location.href = returnTo || '/dashboard'), 600);
+    setSubmitting(true);
+    setMsg('');
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      setMsg(error ? error.message : 'Logged in. Redirecting...');
+      if (!error) setTimeout(() => (window.location.href = returnTo || '/dashboard'), 300);
+    } catch (error) {
+      const networkFailure = /load failed|failed to fetch|network request failed/i.test(error?.message || '');
+      setMsg(networkFailure
+        ? 'Could not reach the login service. Check your connection and try again.'
+        : (error?.message || 'Login failed. Please try again.'));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -29,8 +41,10 @@ export default function LoginPage() {
         <h1 style={{ margin: 0 }}>Log in</h1>
         <input style={input} placeholder='Email' type='email' name='email' autoComplete='email' value={email} onChange={(e) => setEmail(e.target.value)} />
         <input style={input} placeholder='Password' type='password' name='password' id='login-password' autoComplete='current-password' value={password} onChange={(e) => setPassword(e.target.value)} />
-        <button style={btn} type='submit'>Log in</button>
-        {msg ? <p>{msg}</p> : null}
+        <button style={{ ...btn, opacity: submitting ? 0.7 : 1 }} type='submit' disabled={submitting}>
+          {submitting ? 'Logging in…' : 'Log in'}
+        </button>
+        {msg ? <p role='status'>{msg}</p> : null}
         <p style={{ marginTop: 2 }}>Don’t have an account? <a href='/signup' style={{ color: '#8fb7ff' }}>Sign up</a></p>
       </form>
     </main>
