@@ -41,6 +41,7 @@ export default function ListingExplorer({ initialSearch = '', initialIndustry = 
   const [businessFollowIds, setBusinessFollowIds] = useState([]);
   const [sellerProfiles, setSellerProfiles] = useState({});
   const [cardMediaIndex, setCardMediaIndex] = useState({});
+  const [viewMode, setViewMode] = useState('list');
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 900);
@@ -412,7 +413,9 @@ export default function ListingExplorer({ initialSearch = '', initialIndustry = 
               {sortOptions.map((option) => <option key={option}>{option}</option>)}
             </select>
           </label>
-          <button style={ghostBtn} onClick={() => { setToast('Map view is coming soon'); setTimeout(() => setToast(''), 1800); }}>Map View (Coming Soon)</button>
+          <button style={ghostBtn} onClick={() => setViewMode((mode) => mode === 'list' ? 'map' : 'list')}>
+            {viewMode === 'list' ? 'Location view' : 'List view'}
+          </button>
         </div>
 
         {isMobile ? (
@@ -485,10 +488,11 @@ export default function ListingExplorer({ initialSearch = '', initialIndustry = 
       </section>
 
       <section style={listingSection}>
-        <h3 style={{ marginTop: 4, color: '#fff' }}>Business Listings</h3>
+        <h3 style={{ marginTop: 4, color: '#fff' }}>{viewMode === 'map' ? 'Listing locations' : 'Business listings'}</h3>
         {loadingListings ? <p style={{ opacity: 0.8, color: 'rgba(235,241,255,0.78)' }}>Loading listings...</p> : null}
         {!loadingListings && filteredListings.length === 0 ? <p style={{ opacity: 0.8, color: 'rgba(235,241,255,0.78)' }}>No active listings found.</p> : null}
-        <div style={{ display: 'grid', gap: 10 }}>
+        {viewMode === 'map' && !loadingListings && filteredListings.length ? <MarketplaceMap listings={filteredListings} isMobile={isMobile} /> : null}
+        <div style={{ display: viewMode === 'list' ? 'grid' : 'none', gap: 10 }}>
           {filteredListings.map((l) => {
             const media = mediaPreview[l.id] || [];
             const currentIndex = cardMediaIndex[l.id] || 0;
@@ -530,6 +534,54 @@ export default function ListingExplorer({ initialSearch = '', initialIndustry = 
       {toast ? <div style={toastStyle}>{toast}</div> : null}
     </>
   );
+}
+
+function MarketplaceMap({ listings, isMobile }) {
+  const located = listings.filter((listing) => Number.isFinite(Number(listing.lat)) && Number.isFinite(Number(listing.lng)));
+
+  if (!located.length) {
+    return <div style={mapEmpty}>These listings do not have map coordinates yet. Use the location filter or switch back to list view.</div>;
+  }
+
+  return (
+    <div style={{ ...mapLayout, gridTemplateColumns: isMobile ? '1fr' : mapLayout.gridTemplateColumns }}>
+      <div style={{ ...mapCanvas, minHeight: isMobile ? 330 : mapCanvas.minHeight }} aria-label={`Map showing ${located.length} listing locations`}>
+        <div style={mapGrid} />
+        <span style={{ ...mapLabel, top: '12%', left: '9%' }}>West</span>
+        <span style={{ ...mapLabel, top: '12%', right: '9%' }}>East</span>
+        {located.map((listing) => {
+          const x = Math.max(4, Math.min(96, ((Number(listing.lng) + 125) / 59) * 100));
+          const y = Math.max(7, Math.min(93, ((50 - Number(listing.lat)) / 26) * 100));
+          return (
+            <a
+              key={listing.id}
+              href={`/listing?id=${listing.id}`}
+              title={`${listing.title} — ${listing.city || listing.state || 'View listing'}`}
+              style={{ ...mapPin, left: `${x}%`, top: `${y}%` }}
+            >
+              <span style={mapPinDot} />
+              <span style={mapPinPrice}>${compactPrice(listing.asking_price)}</span>
+            </a>
+          );
+        })}
+      </div>
+      <div style={mapResults}>
+        {located.slice(0, 8).map((listing) => (
+          <a key={listing.id} href={`/listing?id=${listing.id}`} style={mapResult}>
+            <strong>{listing.title}</strong>
+            <span>{[listing.city, listing.state].filter(Boolean).join(', ') || 'Location available'} · ${Number(listing.asking_price || 0).toLocaleString()}</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function compactPrice(value) {
+  const price = Number(value || 0);
+  if (price >= 1000000) return `${(price / 1000000).toFixed(price % 1000000 ? 1 : 0)}M`;
+  if (price >= 1000) return `${Math.round(price / 1000)}K`;
+  return price.toLocaleString();
 }
 
 function DropdownFilter({ title, isOpen, onToggle, children }) {
@@ -591,6 +643,16 @@ const dotWrap = { position: 'absolute', left: 0, right: 0, bottom: 10, display: 
 const dot = { width: 6, height: 6, borderRadius: 999, background: 'rgba(255,255,255,0.55)' };
 const dotActive = { width: 8, height: 8, borderRadius: 999, background: '#fff' };
 const cardBottom = { display: 'flex', justifyContent: 'space-between', alignItems: 'center' };
+const mapLayout = { display: 'grid', gridTemplateColumns: 'minmax(0, 1.6fr) minmax(220px, .7fr)', gap: 12 };
+const mapCanvas = { position: 'relative', minHeight: 430, overflow: 'hidden', borderRadius: 18, border: '1px solid rgba(143,183,255,.22)', background: 'radial-gradient(circle at 30% 35%, rgba(46,125,255,.2), transparent 28%), radial-gradient(circle at 70% 65%, rgba(255,107,53,.12), transparent 25%), #0a1128' };
+const mapGrid = { position: 'absolute', inset: 0, opacity: .18, backgroundImage: 'linear-gradient(rgba(143,183,255,.4) 1px, transparent 1px), linear-gradient(90deg, rgba(143,183,255,.4) 1px, transparent 1px)', backgroundSize: '48px 48px', transform: 'perspective(500px) rotateX(8deg) scale(1.1)' };
+const mapLabel = { position: 'absolute', color: 'rgba(235,241,255,.35)', textTransform: 'uppercase', letterSpacing: '.18em', fontSize: 10, fontWeight: 800 };
+const mapPin = { position: 'absolute', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', gap: 5, padding: '5px 8px 5px 5px', borderRadius: 999, color: '#fff', background: '#151d39', border: '1px solid rgba(255,255,255,.22)', textDecoration: 'none', boxShadow: '0 8px 24px rgba(0,0,0,.38)', zIndex: 2 };
+const mapPinDot = { width: 11, height: 11, borderRadius: 999, background: '#ff6b35', boxShadow: '0 0 0 4px rgba(255,107,53,.15)' };
+const mapPinPrice = { fontSize: 11, fontWeight: 800 };
+const mapResults = { display: 'grid', alignContent: 'start', gap: 8, maxHeight: 430, overflowY: 'auto' };
+const mapResult = { display: 'grid', gap: 5, padding: 13, color: '#fff', background: '#121b3f', border: '1px solid rgba(94,128,202,.28)', borderRadius: 13, textDecoration: 'none', fontSize: 13 };
+const mapEmpty = { padding: 28, border: '1px dashed rgba(143,183,255,.3)', borderRadius: 16, color: 'rgba(235,241,255,.72)', lineHeight: 1.6, textAlign: 'center' };
 const menuBtn = { border: '1px solid rgba(94,128,202,0.28)', borderRadius: 999, background: '#0b1431', color: '#fff', width: 34, height: 34, fontSize: 18, lineHeight: 1, cursor: 'pointer' };
 const menuPanel = { position: 'absolute', right: 0, top: 40, background: '#0f1732', border: '1px solid rgba(94,128,202,0.28)', borderRadius: 10, minWidth: 180, display: 'grid', zIndex: 5, boxShadow: '0 10px 24px rgba(0,0,0,0.2)' };
 const menuItem = { border: 0, borderBottom: '1px solid rgba(94,128,202,0.18)', background: '#0f1732', textAlign: 'left', padding: '10px 12px', cursor: 'pointer', color: '#fff' };

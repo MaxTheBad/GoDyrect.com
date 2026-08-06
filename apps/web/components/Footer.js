@@ -1,25 +1,14 @@
 export default function Footer(){
   return (
-    <footer style={wrap}>
-      <div style={inner}>
-        <div style={text}>© {new Date().getFullYear()} GoDyrect</div>
-        <nav style={{display:'flex',gap:12}}>
-          <a href="/about" style={link}>About</a>
-          <a href="/contactus" style={link}>Contact</a>
+    <footer className="site-footer">
+      <div className="site-footer__inner">
+        <div className="site-footer__brand">© {new Date().getFullYear()} GoDyrect. Deals move better direct.</div>
+        <nav className="site-footer__links" aria-label="Footer navigation">
+          <a href="/about">About</a>
+          <a href="/contactus">Contact</a>
+          <a href="/legal/privacy">Privacy</a>
         </nav>
       </div>
     </footer>
   )
 }
-
-const wrap = {
-  borderTop: 'none',
-  background: '#000',
-  padding: '18px 0',
-  marginTop: 0,
-  color: '#fff',
-  width: '100%'
-}
-const inner = { maxWidth:1120, margin:'0 auto', padding:'0 20px', display:'flex', justifyContent:'space-between', alignItems:'center' }
-const link = { color:'#ffffff', textDecoration:'none', fontWeight:600 }
-const text = { color: '#ffffff' }

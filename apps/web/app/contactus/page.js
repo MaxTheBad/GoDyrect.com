@@ -34,7 +34,7 @@ export default function ContactPage(){
             <ContactForm />
           </div>
 
-          <p style={{marginTop:20, color: '#ffffff'}}>Or <Link href="/landing">return to landing</Link>.</p>
+          <p style={{marginTop:20, color: '#ffffff'}}>Or <Link href="/explore">return to the marketplace</Link>.</p>
         </section>
 
         <footer className="foot">© {new Date().getFullYear()}</footer>

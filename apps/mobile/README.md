@@ -1,14 +1,16 @@
-# GoDyrect Mobile (Expo)
+# GoDyrect Mobile
 
-Planned setup:
-- Expo React Native app
-- Supabase auth/session
-- Listing feed + map/list toggle
-- Messaging + favorites
+Expo app for iPhone and Android testing.
 
-## Next step
-Run:
+## Run locally
+
 ```bash
-npx create-expo-app@latest apps/mobile
+npm install
+npm --workspace apps/mobile run ios
 ```
-Then copy env vars from `apps/mobile/.env.example`.
+
+## Notes
+
+- The web app in `apps/web` still works independently.
+- This mobile app is the path for on-device video editor testing.
+- Set env vars from `apps/mobile/.env.example` before wiring backend features.
